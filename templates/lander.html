@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ name }}{% if category %} — {{ category }}{% endif %}</title>
+{% if tagline %}<meta name="description" content="{{ tagline }}">{% endif %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+{% if name and phone_display %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "LocalBusiness",
+  "name": {{ name|tojson }},
+  "telephone": {{ phone_display|tojson }}{% if address %},
+  "address": {{ address|tojson }}{% endif %}{% if rating %},
+  "aggregateRating": { "@type": "AggregateRating", "ratingValue": {{ rating }}, "reviewCount": {{ review_count or 0 }} }{% endif %}
+}
+</script>
+{% endif %}
+<style>
+  :root{
+    --ink:#181D24;
+    --paper:#EFF2EE;
+    --signal:#FF5A1F;
+    --signal-ink:#FFFFFF;
+    --slate:#5B6B79;
+    --success:#1F8A5F;
+    --line:#D8DCD9;
+    --card:#FFFFFF;
+    --radius:14px;
+    --display: 'Space Grotesk', system-ui, sans-serif;
+    --body: 'Inter', system-ui, sans-serif;
+    --mono: 'IBM Plex Mono', ui-monospace, monospace;
+  }
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    margin:0;
+    font-family:var(--body);
+    color:var(--ink);
+    background:var(--paper);
+    line-height:1.5;
+    padding-bottom:84px; /* room for the sticky mobile call bar */
+  }
+  a{color:inherit;}
+  img{max-width:100%;display:block;}
+  .wrap{max-width:720px;margin:0 auto;padding:0 20px;}
+
+  /* ---------- top bar ---------- */
+  .topbar{
+    position:sticky;top:0;z-index:30;
+    background:var(--ink);color:#fff;
+    border-bottom:1px solid rgba(255,255,255,0.08);
+  }
+  .topbar-inner{
+    max-width:720px;margin:0 auto;padding:10px 20px;
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+  }
+  .topbar-name{font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:-0.01em;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .topbar-rating{font-family:var(--mono);font-size:12px;color:#C7CDD2;white-space:nowrap;}
+  .topbar-call{
+    flex-shrink:0;background:var(--signal);color:var(--signal-ink);
+    font-family:var(--mono);font-weight:600;font-size:12px;letter-spacing:0.02em;
+    padding:8px 14px;border-radius:999px;text-decoration:none;white-space:nowrap;
+  }
+
+  /* ---------- hero ---------- */
+  .hero{position:relative;min-height:420px;display:flex;align-items:flex-end;color:#fff;background:var(--ink);}
+  .hero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.55;}
+  .hero-scrim{position:absolute;inset:0;background:linear-gradient(180deg, rgba(24,29,36,0.15) 0%, rgba(24,29,36,0.55) 55%, rgba(24,29,36,0.95) 100%);}
+  .hero-content{position:relative;width:100%;padding:48px 20px 28px;max-width:720px;margin:0 auto;}
+  .hero-eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#C7CDD2;margin:0 0 10px;}
+  .hero-name{font-family:var(--display);font-weight:700;font-size:clamp(28px,7vw,42px);line-height:1.05;letter-spacing:-0.01em;margin:0 0 6px;}
+  .hero-tagline{font-size:15px;color:#DCE0E2;max-width:46ch;margin:0 0 22px;}
+
+  /* ---------- signature: the call ticket (reused above the fold + in the closing CTA band) ---------- */
+  .ticket{
+    background:var(--card);color:var(--ink);
+    border:2px dashed rgba(24,29,36,0.35);
+    border-radius:var(--radius);
+    padding:18px 20px;
+    max-width:380px;
+  }
+  .ticket-row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .ticket-label{font-family:var(--mono);font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--slate);}
+  .ticket-phone{
+    display:block;margin-top:6px;
+    font-family:var(--mono);font-weight:600;font-size:clamp(22px,6vw,30px);
+    color:var(--ink);text-decoration:none;letter-spacing:-0.01em;
+  }
+  .ticket-cta{
+    display:inline-flex;align-items:center;gap:8px;
+    margin-top:14px;width:100%;justify-content:center;
+    background:var(--signal);color:var(--signal-ink);
+    font-family:var(--mono);font-weight:600;font-size:13px;letter-spacing:0.03em;text-transform:uppercase;
+    padding:13px 16px;border-radius:8px;text-decoration:none;
+  }
+  .status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--success);margin-right:6px;}
+  .status-dot.closed{background:#9AA3A8;}
+  .status-line{font-family:var(--mono);font-size:12px;color:var(--slate);margin-top:10px;}
+
+  /* ---------- sections ---------- */
+  section{padding:32px 0;border-bottom:1px solid var(--line);}
+  .wrap > section:last-of-type{border-bottom:none;}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--slate);margin:0 0 14px;}
+
+  .chips{display:flex;flex-wrap:wrap;gap:8px;}
+  .chip{
+    font-family:var(--body);font-weight:500;font-size:13px;
+    background:var(--card);border:1px solid var(--line);border-radius:999px;
+    padding:8px 14px;
+  }
+
+  .filmstrip{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:4px;margin:0 -20px;padding-left:20px;padding-right:20px;}
+  .filmstrip img{flex:0 0 auto;width:62vw;max-width:260px;height:180px;object-fit:cover;border-radius:10px;scroll-snap-align:start;background:var(--card);}
+
+  /* ---------- reviews ---------- */
+  .review-summary{font-family:var(--mono);font-size:14px;margin:0 0 16px;}
+  .review-summary b{font-size:16px;}
+  .review-summary .muted{color:var(--slate);font-weight:400;}
+  .review-list{display:flex;flex-direction:column;gap:12px;margin-bottom:14px;}
+  .review-card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;}
+  .review-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px;}
+  .review-author{font-weight:600;font-size:13px;}
+  .review-stars{font-family:var(--mono);font-size:12px;color:var(--signal);letter-spacing:1px;}
+  .review-text{font-size:14px;color:var(--ink);margin:0 0 6px;line-height:1.5;}
+  .review-time{font-family:var(--mono);font-size:11px;color:var(--slate);margin:0;}
+  .review-google-link{display:inline-block;font-family:var(--mono);font-size:12px;color:var(--slate);text-decoration:underline;text-decoration-color:var(--line);}
+
+  .hours-table{width:100%;border-collapse:collapse;font-size:14px;}
+  .hours-table td{padding:8px 0;border-bottom:1px solid var(--line);}
+  .hours-table td:last-child{text-align:right;font-family:var(--mono);font-size:13px;color:var(--slate);}
+  .hours-table tr.today td{color:var(--ink);font-weight:600;}
+  .hours-table tr.today td:first-child::after{content:" · today";font-weight:400;font-family:var(--mono);font-size:11px;color:var(--signal);}
+
+  .addr{font-size:14px;color:var(--slate);}
+  .addr a{color:var(--ink);text-decoration:underline;text-decoration-color:var(--line);}
+
+  footer{padding:24px 0 32px;}
+  footer .fine{font-size:12px;color:var(--slate);}
+
+  /* ---------- closing CTA band (the second "tap to call", mirrors the hero) ---------- */
+  .cta-band{background:var(--ink);color:#fff;padding:40px 0 44px;text-align:center;}
+  .cta-band .eyebrow{color:#9AA3A8;}
+  .cta-band-heading{
+    font-family:var(--display);font-weight:700;font-size:clamp(22px,5.5vw,30px);
+    letter-spacing:-0.01em;margin:0 0 20px;
+  }
+  .cta-band .ticket{margin:0 auto;text-align:left;}
+
+  /* ---------- sticky mobile call bar ---------- */
+  .callbar{
+    position:fixed;left:0;right:0;bottom:0;z-index:40;
+    background:var(--ink);border-top:2px dashed rgba(255,255,255,0.25);
+    padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+  }
+  .callbar a{
+    display:flex;align-items:center;justify-content:center;gap:10px;
+    background:var(--signal);color:var(--signal-ink);
+    font-family:var(--mono);font-weight:600;font-size:15px;letter-spacing:0.02em;
+    padding:14px;border-radius:10px;text-decoration:none;
+  }
+
+  @media (min-width:760px){
+    .hero{min-height:480px;}
+    .callbar{display:none;} /* topbar's call pill is reachable on desktop */
+    body{padding-bottom:0;}
+  }
+</style>
+</head>
+<body>
+
+{% macro call_ticket(name, phone_display, phone_href, open_now) %}
+<div class="ticket">
+  <div class="ticket-row">
+    <span class="ticket-label">Tap to call</span>
+  </div>
+  <a class="ticket-phone" href="{{ phone_href }}">{{ phone_display }}</a>
+  {% if open_now is not none %}
+  <p class="status-line">
+    <span class="status-dot {{ '' if open_now else 'closed' }}"></span>{{ 'Open now' if open_now else 'Closed now' }}
+  </p>
+  {% endif %}
+  <a class="ticket-cta" href="{{ phone_href }}">Call {{ name.split(' ')[0] }} now →</a>
+</div>
+{% endmacro %}
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <span class="topbar-name">{{ name }}</span>
+    {% if rating %}<span class="topbar-rating">★ {{ "%.1f"|format(rating) }} ({{ review_count }})</span>{% endif %}
+    {% if phone_href %}<a class="topbar-call" href="{{ phone_href }}">Call now</a>{% endif %}
+  </div>
+</div>
+
+<header class="hero">
+  {% if hero_image %}<img class="hero-img" src="{{ hero_image }}" alt="{{ name }}">{% endif %}
+  <div class="hero-scrim"></div>
+  <div class="hero-content">
+    {% if category %}<p class="hero-eyebrow">{{ category }}{% if address %} · {{ address.split(',')[1].strip() if ',' in address else '' }}{% endif %}</p>{% endif %}
+    <h1 class="hero-name">{{ name }}</h1>
+    {% if tagline %}<p class="hero-tagline">{{ tagline }}</p>{% endif %}
+    {% if phone_display %}{{ call_ticket(name, phone_display, phone_href, open_now) }}{% endif %}
+  </div>
+</header>
+
+<div class="wrap">
+
+  {% if services %}
+  <section>
+    <p class="eyebrow">What we handle</p>
+    <div class="chips">
+      {% for s in services %}<span class="chip">{{ s }}</span>{% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {% if gallery|length > 1 %}
+  <section>
+    <p class="eyebrow">Recent work</p>
+    <div class="filmstrip">
+      {% for img in gallery %}<img src="{{ img }}" alt="{{ name }} — photo {{ loop.index }}" loading="lazy">{% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {% if reviews or rating %}
+  <section>
+    <p class="eyebrow">Reviews</p>
+    {% if rating %}
+    <p class="review-summary"><b>★ {{ "%.1f"|format(rating) }}</b> <span class="muted">({{ review_count }} reviews on Google)</span></p>
+    {% endif %}
+    {% if reviews %}
+    <div class="review-list">
+      {% for r in reviews %}
+      <div class="review-card">
+        <div class="review-card-head">
+          <span class="review-author">{{ r.author }}</span>
+          {% if r.rating %}<span class="review-stars">{{ '★' * (r.rating|int) }}{{ '☆' * (5 - (r.rating|int)) }}</span>{% endif %}
+        </div>
+        <p class="review-text">“{{ r.text }}”</p>
+        {% if r.relative_time %}<p class="review-time">{{ r.relative_time }}</p>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% if maps_url %}<a class="review-google-link" href="{{ maps_url }}" target="_blank" rel="noopener">See all reviews on Google →</a>{% endif %}
+  </section>
+  {% endif %}
+
+  {% if hours %}
+  <section>
+    <p class="eyebrow">Hours</p>
+    <table class="hours-table">
+      {% for line in hours %}
+      {% set day = line.split(':')[0].strip() %}
+      <tr class="{{ 'today' if day == today else '' }}">
+        <td>{{ day }}</td>
+        <td>{{ line.split(':', 1)[1].strip() if ':' in line else line }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </section>
+  {% endif %}
+
+  {% if service_areas %}
+  <section>
+    <p class="eyebrow">Areas we service</p>
+    <div class="chips">
+      {% for area in service_areas %}<span class="chip">{{ area }}</span>{% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+</div>
+
+{% if phone_href %}
+<section class="cta-band">
+  <div class="wrap">
+    <p class="eyebrow">Ready when you are</p>
+    <h2 class="cta-band-heading">{{ name.split(' ')[0] }}’s ready to help</h2>
+    {{ call_ticket(name, phone_display, phone_href, open_now) }}
+  </div>
+</section>
+{% endif %}
+
+<div class="wrap">
+  {% if address %}
+  <section>
+    <p class="eyebrow">Location</p>
+    <p class="addr">{{ address }}{% if maps_url %} · <a href="{{ maps_url }}" target="_blank" rel="noopener">Get directions</a>{% endif %}</p>
+  </section>
+  {% endif %}
+
+  <footer>
+    <p class="fine">Information sourced from this business's Google Business Profile{% if source_website %} and <a href="{{ source_website }}" target="_blank" rel="noopener">website</a>{% endif %}.</p>
+  </footer>
+</div>
+
+{% if phone_href %}
+<div class="callbar">
+  <a href="{{ phone_href }}">┄ Call {{ name }} now — {{ phone_display }}</a>
+</div>
+{% endif %}
+
+</body>
+</html>
