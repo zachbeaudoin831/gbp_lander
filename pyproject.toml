@@ -2,6 +2,16 @@
 name = "gbp-lander-backend"
 version = "0.1.0"
 requires-python = ">=3.11"
+dependencies = [
+    "requests>=2.31",
+    "beautifulsoup4>=4.12",
+    "lxml>=5.0",
+    "Jinja2>=3.1",
+    "Pillow>=10.0",
+    "python-dotenv>=1.0",
+    "fastapi>=0.110",
+    "uvicorn>=0.29",
+]
 
 [tool.vercel]
 entrypoint = "server.main:app"
