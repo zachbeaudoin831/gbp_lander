@@ -220,8 +220,7 @@ export default function App() {
       stop();
       const valid = (Array.isArray(results) ? results : []).filter(r=>r&&r.name);
       if (!valid.length) { setError('No businesses found. Try adding a city or state.'); setStep('search'); return; }
-      if (valid.length === 1) { await runBuild(valid[0]); }
-      else { setCandidates(valid); setStep('candidates'); }
+      setCandidates(valid); setStep('candidates');
     } catch(err) { stop(); setError(err.message); setStep('search'); }
   }
 
@@ -409,7 +408,7 @@ export default function App() {
           onChange={e=>setOfferAnswers({...offerAnswers, [key]:e.target.value})}
           placeholder={placeholder}
           rows={2}
-          style={{width:'100%',padding:'10px 12px',fontFamily:'inherit',fontSize:14,border:'1.5px solid var(--border)',borderRadius:8,background:'var(--surface-2)',color:'var(--text-primary)',resize:'vertical'}}
+          style={{width:'100%',padding:'10px 12px',fontFamily:'inherit',fontSize:14,border:'2px solid #3B82F6',boxShadow:'0 0 0 3px rgba(59,130,246,.12)',outline:'none',borderRadius:8,background:'var(--surface-2)',color:'var(--text-primary)',resize:'vertical'}}
         />
       </div>
     );
