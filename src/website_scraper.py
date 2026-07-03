@@ -130,3 +130,44 @@ def scrape_website(
         paragraphs=paragraphs,
         images=images,
     )
+
+_ABOUT_HINTS = ("about", "our-story", "who-we-are", "meet-the-team", "our-team")
+
+
+def find_about_url(home_url: str, timeout: int = 12) -> Optional[str]:
+    """Looks for an About-ish link on the homepage and returns its absolute
+    URL, or None if nothing obvious is found. Doesn't fetch the About page
+    itself -- call scrape_website() on the result if you want its content.
+    """
+    try:
+        resp = requests.get(home_url, headers={"User-Agent": USER_AGENT}, timeout=timeout)
+        resp.raise_for_status()
+    except Exception:
+        return None
+
+    soup = BeautifulSoup(resp.text, "lxml")
+    home_netloc = urlparse(home_url).netloc
+
+    for a in soup.find_all("a", href=True):
+        href = a["href"].strip()
+        text = a.get_text(strip=True).lower()
+        haystack = f"{href.lower()} {text}"
+        if any(hint in haystack for hint in _ABOUT_HINTS):
+            candidate = urljoin(home_url, href)
+            if urlparse(candidate).netloc == home_netloc:
+                return candidate
+    return None
+
+
+def scrape_about_page(home_url: str, respect_robots: bool = True) -> Optional[WebsiteContent]:
+    """Convenience wrapper: find the About page (if any) and scrape it.
+    Returns None if there's no obvious About link, the page is blocked by
+    robots.txt, or the fetch fails for any reason.
+    """
+    about_url = find_about_url(home_url)
+    if not about_url:
+        return None
+    try:
+        return scrape_website(about_url, respect_robots=respect_robots)
+    except Exception:
+        return None

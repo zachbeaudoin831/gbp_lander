@@ -24,15 +24,18 @@ from __future__ import annotations
 
 import io
 import os
+from typing import Optional
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
 
+from src.ai_copy import generate_extras
 from src.lander_builder import build_profile
 from src.places_client import GooglePlacesClient, PlacesApiError
-from src.website_scraper import ScrapeBlocked, scrape_website
+from src.website_scraper import ScrapeBlocked, scrape_about_page, scrape_website
 
 load_dotenv()
 
@@ -159,5 +162,66 @@ def photo(photo_name: str, max_width: int = 800):
 @app.get("/api/health")
 def health():
     """Simple endpoint to confirm the service is up and the key is set."""
-    has_key = bool(os.environ.get("GOOGLE_PLACES_API_KEY"))
-    return {"status": "ok", "api_key_configured": has_key}
+    has_places_key = bool(os.environ.get("GOOGLE_PLACES_API_KEY"))
+    has_anthropic_key = bool(os.environ.get("ANTHROPIC_API_KEY"))
+    return {
+        "status": "ok",
+        "api_key_configured": has_places_key,
+        "anthropic_key_configured": has_anthropic_key,
+    }
+
+
+class OfferRequest(BaseModel):
+    website: Optional[str] = None
+    name: str
+    category: str = ""
+    tagline: Optional[str] = None
+    services: list[str] = []
+    dream_outcome: str = ""
+    likelihood: str = ""
+    time_delay: str = ""
+    effort: str = ""
+
+
+@app.post("/api/generate-offer")
+def generate_offer(req: OfferRequest):
+    """Scrapes the business's own site fresh (cheap, no Google billing --
+    the caller already has the Places-derived profile from /api/profile,
+    so we don't re-fetch that here) and calls Claude once to produce an
+    above-the-fold offer plus short site/about summaries.
+    """
+    home_text = ""
+    about_text = None
+
+    if req.website:
+        try:
+            home = scrape_website(req.website)
+            home_text = " ".join(home.paragraphs + home.headings)
+        except (ScrapeBlocked, Exception):
+            home_text = ""
+
+        about = scrape_about_page(req.website)
+        if about:
+            about_text = " ".join(about.paragraphs + about.headings)
+
+    try:
+        extras = generate_extras(
+            name=req.name,
+            category=req.category,
+            tagline=req.tagline,
+            services=req.services,
+            home_text=home_text,
+            about_text=about_text,
+            answers={
+                "dream_outcome": req.dream_outcome,
+                "likelihood": req.likelihood,
+                "time_delay": req.time_delay,
+                "effort": req.effort,
+            },
+        )
+    except RuntimeError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Offer generation failed: {e}")
+
+    return extras
