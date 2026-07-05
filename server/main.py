@@ -48,7 +48,7 @@ app = FastAPI(title="GBP Lander Builder API")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_methods=["GET"],
+    allow_methods=["GET", "POST"],,
     allow_headers=["*"],
 )
 
@@ -177,18 +177,16 @@ class OfferRequest(BaseModel):
     category: str = ""
     tagline: Optional[str] = None
     services: list[str] = []
-    dream_outcome: str = ""
-    likelihood: str = ""
-    time_delay: str = ""
-    effort: str = ""
 
 
 @app.post("/api/generate-offer")
 def generate_offer(req: OfferRequest):
     """Scrapes the business's own site fresh (cheap, no Google billing --
     the caller already has the Places-derived profile from /api/profile,
-    so we don't re-fetch that here) and calls Claude once to produce an
-    above-the-fold offer plus short site/about summaries.
+    so we don't re-fetch that here) and calls Claude once to pull out real
+    benefits/guarantees already on the site and turn them into an
+    above-the-fold offer plus short site/about summaries. Fully automatic,
+    no owner input required.
     """
     home_text = ""
     about_text = None
@@ -212,12 +210,6 @@ def generate_offer(req: OfferRequest):
             services=req.services,
             home_text=home_text,
             about_text=about_text,
-            answers={
-                "dream_outcome": req.dream_outcome,
-                "likelihood": req.likelihood,
-                "time_delay": req.time_delay,
-                "effort": req.effort,
-            },
         )
     except RuntimeError as e:
         raise HTTPException(status_code=500, detail=str(e))

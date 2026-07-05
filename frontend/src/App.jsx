@@ -176,8 +176,6 @@ export default function App() {
   const [error,      setError]      = useState('');
   const [viewMode,   setViewMode]   = useState('mobile');
   const [copied,     setCopied]     = useState(false);
-  const [offerAnswers, setOfferAnswers] = useState({ dream_outcome:'', likelihood:'', time_delay:'', effort:'' });
-  const [offerBusy,  setOfferBusy]  = useState(false);
   const iframeRef = useRef(null);
   const blobRef   = useRef(null);
   const timerRef  = useRef(null);
@@ -232,12 +230,26 @@ export default function App() {
       'Extracting services and hours…',
       'Gathering reviews…',
       'Finding photos…',
+      'Reading their website for the offer…',
     ], 3200);
     try {
       const profile = await getProfile(candidate.place_id);
+      let extras = {};
+      try {
+        extras = await generateOffer({
+          website: profile.website,
+          name: profile.name,
+          category: profile.category,
+          tagline: profile.tagline,
+          services: profile.services || [],
+        });
+      } catch {
+        // Offer generation is a nice-to-have -- if the site can't be
+        // scraped or the AI call fails, just build the page without it
+        // rather than blocking the whole flow.
+      }
       stop();
-      setBusiness(profile);
-      setStep('offer');
+      finishBuild({ ...profile, ...extras });
     } catch(err) {
       stop();
       setError(err.message);
@@ -249,31 +261,6 @@ export default function App() {
     setBusiness(profile);
     setHtml(buildLanderHTML(profile));
     setStep('preview');
-  }
-
-  async function handleOfferSubmit(e) {
-    e?.preventDefault?.();
-    setOfferBusy(true);
-    setError('');
-    try {
-      const extras = await generateOffer({
-        website: business.website,
-        name: business.name,
-        category: business.category,
-        tagline: business.tagline,
-        services: business.services || [],
-        ...offerAnswers,
-      });
-      finishBuild({ ...business, ...extras });
-    } catch(err) {
-      setError(err.message);
-    } finally {
-      setOfferBusy(false);
-    }
-  }
-
-  function skipOffer() {
-    finishBuild(business);
   }
 
   function handleDownload() {
@@ -397,55 +384,6 @@ export default function App() {
       </div>
     </div>
   );
-
-  /* ── offer questions ──────────────────────────────────────────────── */
-  if (step === 'offer') {
-    const q = (key, label, placeholder) => (
-      <div style={{marginBottom:18,textAlign:'left'}}>
-        <label style={{display:'block',fontSize:13,fontWeight:600,color:'var(--text-primary)',marginBottom:6}}>{label}</label>
-        <textarea
-          value={offerAnswers[key]}
-          onChange={e=>setOfferAnswers({...offerAnswers, [key]:e.target.value})}
-          placeholder={placeholder}
-          rows={2}
-          style={{width:'100%',padding:'10px 12px',fontFamily:'inherit',fontSize:14,border:'2px solid #3B82F6',boxShadow:'0 0 0 3px rgba(59,130,246,.12)',outline:'none',borderRadius:8,background:'var(--surface-2)',color:'var(--text-primary)',resize:'vertical'}}
-        />
-      </div>
-    );
-    return (
-      <div>
-        <div style={{background:'#181D24',padding:'12px 20px',display:'flex',alignItems:'center',gap:10}}>
-          <span style={{width:26,height:26,background:'#FF5A1F',borderRadius:6,display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,color:'#fff',flexShrink:0}}>▲</span>
-          <span style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:14,color:'#fff',letterSpacing:'-.01em'}}>LanderBuilder</span>
-        </div>
-        <div style={{padding:'44px 24px',display:'flex',justifyContent:'center'}}>
-          <div style={{maxWidth:520,width:'100%'}}>
-            <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,letterSpacing:'.1em',textTransform:'uppercase',color:'#FF5A1F',margin:'0 0 12px'}}>Optional — makes the page above the fold hit harder</p>
-            <h2 style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:24,letterSpacing:'-.01em',margin:'0 0 10px'}}>Craft {business?.name}'s offer</h2>
-            <p style={{color:'var(--text-secondary)',fontSize:14,margin:'0 0 28px',lineHeight:1.6}}>Answer a few quick questions about what you actually deliver, and we'll turn it into a sharp headline for the top of the page. Skip if you'd rather keep the default tagline.</p>
-
-            <form onSubmit={handleOfferSubmit}>
-              {q('dream_outcome', "What's the dream outcome for your customer?", "e.g. A spotless, showroom-quality car that turns heads")}
-              {q('likelihood', "Why should they believe you'll deliver it?", "e.g. 15 years in business, 200+ five-star reviews, certified techs")}
-              {q('time_delay', "How fast do they see results?", "e.g. Most jobs done same-day, within 2 hours")}
-              {q('effort', "How easy is it on them?", "e.g. We come to them — no drop-off, no waiting around")}
-
-              {error && <div className="lb-error" style={{marginBottom:16}}>{error}</div>}
-
-              <div style={{display:'flex',gap:10}}>
-                <button type="submit" className="lb-btn-signal" disabled={offerBusy} style={{flex:1,justifyContent:'center'}}>
-                  {offerBusy ? 'Crafting offer…' : 'Generate my offer →'}
-                </button>
-                <button type="button" className="lb-btn-dark" onClick={skipOffer} disabled={offerBusy}>
-                  Skip
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   /* ── preview ───────────────────────────────────────────────────────── */
   if (step === 'preview') {
