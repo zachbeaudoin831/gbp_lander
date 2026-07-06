@@ -1,0 +1,33 @@
+/* Base theme for the LanderBuilder app shell (not the generated lander page --
+   that has its own inline CSS in buildLanderHTML). Values pulled from the
+   same brand palette used in templates/lander.html so the tool and the
+   thing it builds feel like one product. */
+:root {
+  --ink: #181D24;
+  --paper: #EFF2EE;
+  --signal: #FF5A1F;
+  --slate: #5B6B79;
+  --success: #1F8A5F;
+  --line: #D8DCD9;
+
+  --text-primary: var(--ink);
+  --text-secondary: var(--slate);
+  --text-muted: #9AA3A8;
+
+  --surface-1: #F7F8F7;
+  --surface-2: #FFFFFF;
+  --border: var(--line);
+  --border-strong: #B9C0BC;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--paper);
+  color: var(--text-primary);
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+#root {
+  min-height: 100vh;
+}
