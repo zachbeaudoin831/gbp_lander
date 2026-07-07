@@ -221,7 +221,7 @@
 
   {% if gallery|length > 1 %}
   <section>
-    <p class="eyebrow">Recent work</p>
+    <p class="eyebrow">Google Photos</p>
     <div class="filmstrip">
       {% for img in gallery %}<img src="{{ img }}" alt="{{ name }} — photo {{ loop.index }}" loading="lazy">{% endfor %}
     </div>

@@ -68,7 +68,7 @@ ${(d.about_summary||d.site_summary)?`<section><p class="eyebrow">About ${esc(fir
 
 ${(d.services||[]).length?`<section><p class="eyebrow">What we handle</p><div class="chips">${(d.services||[]).map(s=>`<span class="chip">${esc(s)}</span>`).join('')}</div></section>`:''}
 
-${(d.photos||[]).length>1?`<section><p class="eyebrow">Recent work</p><div class="filmstrip">${(d.photos||[]).map((p,i)=>`<img src="${esc(p)}" alt="${esc(d.name)} photo ${i+1}" loading="lazy" onerror="this.style.display='none'">`).join('')}</div></section>`:''}
+${(d.photos||[]).length>1?`<section><p class="eyebrow">Google Photos</p><div class="filmstrip">${(d.photos||[]).map((p,i)=>`<img src="${esc(p)}" alt="${esc(d.name)} photo ${i+1}" loading="lazy" onerror="this.style.display='none'">`).join('')}</div></section>`:''}
 
 ${((d.reviews||[]).length||d.rating)?`<section><p class="eyebrow">Reviews</p>${d.rating?`<p class="review-summary"><b>★ ${Number(d.rating).toFixed(1)}</b> <span class="muted">(${d.review_count||0} reviews on Google)</span></p>`:''}<div class="review-list">${(d.reviews||[]).map(r=>`<div class="review-card"><div class="review-card-head"><span class="review-author">${esc(r.author)}</span>${r.rating!=null?`<span class="review-stars">${starsStr(r.rating)}</span>`:''}</div><p class="review-text">"${esc(r.text)}"</p>${r.relative_time?`<p class="review-time">${esc(r.relative_time)}</p>`:''}</div>`).join('')}</div>${d.maps_url?`<a class="review-google-link" href="${esc(d.maps_url)}" target="_blank" rel="noopener">See all reviews on Google →</a>`:''}</section>`:'' }
 
