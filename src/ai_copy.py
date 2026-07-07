@@ -27,13 +27,19 @@ promises, or credibility markers already present in that text, and turn \
 them into a tight, above-the-fold offer -- no interview, no owner input,
 just what's genuinely there in their own copy.
 
+You'll also get the business's raw Google category, which is often too \
+generic (e.g. "Services", "Store") to use as a page label. Look at the \
+services list and site text and, if it clearly supports something more \
+specific, propose a tighter replacement category.
+
 Return ONLY raw JSON, no markdown, no prose, matching exactly this shape:
 {
   "offer_headline": "one punchy sentence, under 12 words, the core promise",
   "offer_subhead": "one supporting sentence, under 24 words, adds credibility or specificity",
   "offer_guarantee": "one short risk-reversal line ONLY if the site text actually states a guarantee/warranty/promise -- else null, never invented",
   "site_summary": "2-3 sentences in third person summarizing what the business actually does, drawn from their real site copy -- no fluff, no invented claims",
-  "about_summary": "2-3 sentences in third person summarizing who they are / their story, drawn from their real About page -- null if no About page content was provided"
+  "about_summary": "2-3 sentences in third person summarizing who they are / their story, drawn from their real About page -- null if no About page content was provided",
+  "category": "a short (1-4 word), specific business category label (e.g. 'Dog Trainer', 'HVAC Repair', 'Family Dentistry') clearly supported by the services/site text -- else null if the given category is already specific enough or the text doesn't clearly support a more specific one, never invented or guessed beyond what the text supports"
 }
 
 Rules:
@@ -47,7 +53,10 @@ in the text.
 above the fold -- no placeholders, no brackets.
 - offer_guarantee must only be filled in if the source text actually \
 contains something guarantee-like (money-back, warranty, satisfaction \
-promise, etc.) -- do not manufacture one."""
+promise, etc.) -- do not manufacture one.
+- category must be a real-world category name a person would recognize, \
+not a marketing phrase -- if unsure, return null and the original Google \
+category will be kept."""
 
 
 def _client() -> anthropic.Anthropic:

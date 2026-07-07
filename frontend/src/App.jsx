@@ -246,8 +246,13 @@ export default function App() {
         // scraped or the AI call fails, just build the page without it
         // rather than blocking the whole flow.
       }
+      // The AI only returns fields it's confident about (e.g. a refined
+      // category); drop any nulls so they don't blank out real profile data.
+      const cleanExtras = Object.fromEntries(
+        Object.entries(extras).filter(([, v]) => v !== null && v !== undefined)
+      );
       stop();
-      finishBuild({ ...profile, ...extras });
+      finishBuild({ ...profile, ...cleanExtras });
     } catch(err) {
       stop();
       setError(err.message);
