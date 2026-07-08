@@ -204,18 +204,9 @@
 
 <div class="wrap">
 
-  {% if services %}
-  <section>
-    <p class="eyebrow">What we handle</p>
-    <div class="chips">
-      {% for s in services %}<span class="chip">{{ s }}</span>{% endfor %}
-    </div>
-  </section>
-  {% endif %}
-
   {% if gallery|length > 1 %}
   <section>
-    <p class="eyebrow">Google Photos</p>
+    <p class="eyebrow">Photos</p>
     <div class="filmstrip">
       {% for img in gallery %}<img src="{{ img }}" alt="{{ name }} — photo {{ loop.index }}" loading="lazy">{% endfor %}
     </div>
@@ -243,6 +234,15 @@
     </div>
     {% endif %}
     {% if maps_url %}<a class="review-google-link" href="{{ maps_url }}" target="_blank" rel="noopener">See all reviews on Google →</a>{% endif %}
+  </section>
+  {% endif %}
+
+  {% if services %}
+  <section>
+    <p class="eyebrow">What we handle</p>
+    <div class="chips">
+      {% for s in services %}<span class="chip">{{ s }}</span>{% endfor %}
+    </div>
   </section>
   {% endif %}
 
