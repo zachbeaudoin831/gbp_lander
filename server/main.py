@@ -33,6 +33,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from src.ai_copy import generate_extras
+from src.brand_color import fetch_brand_color
 from src.lander_builder import build_profile
 from src.places_client import GooglePlacesClient, PlacesApiError
 from src.website_scraper import ScrapeBlocked, scrape_about_page, scrape_website
@@ -110,6 +111,13 @@ def profile(place_id: str):
         except Exception:
             site = None
 
+    brand_color = None
+    logo_url = site.logo_url if site else None
+    if logo_url:
+        brand_color = fetch_brand_color(logo_url)
+    if not brand_color and site and site.og_image:
+        brand_color = fetch_brand_color(site.og_image)
+
     photo_refs = [p["name"] for p in place.photos[:8]]
     photo_urls = [_photo_url(ref) for ref in photo_refs]
 
@@ -135,6 +143,7 @@ def profile(place_id: str):
         "service_areas": ctx["service_areas"],
         "reviews": ctx["reviews"],
         "photos": photo_urls,
+        "brand_color": brand_color,
     }
 
 

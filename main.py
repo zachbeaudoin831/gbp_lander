@@ -16,6 +16,7 @@ import sys
 
 from dotenv import load_dotenv
 
+from src.brand_color import contrast_ink, fetch_brand_color
 from src.lander_builder import build_profile, render_lander
 from src.places_client import GooglePlacesClient, PlacesApiError
 from src.website_scraper import ScrapeBlocked, scrape_website
@@ -83,7 +84,16 @@ def main():
         except Exception as e:
             print(f"  scrape failed, continuing without it: {e}")
 
+    brand_color = None
+    logo_url = site.logo_url if site else None
+    if logo_url:
+        brand_color = fetch_brand_color(logo_url)
+    if not brand_color and site and site.og_image:
+        brand_color = fetch_brand_color(site.og_image)
+
     context = build_profile(place, site, local_photos_rel)
+    context["brand_color"] = brand_color
+    context["signal_ink"] = contrast_ink(brand_color)
     out_path = os.path.join(place_dir, "lander.html")
     render_lander(context, out_path)
     print(f"\nLanding page written to: {out_path}")

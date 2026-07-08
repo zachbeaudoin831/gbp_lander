@@ -24,8 +24,8 @@
   :root{
     --ink:#181D24;
     --paper:#EFF2EE;
-    --signal:#FF5A1F;
-    --signal-ink:#FFFFFF;
+    --signal:{{ brand_color or '#FF5A1F' }};
+    --signal-ink:{{ signal_ink or '#FFFFFF' }};
     --slate:#5B6B79;
     --success:#1F8A5F;
     --line:#D8DCD9;
@@ -87,17 +87,12 @@
   }
   .ticket-row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
   .ticket-label{font-family:var(--mono);font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--slate);}
-  .ticket-phone{
-    display:block;margin-top:6px;
-    font-family:var(--mono);font-weight:600;font-size:clamp(22px,6vw,30px);
-    color:var(--ink);text-decoration:none;letter-spacing:-0.01em;
-  }
   .ticket-cta{
     display:inline-flex;align-items:center;gap:8px;
-    margin-top:14px;width:100%;justify-content:center;
+    margin-top:10px;width:100%;justify-content:center;
     background:var(--signal);color:var(--signal-ink);
-    font-family:var(--mono);font-weight:600;font-size:13px;letter-spacing:0.03em;text-transform:uppercase;
-    padding:13px 16px;border-radius:8px;text-decoration:none;
+    font-family:var(--mono);font-weight:700;font-size:clamp(20px,5.5vw,26px);letter-spacing:-0.01em;
+    padding:14px 16px;border-radius:8px;text-decoration:none;
   }
   .status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--success);margin-right:6px;}
   .status-dot.closed{background:#9AA3A8;}
@@ -179,13 +174,12 @@
   <div class="ticket-row">
     <span class="ticket-label">Tap to call</span>
   </div>
-  <a class="ticket-phone" href="{{ phone_href }}">{{ phone_display }}</a>
   {% if open_now is not none %}
   <p class="status-line">
     <span class="status-dot {{ '' if open_now else 'closed' }}"></span>{{ 'Open now' if open_now else 'Closed now' }}
   </p>
   {% endif %}
-  <a class="ticket-cta" href="{{ phone_href }}">Call {{ name.split(' ')[0] }} now →</a>
+  <a class="ticket-cta" href="{{ phone_href }}">{{ phone_display }}</a>
 </div>
 {% endmacro %}
 

@@ -13,6 +13,7 @@ the one check that costs nothing.
 from __future__ import annotations
 
 import dataclasses
+import re
 import urllib.robotparser
 from typing import Optional
 from urllib.parse import urljoin, urlparse
@@ -38,6 +39,7 @@ class WebsiteContent:
     title: Optional[str]
     meta_description: Optional[str]
     og_image: Optional[str]
+    logo_url: Optional[str]
     headings: list  # short phrases -- candidate "service" labels
     paragraphs: list  # cleaned body text blocks, longest first
     images: list  # absolute URLs to likely-content images
@@ -45,6 +47,31 @@ class WebsiteContent:
 
 class ScrapeBlocked(RuntimeError):
     pass
+
+
+# Matches an <img> that's plausibly the site's own logo, so callers can pull
+# a brand color from it. Loose by design -- most sites don't mark this up
+# semantically, so we're matching common conventions (class/id/alt/filename
+# containing "logo"), not a spec.
+_LOGO_HINT_RE = re.compile(r"logo", re.IGNORECASE)
+
+
+def _find_logo_url(soup: BeautifulSoup, base_url: str) -> Optional[str]:
+    for img in soup.find_all("img"):
+        haystack = " ".join(
+            str(img.get(attr, "")) for attr in ("class", "id", "alt", "src", "data-src")
+        )
+        if _LOGO_HINT_RE.search(haystack):
+            src = img.get("src") or img.get("data-src")
+            if src:
+                return urljoin(base_url, src)
+
+    for rel in ("apple-touch-icon", "icon", "shortcut icon"):
+        link = soup.find("link", attrs={"rel": rel})
+        if link and link.get("href"):
+            return urljoin(base_url, link["href"])
+
+    return None
 
 
 def _allowed_by_robots(url: str) -> bool:
@@ -90,6 +117,8 @@ def scrape_website(
     if og_tag and og_tag.get("content"):
         og_image = urljoin(url, og_tag["content"])
 
+    logo_url = _find_logo_url(soup, url)
+
     headings: list[str] = []
     for tag_name in ("h1", "h2", "h3"):
         for h in soup.find_all(tag_name):
@@ -126,6 +155,7 @@ def scrape_website(
         title=title,
         meta_description=meta_desc,
         og_image=og_image,
+        logo_url=logo_url,
         headings=headings[:20],
         paragraphs=paragraphs,
         images=images,

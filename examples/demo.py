@@ -105,6 +105,7 @@ def main():
         title="Hargrove Plumbing & Drain",
         meta_description="Licensed Austin plumbers for drain cleaning, water heaters, leak repair, and re-pipes.",
         og_image=None,
+        logo_url=None,
         headings=[
             "Drain Cleaning",
             "Water Heater Repair & Install",
