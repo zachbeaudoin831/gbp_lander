@@ -43,10 +43,13 @@ def _build_reviews(raw_reviews: list, max_reviews: int = 5, max_chars: int = 240
     """Reshapes raw Place Details `reviews[]` entries for the template.
 
     Schema reference (Places API New): each entry has rating, text.text,
-    authorAttribution.displayName, relativePublishTimeDescription. Google
-    caps Place Details at 5 reviews per request regardless of what you ask
-    for, so max_reviews here is a ceiling, not a real limiter.
+    authorAttribution.displayName, relativePublishTimeDescription,
+    publishTime (RFC3339, used here to sort newest-first -- Google's own
+    ordering is relevance, not recency). Google caps Place Details at 5
+    reviews per request regardless of what you ask for, so max_reviews here
+    is a ceiling, not a real limiter.
     """
+    raw_reviews = sorted(raw_reviews, key=lambda r: r.get("publishTime") or "", reverse=True)
     out = []
     for r in raw_reviews[:max_reviews]:
         text = ((r.get("text") or {}).get("text") or "").strip()
