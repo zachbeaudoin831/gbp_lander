@@ -81,7 +81,7 @@ ${((d.reviews||[]).length||d.rating)?`<section><p class="eyebrow">Reviews</p>${d
 
 ${(d.about_summary||d.site_summary)?`<section><p class="eyebrow">About ${esc(first)}</p><p class="about-text">${esc(d.about_summary||d.site_summary)}</p></section>`:''}
 
-${(d.services||[]).length?`<section><p class="eyebrow">What we handle</p><div class="chips">${(d.services||[]).map(s=>`<span class="chip">${esc(s)}</span>`).join('')}</div></section>`:''}
+${(d.services||[]).length?`<section><p class="eyebrow">Services</p><div class="chips">${(d.services||[]).map(s=>`<span class="chip">${esc(s)}</span>`).join('')}</div></section>`:''}
 
 ${hoursRows?`<section><p class="eyebrow">Hours</p><table class="hours-table">${hoursRows}</table></section>`:''}
 
@@ -258,9 +258,12 @@ export default function App() {
         // rather than blocking the whole flow.
       }
       // The AI only returns fields it's confident about (e.g. a refined
-      // category); drop any nulls so they don't blank out real profile data.
+      // category or services list); drop nulls and empty arrays so they
+      // don't blank out real profile data.
       const cleanExtras = Object.fromEntries(
-        Object.entries(extras).filter(([, v]) => v !== null && v !== undefined)
+        Object.entries(extras).filter(([, v]) =>
+          v !== null && v !== undefined && !(Array.isArray(v) && v.length === 0)
+        )
       );
       stop();
       finishBuild({ ...profile, ...cleanExtras });

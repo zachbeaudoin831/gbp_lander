@@ -32,6 +32,12 @@ generic (e.g. "Services", "Store") to use as a page label. Look at the \
 services list and site text and, if it clearly supports something more \
 specific, propose a tighter replacement category.
 
+You'll also get a heuristically-extracted "services" list, pulled straight \
+from the site's headings -- it can include junk that isn't actually a \
+service (nav labels, an FAQ heading, a service-area callout that slipped \
+through). If you can identify the real list of services/offerings from the \
+site text, return a cleaned-up version.
+
 Return ONLY raw JSON, no markdown, no prose, matching exactly this shape:
 {
   "offer_headline": "one punchy sentence, under 12 words, the core promise",
@@ -39,7 +45,8 @@ Return ONLY raw JSON, no markdown, no prose, matching exactly this shape:
   "offer_guarantee": "one short risk-reversal line ONLY if the site text actually states a guarantee/warranty/promise -- else null, never invented",
   "site_summary": "2-3 sentences in third person summarizing what the business actually does, drawn from their real site copy -- no fluff, no invented claims",
   "about_summary": "2-3 sentences in third person summarizing who they are / their story, drawn from their real About page -- null if no About page content was provided",
-  "category": "a short (1-4 word), specific business category label (e.g. 'Dog Trainer', 'HVAC Repair', 'Family Dentistry') clearly supported by the services/site text -- else null if the given category is already specific enough or the text doesn't clearly support a more specific one, never invented or guessed beyond what the text supports"
+  "category": "a short (1-4 word), specific business category label (e.g. 'Dog Trainer', 'HVAC Repair', 'Family Dentistry') clearly supported by the services/site text -- else null if the given category is already specific enough or the text doesn't clearly support a more specific one, never invented or guessed beyond what the text supports",
+  "services": "an array of 3-8 short (2-6 word) real service/offering names, cleaned up from the heuristic list and/or site text -- drop anything that isn't actually a service (FAQ, service areas, nav items, About/Contact) -- else null if the given list is already clean or the site text doesn't clearly support changes, never invented"
 }
 
 Rules:
@@ -56,7 +63,10 @@ contains something guarantee-like (money-back, warranty, satisfaction \
 promise, etc.) -- do not manufacture one.
 - category must be a real-world category name a person would recognize, \
 not a marketing phrase -- if unsure, return null and the original Google \
-category will be kept."""
+category will be kept.
+- services must only contain things the business actually offers per the \
+site text -- if unsure, return null and the heuristic list will be kept \
+as-is."""
 
 
 def _client() -> anthropic.Anthropic:

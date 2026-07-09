@@ -108,6 +108,19 @@ def _extract_service_areas(site: Optional[WebsiteContent], address: str, max_are
     return deduped[:max_areas]
 
 
+# Matches headings that show up on service-business homepages but aren't
+# themselves a service -- nav items, FAQ/legal boilerplate, service-area
+# callouts, etc. Loose by design, same spirit as _SERVICE_AREA_RE above.
+_NON_SERVICE_HEADING_RE = re.compile(
+    r"\b(faq|frequently asked|about( us)?|contact( us)?|testimonials?|"
+    r"reviews?|blog|gallery|areas?( we serv[a-z]*)?|service areas?|"
+    r"proudly serving|serving\b|surrounding|location|hours|our team|"
+    r"meet the team|careers|privacy|terms( of service)?|why choose|"
+    r"welcome to|home)\b",
+    re.IGNORECASE,
+)
+
+
 def build_profile(
     place: PlaceProfile,
     site: Optional[WebsiteContent],
@@ -124,15 +137,20 @@ def build_profile(
     tagline = place.editorial_summary or (site.meta_description if site else None)
 
     # Candidate "service" chips, pulled straight from the site's own
-    # headings. Simple on purpose -- see module docstring.
+    # headings. Simple on purpose -- see module docstring. Excludes
+    # headings that are obviously navigation/boilerplate rather than an
+    # actual service (FAQ, service-area callouts, About/Contact, etc.).
     services: list[str] = []
     if site:
         seen_lower = set()
         for h in site.headings:
             key = h.lower()
-            if key not in seen_lower and 3 <= len(h) <= 40:
-                services.append(h)
-                seen_lower.add(key)
+            if key in seen_lower or not (3 <= len(h) <= 40):
+                continue
+            if _NON_SERVICE_HEADING_RE.search(h):
+                continue
+            services.append(h)
+            seen_lower.add(key)
     services = services[:8]
 
     gallery = list(local_photo_paths)
