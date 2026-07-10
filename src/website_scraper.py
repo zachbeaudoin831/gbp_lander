@@ -163,11 +163,20 @@ def scrape_website(
 
 _ABOUT_HINTS = ("about", "our-story", "who-we-are", "meet-the-team", "our-team")
 
+# Local service businesses almost universally use one of these phrasings
+# for their "here's everywhere we work" page.
+_SERVICE_AREA_HINTS = (
+    "service-area", "service areas", "areas-we-serve", "areas we serve",
+    "where-we-serve", "where we serve", "locations-we-serve",
+    "locations we serve", "our-locations", "our locations", "coverage-area",
+)
 
-def find_about_url(home_url: str, timeout: int = 12) -> Optional[str]:
-    """Looks for an About-ish link on the homepage and returns its absolute
-    URL, or None if nothing obvious is found. Doesn't fetch the About page
-    itself -- call scrape_website() on the result if you want its content.
+
+def _find_page_url(home_url: str, hints: tuple[str, ...], timeout: int = 12) -> Optional[str]:
+    """Looks for a link on the homepage whose href or text matches one of
+    `hints`, and returns its absolute URL -- or None if nothing obvious is
+    found. Doesn't fetch the target page itself -- call scrape_website() on
+    the result if you want its content.
     """
     try:
         resp = requests.get(home_url, headers={"User-Agent": USER_AGENT}, timeout=timeout)
@@ -182,11 +191,28 @@ def find_about_url(home_url: str, timeout: int = 12) -> Optional[str]:
         href = a["href"].strip()
         text = a.get_text(strip=True).lower()
         haystack = f"{href.lower()} {text}"
-        if any(hint in haystack for hint in _ABOUT_HINTS):
+        if any(hint in haystack for hint in hints):
             candidate = urljoin(home_url, href)
             if urlparse(candidate).netloc == home_netloc:
                 return candidate
     return None
+
+
+def find_about_url(home_url: str, timeout: int = 12) -> Optional[str]:
+    """Looks for an About-ish link on the homepage and returns its absolute
+    URL, or None if nothing obvious is found. Doesn't fetch the About page
+    itself -- call scrape_website() on the result if you want its content.
+    """
+    return _find_page_url(home_url, _ABOUT_HINTS, timeout=timeout)
+
+
+def find_service_area_url(home_url: str, timeout: int = 12) -> Optional[str]:
+    """Looks for a "service areas" / "where we serve" link on the homepage.
+    Many local service businesses list their full coverage area on a
+    dedicated page rather than the homepage, which is why the homepage
+    alone often only turns up the one city mentioned in the footer.
+    """
+    return _find_page_url(home_url, _SERVICE_AREA_HINTS, timeout=timeout)
 
 
 def scrape_about_page(home_url: str, respect_robots: bool = True) -> Optional[WebsiteContent]:
@@ -199,5 +225,19 @@ def scrape_about_page(home_url: str, respect_robots: bool = True) -> Optional[We
         return None
     try:
         return scrape_website(about_url, respect_robots=respect_robots)
+    except Exception:
+        return None
+
+
+def scrape_service_area_page(home_url: str, respect_robots: bool = True) -> Optional[WebsiteContent]:
+    """Convenience wrapper: find the service-areas page (if any) and scrape
+    it. Returns None if there's no obvious link, the page is blocked by
+    robots.txt, or the fetch fails for any reason.
+    """
+    areas_url = find_service_area_url(home_url)
+    if not areas_url:
+        return None
+    try:
+        return scrape_website(areas_url, respect_robots=respect_robots)
     except Exception:
         return None

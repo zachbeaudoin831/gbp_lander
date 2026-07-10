@@ -250,6 +250,7 @@ export default function App() {
           category: profile.category,
           tagline: profile.tagline,
           services: profile.services || [],
+          service_areas: profile.service_areas || [],
         });
       } catch {
         // Offer generation is a nice-to-have -- if the site can't be

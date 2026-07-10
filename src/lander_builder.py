@@ -76,11 +76,42 @@ _SERVICE_AREA_RE = re.compile(
     re.IGNORECASE,
 )
 
+# Filters out a service-areas page's own page title/nav labels (e.g. "Areas
+# We Serve", "Our Coverage Area") from being mistaken for an actual city
+# name when scanning that page's headings.
+_NON_AREA_LABEL_RE = re.compile(
+    r"\b(area|areas|service|serve|serving|location|locations|coverage|region|regions|zip|contact|about|home|faq)\b",
+    re.IGNORECASE,
+)
 
-def _extract_service_areas(site: Optional[WebsiteContent], address: str, max_areas: int = 10) -> list[str]:
+
+def _extract_service_areas(
+    site: Optional[WebsiteContent],
+    address: str,
+    service_area_site: Optional[WebsiteContent] = None,
+    max_areas: int = 20,
+) -> list[str]:
     candidates: list[str] = []
-    if site:
-        for block in site.paragraphs + site.headings:
+
+    # A dedicated "service areas" page (if one was found) almost always
+    # lists cities as short headings or a bullet list rather than a single
+    # sentence -- treat every short block on that page as a candidate city
+    # rather than requiring the "serving X, Y, Z" phrasing below.
+    if service_area_site:
+        for block in service_area_site.headings + service_area_site.paragraphs:
+            block = block.strip(" .")
+            if (
+                2 <= len(block) <= 30
+                and block[:1].isupper()
+                and "," not in block
+                and not _NON_AREA_LABEL_RE.search(block)
+            ):
+                candidates.append(block)
+
+    for content in (site, service_area_site):
+        if not content:
+            continue
+        for block in content.paragraphs + content.headings:
             m = _SERVICE_AREA_RE.search(block)
             if not m:
                 continue
@@ -89,8 +120,6 @@ def _extract_service_areas(site: Optional[WebsiteContent], address: str, max_are
                 part = part.strip(" .")
                 if 2 <= len(part) <= 30 and part[:1].isupper():
                     candidates.append(part)
-            if candidates:
-                break
 
     if not candidates and address:
         # Fall back to the business's own city rather than showing nothing.
@@ -125,6 +154,7 @@ def build_profile(
     place: PlaceProfile,
     site: Optional[WebsiteContent],
     local_photo_paths: list[str],
+    service_area_site: Optional[WebsiteContent] = None,
 ) -> dict:
     """Build the flat context dict the template consumes.
 
@@ -133,6 +163,11 @@ def build_profile(
     GooglePlacesClient.download_photo). Don't pass Google's live photo URLs
     in here -- those carry your API key in the query string and shouldn't
     end up in a customer-facing page.
+
+    `service_area_site` is the scraped content of a dedicated "service
+    areas" page, if the caller found one (see
+    website_scraper.scrape_service_area_page) -- optional, since most
+    businesses don't have one and the homepage-only heuristic still runs.
     """
     tagline = place.editorial_summary or (site.meta_description if site else None)
 
@@ -173,7 +208,7 @@ def build_profile(
         "today": _today_name(),
         "tagline": tagline,
         "services": services,
-        "service_areas": _extract_service_areas(site, place.address),
+        "service_areas": _extract_service_areas(site, place.address, service_area_site),
         "gallery": gallery,
         "hero_image": gallery[0] if gallery else None,
         "source_website": site.url if site else None,

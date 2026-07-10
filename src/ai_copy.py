@@ -38,6 +38,14 @@ service (nav labels, an FAQ heading, a service-area callout that slipped \
 through). If you can identify the real list of services/offerings from the \
 site text, return a cleaned-up version.
 
+You'll also get a heuristically-extracted "service areas" list (cities/\
+regions the business says it serves) plus raw text from a dedicated \
+service-areas page if one was found. The heuristic often only catches one \
+city, even when the site lists many (e.g. a bullet list, or a sentence like \
+"serving Austin, Round Rock, Cedar Park, and Pflugerville"). If the site \
+text clearly names more service areas than the heuristic found, return the \
+fuller list.
+
 Return ONLY raw JSON, no markdown, no prose, matching exactly this shape:
 {
   "offer_headline": "one punchy sentence, under 12 words, the core promise",
@@ -46,7 +54,8 @@ Return ONLY raw JSON, no markdown, no prose, matching exactly this shape:
   "site_summary": "2-3 sentences in third person summarizing what the business actually does, drawn from their real site copy -- no fluff, no invented claims",
   "about_summary": "2-3 sentences in third person summarizing who they are / their story, drawn from their real About page -- null if no About page content was provided",
   "category": "a short (1-4 word), specific business category label (e.g. 'Dog Trainer', 'HVAC Repair', 'Family Dentistry') clearly supported by the services/site text -- else null if the given category is already specific enough or the text doesn't clearly support a more specific one, never invented or guessed beyond what the text supports",
-  "services": "an array of 3-8 short (2-6 word) real service/offering names, cleaned up from the heuristic list and/or site text -- drop anything that isn't actually a service (FAQ, service areas, nav items, About/Contact) -- else null if the given list is already clean or the site text doesn't clearly support changes, never invented"
+  "services": "an array of 3-8 short (2-6 word) real service/offering names, cleaned up from the heuristic list and/or site text -- drop anything that isn't actually a service (FAQ, service areas, nav items, About/Contact) -- else null if the given list is already clean or the site text doesn't clearly support changes, never invented",
+  "service_areas": "an array of real city/region names the site text says the business serves -- else null if the heuristic list already looks complete or the site text doesn't clearly name more areas, never invented or guessed beyond what the text supports"
 }
 
 Rules:
@@ -66,6 +75,9 @@ not a marketing phrase -- if unsure, return null and the original Google \
 category will be kept.
 - services must only contain things the business actually offers per the \
 site text -- if unsure, return null and the heuristic list will be kept \
+as-is.
+- service_areas must only contain place names the site text actually \
+states -- if unsure, return null and the heuristic list will be kept \
 as-is."""
 
 
@@ -84,18 +96,24 @@ def generate_extras(
     services: list[str],
     home_text: str,
     about_text: Optional[str],
+    service_areas: Optional[list[str]] = None,
+    service_area_text: Optional[str] = None,
 ) -> dict:
     user_content = f"""BUSINESS PROFILE
 Name: {name}
 Category: {category}
 Existing tagline: {tagline or "(none)"}
 Services: {", ".join(services) if services else "(none listed)"}
+Service areas (heuristically extracted): {", ".join(service_areas) if service_areas else "(none found)"}
 
 HOMEPAGE TEXT (raw, may include noise)
 {home_text[:3000] or "(no website text available)"}
 
 ABOUT PAGE TEXT (raw, may include noise)
-{about_text[:3000] if about_text else "(no About page found)"}"""
+{about_text[:3000] if about_text else "(no About page found)"}
+
+SERVICE AREAS PAGE TEXT (raw, may include noise)
+{service_area_text[:3000] if service_area_text else "(no dedicated service-areas page found)"}"""
 
     client = _client()
     resp = client.messages.create(

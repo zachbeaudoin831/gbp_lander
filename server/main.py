@@ -36,7 +36,12 @@ from src.ai_copy import generate_extras
 from src.brand_color import fetch_brand_color
 from src.lander_builder import build_profile
 from src.places_client import GooglePlacesClient, PlacesApiError
-from src.website_scraper import ScrapeBlocked, scrape_about_page, scrape_website
+from src.website_scraper import (
+    ScrapeBlocked,
+    scrape_about_page,
+    scrape_service_area_page,
+    scrape_website,
+)
 
 load_dotenv()
 
@@ -111,6 +116,8 @@ def profile(place_id: str):
         except Exception:
             site = None
 
+    service_area_site = scrape_service_area_page(place.website) if place.website else None
+
     brand_color = None
     logo_url = site.logo_url if site else None
     if logo_url:
@@ -124,7 +131,7 @@ def profile(place_id: str):
     # Reuse the existing merge/heuristic logic (tagline, service chips,
     # service-area extraction, review reshaping) -- it already does the
     # hard part. We just remap its output keys to what the frontend expects.
-    ctx = build_profile(place, site, photo_urls)
+    ctx = build_profile(place, site, photo_urls, service_area_site)
 
     return {
         "name": ctx["name"],
@@ -186,6 +193,7 @@ class OfferRequest(BaseModel):
     category: str = ""
     tagline: Optional[str] = None
     services: list[str] = []
+    service_areas: list[str] = []
 
 
 @app.post("/api/generate-offer")
@@ -199,6 +207,7 @@ def generate_offer(req: OfferRequest):
     """
     home_text = ""
     about_text = None
+    service_area_text = None
 
     if req.website:
         try:
@@ -211,6 +220,10 @@ def generate_offer(req: OfferRequest):
         if about:
             about_text = " ".join(about.paragraphs + about.headings)
 
+        areas_page = scrape_service_area_page(req.website)
+        if areas_page:
+            service_area_text = " ".join(areas_page.paragraphs + areas_page.headings)
+
     try:
         extras = generate_extras(
             name=req.name,
@@ -219,6 +232,8 @@ def generate_offer(req: OfferRequest):
             services=req.services,
             home_text=home_text,
             about_text=about_text,
+            service_areas=req.service_areas,
+            service_area_text=service_area_text,
         )
     except RuntimeError as e:
         raise HTTPException(status_code=500, detail=str(e))
