@@ -96,7 +96,7 @@
   }
   .status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--success);margin-right:6px;}
   .status-dot.closed{background:#9AA3A8;}
-  .status-line{font-family:var(--mono);font-size:12px;color:var(--slate);margin-top:10px;}
+  .status-line{font-family:var(--mono);font-size:12px;color:var(--slate);white-space:nowrap;}
 
   /* ---------- sections ---------- */
   section{padding:32px 0;border-bottom:1px solid var(--line);}
@@ -173,12 +173,12 @@
 <div class="ticket">
   <div class="ticket-row">
     <span class="ticket-label">Tap to call</span>
+    {% if open_now is not none %}
+    <span class="status-line">
+      <span class="status-dot {{ '' if open_now else 'closed' }}"></span>{{ 'Open now' if open_now else 'Closed now' }}
+    </span>
+    {% endif %}
   </div>
-  {% if open_now is not none %}
-  <p class="status-line">
-    <span class="status-dot {{ '' if open_now else 'closed' }}"></span>{{ 'Open now' if open_now else 'Closed now' }}
-  </p>
-  {% endif %}
   <a class="ticket-cta" href="{{ phone_href }}">{{ phone_display }}</a>
 </div>
 {% endmacro %}
