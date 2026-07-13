@@ -94,9 +94,31 @@
     font-family:var(--mono);font-weight:700;font-size:clamp(20px,5.5vw,26px);letter-spacing:-0.01em;
     padding:14px 16px;border-radius:8px;text-decoration:none;
   }
+  .ticket-row-ask{margin-top:16px;}
+  .ticket-cta.ticket-cta-secondary{
+    background:transparent;color:var(--ink);border:2px solid var(--signal);
+    font-size:15px;font-weight:600;letter-spacing:0.03em;text-transform:uppercase;margin-top:8px;
+  }
   .status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--success);margin-right:6px;}
   .status-dot.closed{background:#9AA3A8;}
   .status-line{font-family:var(--mono);font-size:12px;color:var(--slate);white-space:nowrap;}
+
+  /* ---------- ask-a-question modal ---------- */
+  .askm{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .askm[hidden]{display:none;}
+  .askm-backdrop{position:absolute;inset:0;background:rgba(24,29,36,0.6);}
+  .askm-card{position:relative;background:var(--card);color:var(--ink);border-radius:var(--radius);max-width:380px;width:100%;padding:28px 24px;box-shadow:0 20px 60px rgba(0,0,0,0.35);}
+  .askm-x{position:absolute;top:10px;right:14px;background:none;border:0;font-size:26px;line-height:1;color:var(--slate);cursor:pointer;}
+  .askm-title{font-family:var(--display);font-weight:700;font-size:20px;letter-spacing:-0.01em;margin:0 0 8px;}
+  .askm-sub{font-size:14px;color:var(--slate);margin:0 0 20px;}
+  .askm-btn{display:inline-flex;align-items:center;justify-content:center;width:100%;font-family:var(--mono);font-weight:600;font-size:15px;letter-spacing:0.03em;text-transform:uppercase;padding:14px 16px;border-radius:8px;border:0;cursor:pointer;}
+  .askm-btn-primary{background:var(--signal);color:var(--signal-ink);}
+  .askm-choices{display:flex;flex-direction:column;gap:10px;}
+  .askm-choice{background:transparent;color:var(--ink);border:2px solid var(--signal);}
+  .askm-form{display:flex;flex-direction:column;gap:12px;}
+  .askm-input{width:100%;font-family:var(--body);font-size:16px;padding:12px 14px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);}
+  .askm-input:focus{outline:2px solid var(--signal);outline-offset:1px;border-color:var(--signal);}
+  .askm-consent{font-size:11px;color:var(--slate);line-height:1.4;margin:0;}
 
   /* ---------- sections ---------- */
   section{padding:32px 0;border-bottom:1px solid var(--line);}
@@ -180,6 +202,10 @@
     {% endif %}
   </div>
   <a class="ticket-cta" href="{{ phone_href }}">{{ phone_display }}</a>
+  <div class="ticket-row ticket-row-ask">
+    <span class="ticket-label">Tap to ask question</span>
+  </div>
+  <button type="button" class="ticket-cta ticket-cta-secondary js-ask-open">Send question</button>
 </div>
 {% endmacro %}
 
@@ -299,6 +325,68 @@
 <div class="callbar">
   <a href="{{ phone_href }}">┄ Call {{ name }} now — {{ phone_display }}</a>
 </div>
+{% endif %}
+
+{% if phone_display %}
+<div class="askm" id="askm" hidden>
+  <div class="askm-backdrop" data-askm-close></div>
+  <div class="askm-card" role="dialog" aria-modal="true" aria-labelledby="askm-title">
+    <button class="askm-x" type="button" data-askm-close aria-label="Close">&times;</button>
+    <div class="askm-step" data-step="1">
+      <h3 class="askm-title" id="askm-title">Ask {{ name.split(' ')[0] }} a question</h3>
+      <p class="askm-sub">Tell us how to reach you and we'll get right back to you.</p>
+      <button class="askm-btn askm-btn-primary" type="button" data-askm-next>Continue</button>
+    </div>
+    <div class="askm-step" data-step="2" hidden>
+      <h3 class="askm-title">Call or text back?</h3>
+      <p class="askm-sub">During business hours.</p>
+      <div class="askm-choices">
+        <button class="askm-btn askm-choice" type="button" data-pref="call">Call back</button>
+        <button class="askm-btn askm-choice" type="button" data-pref="text">Text back</button>
+      </div>
+    </div>
+    <div class="askm-step" data-step="3" hidden>
+      <h3 class="askm-title">Where should we reach you?</h3>
+      <form class="askm-form" data-askm-form novalidate>
+        <input class="askm-input" name="name" placeholder="Your name" autocomplete="name" required>
+        <input class="askm-input" name="phone" type="tel" placeholder="Phone number" autocomplete="tel" required>
+        <p class="askm-consent">By submitting, you agree to be contacted by {{ name }} about your inquiry. Message/data rates may apply.</p>
+        <button class="askm-btn askm-btn-primary" type="submit">Send</button>
+      </form>
+    </div>
+    <div class="askm-step" data-step="4" hidden>
+      <h3 class="askm-title">Got it!</h3>
+      <p class="askm-sub">{{ name.split(' ')[0] }} will reach out to you shortly.</p>
+      <button class="askm-btn askm-btn-primary" type="button" data-askm-close>Done</button>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  var modal=document.getElementById('askm'); if(!modal) return;
+  var LEAD_ENDPOINT={{ 'https://gbp-lander.vercel.app/api/lead' | tojson }};
+  var lead={business:{{ name | tojson }},pref:null};
+  function show(n){var s=modal.querySelectorAll('.askm-step');for(var i=0;i<s.length;i++){s[i].hidden=s[i].getAttribute('data-step')!==String(n);}}
+  function openM(){modal.hidden=false;document.body.style.overflow='hidden';show(1);}
+  function closeM(){modal.hidden=true;document.body.style.overflow='';}
+  var t=document.querySelectorAll('.js-ask-open');for(var i=0;i<t.length;i++){t[i].addEventListener('click',function(e){e.preventDefault();openM();});}
+  var c=modal.querySelectorAll('[data-askm-close]');for(var j=0;j<c.length;j++){c[j].addEventListener('click',closeM);}
+  var nx=modal.querySelectorAll('[data-askm-next]');for(var k=0;k<nx.length;k++){nx[k].addEventListener('click',function(){show(2);});}
+  var pf=modal.querySelectorAll('[data-pref]');for(var m=0;m<pf.length;m++){pf[m].addEventListener('click',function(){lead.pref=this.getAttribute('data-pref');show(3);});}
+  var form=modal.querySelector('[data-askm-form]');
+  form.addEventListener('submit',function(e){e.preventDefault();
+    var nm=form.querySelector('input[name="name"]').value.trim();
+    var ph=form.querySelector('input[name="phone"]').value.trim();
+    if(!nm||!ph){return;}
+    lead.name=nm;lead.phone=ph;
+    var qs=new URLSearchParams(location.search);
+    var payload=Object.assign({},lead,{url:location.href,ts:new Date().toISOString(),fbclid:qs.get('fbclid'),gclid:qs.get('gclid')});
+    try{if(LEAD_ENDPOINT){fetch(LEAD_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).catch(function(){});}}catch(err){}
+    show(4);
+  });
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!modal.hidden){closeM();}});
+})();
+</script>
 {% endif %}
 
 </body>
