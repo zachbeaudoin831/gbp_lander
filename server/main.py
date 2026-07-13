@@ -30,11 +30,12 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from src.ai_copy import generate_extras
 from src.brand_color import fetch_brand_color
 from src.lander_builder import build_profile
+from src.lead_store import LeadStoreError, insert_lead
 from src.places_client import GooglePlacesClient, PlacesApiError
 from src.website_scraper import (
     ScrapeBlocked,
@@ -184,7 +185,52 @@ def health():
         "status": "ok",
         "api_key_configured": has_places_key,
         "anthropic_key_configured": has_anthropic_key,
+        "lead_store_configured": bool(os.environ.get("DATABASE_URL")),
     }
+
+
+class LeadRequest(BaseModel):
+    """A lead submitted from the lander's "ask a question" modal.
+
+    Lengths are capped to keep an unauthenticated public endpoint from being
+    used to shovel oversized payloads into the database.
+    """
+    name: str = Field(min_length=1, max_length=200)
+    phone: str = Field(min_length=1, max_length=50)
+    business: Optional[str] = Field(default=None, max_length=200)
+    pref: Optional[str] = None  # 'call' | 'text'
+    url: Optional[str] = Field(default=None, max_length=2000)
+    fbclid: Optional[str] = Field(default=None, max_length=500)
+    gclid: Optional[str] = Field(default=None, max_length=500)
+
+
+@app.post("/api/lead")
+def create_lead(req: LeadRequest):
+    """Store a lead captured by the lander's question modal.
+
+    Fire-and-forget from the browser's perspective (the modal shows its
+    confirmation regardless), but this persists the row so nothing is lost.
+    """
+    pref = req.pref if req.pref in ("call", "text") else None
+    try:
+        lead_id = insert_lead(
+            business=req.business,
+            name=req.name.strip(),
+            phone=req.phone.strip(),
+            contact_pref=pref,
+            source="form",
+            page_url=req.url,
+            fbclid=req.fbclid,
+            gclid=req.gclid,
+        )
+    except LeadStoreError:
+        # DATABASE_URL not configured -- the store isn't set up yet.
+        raise HTTPException(status_code=503, detail="Lead store not configured")
+    except Exception:
+        # Don't echo driver errors (they can leak connection details).
+        raise HTTPException(status_code=502, detail="Could not save lead")
+
+    return {"ok": True, "id": lead_id}
 
 
 class OfferRequest(BaseModel):
