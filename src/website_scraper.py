@@ -18,8 +18,9 @@ import urllib.robotparser
 from typing import Optional
 from urllib.parse import urljoin, urlparse
 
-import requests
 from bs4 import BeautifulSoup
+
+from .url_guard import assert_public_url, safe_get
 
 USER_AGENT = "GBPLanderBot/0.1 (+https://example.com/bot-info)"
 
@@ -95,10 +96,14 @@ def scrape_website(
     max_images: int = 12,
     respect_robots: bool = True,
 ) -> WebsiteContent:
+    # SSRF guard first -- validate before any network call (including the
+    # robots.txt fetch below, which hits the same host).
+    assert_public_url(url)
+
     if respect_robots and not _allowed_by_robots(url):
         raise ScrapeBlocked(f"robots.txt disallows fetching {url}")
 
-    resp = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=timeout)
+    resp = safe_get(url, timeout=timeout)
     resp.raise_for_status()
 
     soup = BeautifulSoup(resp.text, "lxml")
@@ -179,7 +184,7 @@ def _find_page_url(home_url: str, hints: tuple[str, ...], timeout: int = 12) -> 
     the result if you want its content.
     """
     try:
-        resp = requests.get(home_url, headers={"User-Agent": USER_AGENT}, timeout=timeout)
+        resp = safe_get(home_url, timeout=timeout)
         resp.raise_for_status()
     except Exception:
         return None

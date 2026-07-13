@@ -12,10 +12,9 @@ from __future__ import annotations
 import io
 from typing import Optional
 
-import requests
 from PIL import Image
 
-USER_AGENT = "GBPLanderBot/0.1 (+https://example.com/bot-info)"
+from .url_guard import safe_get
 
 MAX_IMAGE_BYTES = 5 * 1024 * 1024  # refuse to download absurdly large "logos"
 
@@ -83,12 +82,7 @@ def fetch_brand_color(image_url: str, timeout: int = 10) -> Optional[str]:
     the caller should fall back to a default color rather than block on this.
     """
     try:
-        resp = requests.get(
-            image_url,
-            headers={"User-Agent": USER_AGENT},
-            timeout=timeout,
-            stream=True,
-        )
+        resp = safe_get(image_url, timeout=timeout, stream=True)
         resp.raise_for_status()
         content_length = resp.headers.get("Content-Length")
         if content_length and int(content_length) > MAX_IMAGE_BYTES:
