@@ -228,9 +228,6 @@ body{margin:0;padding:0;font-family:'Inter',system-ui,sans-serif}
 .lb-btn-ghost.active{background:#FF5A1F;color:#fff;border-color:#FF5A1F}
 .lb-btn-dark{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.12);border-radius:7px;padding:7px 14px;font-size:12px;color:#C7CDD2;font-family:'IBM Plex Mono',monospace;letter-spacing:.02em;cursor:pointer;white-space:nowrap;transition:all .15s}
 .lb-btn-dark:hover{background:rgba(255,255,255,.18);color:#fff}
-.lb-btn-dark.active{background:#FF5A1F;color:#fff;border-color:#FF5A1F}
-.lb-btn-dl{background:#FF5A1F;color:#fff;border:none;border-radius:7px;padding:7px 16px;font-size:12px;font-weight:600;font-family:'IBM Plex Mono',monospace;letter-spacing:.02em;cursor:pointer;transition:opacity .15s}
-.lb-btn-dl:hover{opacity:.88}
 .lb-pill{cursor:pointer;background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:6px 14px;font-size:13px;color:var(--text-secondary);transition:all .15s;font-family:inherit}
 .lb-pill:hover{border-color:#FF5A1F;color:#FF5A1F;background:#FFF8F5}
 .lb-card{background:var(--surface-2);border:0.5px solid var(--border);border-radius:12px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:16px;cursor:pointer;transition:box-shadow .15s,border-color .15s}
@@ -240,7 +237,6 @@ body{margin:0;padding:0;font-family:'Inter',system-ui,sans-serif}
 .lb-error{background:#FFF2EE;border:1.5px solid #FF5A1F;border-radius:8px;padding:14px 16px;color:#C0391A;font-size:14px;font-weight:500}
 @keyframes lb-bounce{0%,80%,100%{transform:scale(0)}40%{transform:scale(1)}}
 .lb-dot{width:10px;height:10px;border-radius:50%;background:#FF5A1F;animation:lb-bounce 1.2s ease-in-out infinite both}
-.phone-shell{border-radius:40px;overflow:hidden;border:8px solid #2A333D;box-shadow:0 0 0 2px #404A57,0 28px 60px rgba(0,0,0,.55)}
 `;
 
 /* ─── main app ──────────────────────────────────────────────────────── */
@@ -252,8 +248,6 @@ export default function App() {
   const [html,       setHtml]       = useState('');
   const [business,   setBusiness]   = useState(null);
   const [error,      setError]      = useState('');
-  const [viewMode,   setViewMode]   = useState('mobile');
-  const [copied,     setCopied]     = useState(false);
   const iframeRef = useRef(null);
   const blobRef   = useRef(null);
   const timerRef  = useRef(null);
@@ -276,7 +270,7 @@ export default function App() {
     blobRef.current = URL.createObjectURL(blob);
     iframeRef.current.src = blobRef.current;
     return () => { if (blobRef.current) URL.revokeObjectURL(blobRef.current); };
-  }, [step, html, viewMode]);
+  }, [step, html]);
 
   function cycleMsgs(msgs, interval=2800) {
     if (timerRef.current) clearInterval(timerRef.current);
@@ -348,20 +342,6 @@ export default function App() {
     setBusiness(profile);
     setHtml(buildLanderHTML(profile));
     setStep('preview');
-  }
-
-  function handleDownload() {
-    if (!blobRef.current) return;
-    const a = document.createElement('a');
-    a.href = blobRef.current;
-    a.download = ((business?.name||'lander').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,''))+'.html';
-    a.click();
-  }
-
-  async function handleCopy() {
-    if (!html) return;
-    try { await navigator.clipboard.writeText(html); setCopied(true); setTimeout(()=>setCopied(false), 2000); }
-    catch { /* fallback: nothing */ }
   }
 
   function reset() {
@@ -474,52 +454,25 @@ export default function App() {
 
   /* ── preview ───────────────────────────────────────────────────────── */
   if (step === 'preview') {
-    const isMobile = viewMode === 'mobile';
     return (
-      <div>
-        <div style={{background:'#181D24',padding:'10px 16px',display:'flex',alignItems:'center',gap:8,flexWrap:'wrap',borderBottom:'1px solid rgba(255,255,255,.08)'}}>
-          <div style={{display:'flex',alignItems:'center',gap:8,marginRight:'auto',minWidth:0,overflow:'hidden'}}>
-            <span style={{width:24,height:24,background:'#FF5A1F',borderRadius:5,display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,color:'#fff',flexShrink:0}}>▲</span>
-            <span style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:13,color:'#fff',letterSpacing:'-.01em',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{business?.name}</span>
-          </div>
-          <button className="lb-btn-dark" onClick={reset}><i className="ti ti-arrow-left" aria-hidden="true" /> New search</button>
-          <div style={{display:'flex',gap:4}}>
-            <button className={`lb-btn-dark${viewMode==='mobile'?' active':''}`} onClick={()=>setViewMode('mobile')}>
-              <i className="ti ti-device-mobile" aria-hidden="true" /> Mobile
-            </button>
-            <button className={`lb-btn-dark${viewMode==='desktop'?' active':''}`} onClick={()=>setViewMode('desktop')}>
-              <i className="ti ti-device-desktop" aria-hidden="true" /> Desktop
-            </button>
-          </div>
-          <button className="lb-btn-dark" onClick={handleCopy} style={copied?{background:'rgba(31,138,95,.3)',color:'#6FD9A6',borderColor:'rgba(31,138,95,.4)'}:{}}>
-            <i className={`ti ti-${copied?'check':'copy'}`} aria-hidden="true" /> {copied ? 'Copied!' : 'Copy HTML'}
-          </button>
-          <button className="lb-btn-dl" onClick={handleDownload}>
-            <i className="ti ti-download" aria-hidden="true" /> Download HTML
+      <div style={{display:'flex',flexDirection:'column',height:'100dvh',background:'#0E1318'}}>
+        <div style={{flex:'0 0 10%',minHeight:52,background:'#181D24',padding:'0 16px',display:'flex',alignItems:'center',gap:8,borderBottom:'1px solid rgba(255,255,255,.08)'}}>
+          <span style={{width:24,height:24,background:'#FF5A1F',borderRadius:5,display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,color:'#fff',flexShrink:0}}>▲</span>
+          <span style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:13,color:'#fff',letterSpacing:'-.01em',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginRight:'auto'}}>{business?.name}</span>
+          <button className="lb-btn-dark">
+            <i className="ti ti-device-mobile" aria-hidden="true" /> Mobile
           </button>
         </div>
 
-        {isMobile ? (
-          <div style={{background:'#0E1318',padding:'28px 0',display:'flex',justifyContent:'center',minHeight:820}}>
-            <div className="phone-shell" style={{width:390,height:760,position:'relative',flexShrink:0}}>
-              <iframe ref={iframeRef} style={{width:'100%',height:'100%',border:'none',display:'block'}} title="Lander preview — mobile" />
-            </div>
-          </div>
-        ) : (
-          <div style={{background:'#0E1318',padding:0}}>
-            <iframe
-              ref={iframeRef}
-              style={{width:'100%',height:760,border:'none',display:'block'}}
-              title="Lander preview — desktop"
-              onLoad={e=>{
-                try {
-                  const h = e.target.contentDocument?.documentElement?.scrollHeight;
-                  if (h && h > 200) e.target.style.height = Math.min(h+40, 2400)+'px';
-                } catch {}
-              }}
-            />
-          </div>
-        )}
+        <div style={{flex:'1 1 80%',minHeight:0,padding:'0 10px',display:'flex',justifyContent:'center'}}>
+          <iframe ref={iframeRef} style={{width:'100%',maxWidth:480,height:'100%',border:'none',display:'block',background:'#fff'}} title="Lander preview — mobile" />
+        </div>
+
+        <div style={{flex:'0 0 10%',minHeight:64,background:'#181D24',borderTop:'1px solid rgba(255,255,255,.08)',display:'flex',alignItems:'center',justifyContent:'center',padding:'0 16px'}}>
+          <button className="lb-btn-signal" style={{width:'100%',maxWidth:480,display:'flex',alignItems:'center',justifyContent:'center',gap:8}}>
+            Step 2: Create Ads <i className="ti ti-arrow-right" aria-hidden="true" />
+          </button>
+        </div>
       </div>
     );
   }
