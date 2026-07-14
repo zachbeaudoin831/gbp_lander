@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { supabase } from "./supabaseClient";
 
 /* ─── html helpers ─────────────────────────────────────────────────── */
 const esc = s => s == null ? '' : String(s)
@@ -248,6 +249,13 @@ export default function App() {
   const [html,       setHtml]       = useState('');
   const [business,   setBusiness]   = useState(null);
   const [error,      setError]      = useState('');
+  const [accountModal, setAccountModal] = useState('closed'); // 'closed' | 'form' | 'otp'
+  const [accountForm,  setAccountForm]  = useState({ name:'', email:'', phone:'' });
+  const [otpCode,       setOtpCode]      = useState('');
+  const [accountError,  setAccountError] = useState('');
+  const [accountBusy,   setAccountBusy]  = useState(false);
+  const [landers,       setLanders]      = useState([]);
+  const [dashboardTab,  setDashboardTab] = useState('landers');
   const iframeRef = useRef(null);
   const blobRef   = useRef(null);
   const timerRef  = useRef(null);
@@ -346,7 +354,91 @@ export default function App() {
 
   function reset() {
     setStep('search'); setQuery(''); setCandidates([]); setHtml(''); setBusiness(null); setError('');
-    setOfferAnswers({ dream_outcome:'', likelihood:'', time_delay:'', effort:'' });
+  }
+
+  /* ── account creation (Step 2) ────────────────────────────────────── */
+  function openAccountModal() {
+    setAccountError(supabase ? '' : 'Account creation isn’t configured yet — check back soon.');
+    setAccountForm({ name:'', email:'', phone:'' });
+    setOtpCode('');
+    setAccountModal('form');
+  }
+
+  function closeAccountModal() {
+    setAccountModal('closed');
+    setAccountError('');
+    setOtpCode('');
+  }
+
+  async function submitAccountForm(e) {
+    e.preventDefault();
+    if (!supabase) return;
+    const { name, email, phone } = accountForm;
+    if (!name.trim() || !email.trim() || !phone.trim()) {
+      setAccountError('Fill in all three fields.');
+      return;
+    }
+    setAccountBusy(true);
+    setAccountError('');
+    try {
+      const { error: otpError } = await supabase.auth.signInWithOtp({
+        email: email.trim(),
+        options: { data: { name: name.trim(), phone: phone.trim() } },
+      });
+      if (otpError) throw otpError;
+      setAccountModal('otp');
+    } catch (err) {
+      setAccountError(err.message || 'Could not send the code. Try again.');
+    } finally {
+      setAccountBusy(false);
+    }
+  }
+
+  async function submitOtp(e) {
+    e.preventDefault();
+    if (!supabase) return;
+    if (!otpCode.trim()) { setAccountError('Enter the code from your email.'); return; }
+    setAccountBusy(true);
+    setAccountError('');
+    try {
+      const { data, error: verifyError } = await supabase.auth.verifyOtp({
+        email: accountForm.email.trim(),
+        token: otpCode.trim(),
+        type: 'email',
+      });
+      if (verifyError) throw verifyError;
+      const user = data.user;
+
+      const { error: profileError } = await supabase.from('profiles').upsert({
+        id: user.id,
+        name: accountForm.name.trim(),
+        phone: accountForm.phone.trim(),
+        email: accountForm.email.trim(),
+      });
+      if (profileError) throw profileError;
+
+      const { error: landerError } = await supabase.from('landers').insert({
+        user_id: user.id,
+        name: business?.name || 'Untitled lander',
+        profile: business,
+      });
+      if (landerError) throw landerError;
+
+      const { data: allLanders, error: listError } = await supabase
+        .from('landers')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (listError) throw listError;
+
+      setLanders(allLanders || []);
+      setAccountModal('closed');
+      setDashboardTab('landers');
+      setStep('dashboard');
+    } catch (err) {
+      setAccountError(err.message || 'Invalid code. Try again.');
+    } finally {
+      setAccountBusy(false);
+    }
   }
 
   /* ── search ────────────────────────────────────────────────────────── */
@@ -458,13 +550,95 @@ export default function App() {
       <div style={{display:'flex',flexDirection:'column',height:'100dvh',background:'#0E1318'}}>
         <div style={{flex:'0 0 10%',minHeight:52,background:'#181D24',padding:'0 16px',display:'flex',alignItems:'center',gap:8,borderBottom:'1px solid rgba(255,255,255,.08)'}}>
           <span style={{width:24,height:24,background:'#FF5A1F',borderRadius:5,display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,color:'#fff',flexShrink:0}}>▲</span>
-          <button className="lb-btn-signal" style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:8}}>
-            Step 2: Create Ads <i className="ti ti-arrow-right" aria-hidden="true" />
+          <button className="lb-btn-signal" style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:8}} onClick={openAccountModal}>
+            Step 2: Create Account <i className="ti ti-arrow-right" aria-hidden="true" />
           </button>
         </div>
 
         <div style={{flex:'1 1 90%',minHeight:0,padding:'0 10px',display:'flex',justifyContent:'center'}}>
           <iframe ref={iframeRef} style={{width:'100%',maxWidth:480,height:'100%',border:'none',display:'block',background:'#fff'}} title="Lander preview — mobile" />
+        </div>
+
+        {accountModal !== 'closed' && (
+          <div style={{position:'fixed',inset:0,zIndex:200,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
+            <div style={{position:'absolute',inset:0,background:'rgba(14,19,24,.7)'}} onClick={closeAccountModal} />
+            <div style={{position:'relative',background:'#fff',borderRadius:14,maxWidth:380,width:'100%',padding:'28px 24px',boxShadow:'0 20px 60px rgba(0,0,0,.4)'}}>
+              <button onClick={closeAccountModal} aria-label="Close" style={{position:'absolute',top:10,right:14,background:'none',border:0,fontSize:26,lineHeight:1,color:'var(--text-secondary)',cursor:'pointer'}}>&times;</button>
+
+              {accountModal === 'form' && (
+                <>
+                  <h3 style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:20,letterSpacing:'-.01em',margin:'0 0 8px',color:'var(--text-primary)'}}>Create an account</h3>
+                  <p style={{fontSize:14,color:'var(--text-secondary)',margin:'0 0 20px',lineHeight:1.5}}>Create an account to save your landing page and create matching ads (next step).</p>
+                  <form onSubmit={submitAccountForm} style={{display:'flex',flexDirection:'column',gap:12}}>
+                    <input className="lb-input" placeholder="Your name" autoComplete="name" value={accountForm.name} onChange={e=>setAccountForm({...accountForm, name:e.target.value})} />
+                    <input className="lb-input" type="email" placeholder="Email" autoComplete="email" value={accountForm.email} onChange={e=>setAccountForm({...accountForm, email:e.target.value})} />
+                    <input className="lb-input" type="tel" placeholder="Phone number" autoComplete="tel" value={accountForm.phone} onChange={e=>setAccountForm({...accountForm, phone:e.target.value})} />
+                    {accountError && <div className="lb-error">{accountError}</div>}
+                    <button className="lb-btn-signal" type="submit" disabled={accountBusy || !supabase} style={{width:'100%',justifyContent:'center'}}>
+                      {accountBusy ? 'Sending code…' : 'Create Account'}
+                    </button>
+                  </form>
+                </>
+              )}
+
+              {accountModal === 'otp' && (
+                <>
+                  <h3 style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:20,letterSpacing:'-.01em',margin:'0 0 8px',color:'var(--text-primary)'}}>Check your email</h3>
+                  <p style={{fontSize:14,color:'var(--text-secondary)',margin:'0 0 20px',lineHeight:1.5}}>We sent a 6-digit code to {accountForm.email}.</p>
+                  <form onSubmit={submitOtp} style={{display:'flex',flexDirection:'column',gap:12}}>
+                    <input className="lb-input" placeholder="6-digit code" inputMode="numeric" autoComplete="one-time-code" value={otpCode} onChange={e=>setOtpCode(e.target.value)} />
+                    {accountError && <div className="lb-error">{accountError}</div>}
+                    <button className="lb-btn-signal" type="submit" disabled={accountBusy} style={{width:'100%',justifyContent:'center'}}>
+                      {accountBusy ? 'Verifying…' : 'Verify & Continue'}
+                    </button>
+                  </form>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  /* ── dashboard (post-signup: Landers + Ads) ───────────────────────── */
+  if (step === 'dashboard') {
+    return (
+      <div>
+        <div style={{background:'#181D24',padding:'12px 20px',display:'flex',alignItems:'center',gap:10}}>
+          <span style={{width:26,height:26,background:'#FF5A1F',borderRadius:6,display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,color:'#fff',flexShrink:0}}>▲</span>
+          <span style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:14,color:'#fff',letterSpacing:'-.01em'}}>LanderBuilder</span>
+        </div>
+
+        <div style={{padding:'24px 20px 48px',maxWidth:720,margin:'0 auto'}}>
+          <div style={{display:'flex',gap:20,marginBottom:24,borderBottom:'1px solid var(--border)'}}>
+            {['landers','ads'].map(tab => (
+              <button key={tab} onClick={()=>setDashboardTab(tab)} style={{
+                background:'none',border:'none',cursor:'pointer',fontFamily:'inherit',
+                padding:'10px 2px',fontSize:14,fontWeight:600,textTransform:'capitalize',
+                color: dashboardTab===tab ? 'var(--text-primary)' : 'var(--text-secondary)',
+                borderBottom: dashboardTab===tab ? '2px solid #FF5A1F' : '2px solid transparent',
+              }}>{tab}</button>
+            ))}
+          </div>
+
+          {dashboardTab === 'landers' && (
+            <div style={{display:'flex',flexDirection:'column',gap:10}}>
+              {landers.length === 0 && <p style={{color:'var(--text-secondary)',fontSize:14}}>No landers saved yet.</p>}
+              {landers.map(l => (
+                <div key={l.id} className="lb-card" style={{cursor:'default'}}>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:15,color:'var(--text-primary)'}}>{l.name}</div>
+                    <div style={{fontSize:12,color:'var(--text-secondary)',marginTop:2}}>Saved {new Date(l.created_at).toLocaleDateString()}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {dashboardTab === 'ads' && (
+            <p style={{color:'var(--text-secondary)',fontSize:14}}>Pick a lander to create a matching ad — coming soon.</p>
+          )}
         </div>
       </div>
     );
