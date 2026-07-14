@@ -237,9 +237,6 @@ body{margin:0;padding:0;font-family:'Inter',system-ui,sans-serif}
 .lb-error{background:#FFF2EE;border:1.5px solid #FF5A1F;border-radius:8px;padding:14px 16px;color:#C0391A;font-size:14px;font-weight:500}
 @keyframes lb-bounce{0%,80%,100%{transform:scale(0)}40%{transform:scale(1)}}
 .lb-dot{width:10px;height:10px;border-radius:50%;background:#FF5A1F;animation:lb-bounce 1.2s ease-in-out infinite both}
-.lb-phone-frame{position:relative;height:100%;max-width:100%;aspect-ratio:390/844;margin:auto;background:#111417;border-radius:46px;padding:14px;box-shadow:0 0 0 2px rgba(255,255,255,.08),0 30px 70px rgba(0,0,0,.6)}
-.lb-phone-notch{position:absolute;top:14px;left:50%;transform:translateX(-50%);width:112px;height:26px;background:#111417;border-radius:14px;z-index:2}
-.lb-phone-screen{position:relative;width:100%;height:100%;border-radius:32px;overflow:hidden;background:#fff}
 `;
 
 /* ─── main app ──────────────────────────────────────────────────────── */
@@ -461,25 +458,13 @@ export default function App() {
       <div style={{display:'flex',flexDirection:'column',height:'100dvh',background:'#0E1318'}}>
         <div style={{flex:'0 0 10%',minHeight:52,background:'#181D24',padding:'0 16px',display:'flex',alignItems:'center',gap:8,borderBottom:'1px solid rgba(255,255,255,.08)'}}>
           <span style={{width:24,height:24,background:'#FF5A1F',borderRadius:5,display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,color:'#fff',flexShrink:0}}>▲</span>
-          <span style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:13,color:'#fff',letterSpacing:'-.01em',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginRight:'auto'}}>{business?.name}</span>
-          <button className="lb-btn-dark">
-            <i className="ti ti-device-mobile" aria-hidden="true" /> Mobile
-          </button>
-        </div>
-
-        <div style={{flex:'1 1 80%',minHeight:0,padding:'24px 10px',display:'flex',justifyContent:'center'}}>
-          <div className="lb-phone-frame">
-            <div className="lb-phone-notch" />
-            <div className="lb-phone-screen">
-              <iframe ref={iframeRef} style={{width:'100%',height:'100%',border:'none',display:'block',background:'#fff'}} title="Lander preview — mobile" />
-            </div>
-          </div>
-        </div>
-
-        <div style={{flex:'0 0 10%',minHeight:64,background:'#181D24',borderTop:'1px solid rgba(255,255,255,.08)',display:'flex',alignItems:'center',justifyContent:'center',padding:'0 16px'}}>
-          <button className="lb-btn-signal" style={{width:'100%',maxWidth:480,display:'flex',alignItems:'center',justifyContent:'center',gap:8}}>
+          <button className="lb-btn-signal" style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:8}}>
             Step 2: Create Ads <i className="ti ti-arrow-right" aria-hidden="true" />
           </button>
+        </div>
+
+        <div style={{flex:'1 1 90%',minHeight:0,padding:'0 10px',display:'flex',justifyContent:'center'}}>
+          <iframe ref={iframeRef} style={{width:'100%',maxWidth:480,height:'100%',border:'none',display:'block',background:'#fff'}} title="Lander preview — mobile" />
         </div>
       </div>
     );

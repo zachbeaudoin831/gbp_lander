@@ -162,7 +162,6 @@
 
   /* ---------- closing CTA band (the second "tap to call", mirrors the hero) ---------- */
   .cta-band{background:var(--ink);color:#fff;padding:40px 0 44px;text-align:center;}
-  .cta-band .eyebrow{color:#9AA3A8;}
   .cta-band-heading{
     font-family:var(--display);font-weight:700;font-size:clamp(22px,5.5vw,30px);
     letter-spacing:-0.01em;margin:0 0 20px;
@@ -301,8 +300,7 @@
 {% if phone_href %}
 <section class="cta-band">
   <div class="wrap">
-    <p class="eyebrow">Ready when you are</p>
-    <h2 class="cta-band-heading">{{ name.split(' ')[0] }}’s ready to help</h2>
+    <h2 class="cta-band-heading">{{ name }} is ready to help</h2>
     {{ call_ticket(name, phone_display, phone_href, open_now) }}
   </div>
 </section>
