@@ -9,6 +9,18 @@ const esc = s => s == null ? '' : String(s)
 const starsStr = n => { const f=Math.max(0,Math.min(5,Math.round(n||0))); return '★'.repeat(f)+'☆'.repeat(5-f); };
 const todayName = () => ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date().getDay()];
 
+// supabase-js throws AuthRetryableFetchError for 5xx responses without
+// parsing the server's real message -- its .message ends up as the literal
+// string "{}", which is useless to show a user. Fall back to a generic
+// message for those (and any other non-useful message) instead.
+const friendlyAuthError = (err, fallback) => {
+  const msg = err?.message;
+  if (!msg || msg === '{}' || err?.status >= 500) {
+    return 'Something went wrong on our end sending that. Please try again in a moment.';
+  }
+  return msg || fallback;
+};
+
 // Picks readable text (near-black or white) against a given background hex --
 // needed because the button's background color is now the client's own
 // brand color, which isn't always dark enough for white text.
@@ -388,7 +400,7 @@ export default function App() {
       if (otpError) throw otpError;
       setAccountModal('otp');
     } catch (err) {
-      setAccountError(err.message || 'Could not send the code. Try again.');
+      setAccountError(friendlyAuthError(err, 'Could not send the code. Try again.'));
     } finally {
       setAccountBusy(false);
     }
@@ -435,7 +447,7 @@ export default function App() {
       setDashboardTab('landers');
       setStep('dashboard');
     } catch (err) {
-      setAccountError(err.message || 'Invalid code. Try again.');
+      setAccountError(friendlyAuthError(err, 'Invalid code. Try again.'));
     } finally {
       setAccountBusy(false);
     }
