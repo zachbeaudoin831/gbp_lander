@@ -596,9 +596,9 @@ export default function App() {
               {accountModal === 'otp' && (
                 <>
                   <h3 style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:20,letterSpacing:'-.01em',margin:'0 0 8px',color:'var(--text-primary)'}}>Check your email</h3>
-                  <p style={{fontSize:14,color:'var(--text-secondary)',margin:'0 0 20px',lineHeight:1.5}}>We sent a 6-digit code to {accountForm.email}.</p>
+                  <p style={{fontSize:14,color:'var(--text-secondary)',margin:'0 0 20px',lineHeight:1.5}}>We sent a verification code to {accountForm.email}.</p>
                   <form onSubmit={submitOtp} style={{display:'flex',flexDirection:'column',gap:12}}>
-                    <input className="lb-input" placeholder="6-digit code" inputMode="numeric" autoComplete="one-time-code" value={otpCode} onChange={e=>setOtpCode(e.target.value)} />
+                    <input className="lb-input" placeholder="Verification code" inputMode="numeric" autoComplete="one-time-code" value={otpCode} onChange={e=>setOtpCode(e.target.value)} />
                     {accountError && <div className="lb-error">{accountError}</div>}
                     <button className="lb-btn-signal" type="submit" disabled={accountBusy} style={{width:'100%',justifyContent:'center'}}>
                       {accountBusy ? 'Verifying…' : 'Verify & Continue'}
