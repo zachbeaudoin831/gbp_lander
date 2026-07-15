@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "./supabaseClient";
+import Home from "./Home";
 
 /* ─── html helpers ─────────────────────────────────────────────────── */
 const esc = s => s == null ? '' : String(s)
@@ -453,52 +454,9 @@ export default function App() {
     }
   }
 
-  /* ── search ────────────────────────────────────────────────────────── */
+  /* ── search (homepage) ────────────────────────────────────────────── */
   if (step === 'search') return (
-    <div>
-      <div style={{background:'#181D24',padding:'12px 20px',display:'flex',alignItems:'center',gap:10}}>
-        <span style={{width:26,height:26,background:'#FF5A1F',borderRadius:6,display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,color:'#fff',flexShrink:0}}>▲</span>
-        <span style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:14,color:'#fff',letterSpacing:'-.01em'}}>LanderBuilder</span>
-      </div>
-
-      <div style={{padding:'52px 24px 48px',display:'flex',flexDirection:'column',alignItems:'center'}}>
-        <div style={{maxWidth:540,width:'100%',textAlign:'center'}}>
-          <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,letterSpacing:'.1em',textTransform:'uppercase',color:'#FF5A1F',margin:'0 0 16px'}}>Google Business Profile → landing page</p>
-          <h1 style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:'clamp(26px,5vw,38px)',letterSpacing:'-.02em',color:'var(--text-primary)',margin:'0 0 14px',lineHeight:1.1}}>Turn your listing into a call-conversion page</h1>
-          <p style={{color:'var(--text-secondary)',fontSize:15,margin:'0 0 36px',lineHeight:1.65}}>Search your Google Business Profile and we'll build a ready-to-deploy landing page using your real photos, hours, reviews, and services.</p>
-
-          <div style={{display:'flex',gap:8,marginBottom:8}}>
-            <input className="lb-input" value={query} onChange={e=>setQuery(e.target.value)}
-              onKeyDown={e=>{ if (e.key === 'Enter') handleSearch(e); }}
-              placeholder="Business name and city — e.g. Joe's Plumbing, Austin TX" />
-            <button className="lb-btn-signal" type="button" onClick={handleSearch}>Find →</button>
-          </div>
-          <p style={{fontSize:12,color:'var(--text-muted)',margin:'0 0 14px',textAlign:'left'}}>One box — type the business name and city/state together, then hit Find.</p>
-
-          <div style={{display:'flex',flexWrap:'wrap',gap:8,justifyContent:'center',marginBottom:24}}>
-            {["Mike's Roofing, Nashville TN","Sunrise Dental, Phoenix AZ","Pacific HVAC, Seattle WA"].map(ex=>(
-              <button key={ex} className="lb-pill" onClick={()=>setQuery(ex)}>{ex}</button>
-            ))}
-          </div>
-
-          {error && <div className="lb-error">{error}</div>}
-
-          <div style={{marginTop:40,borderTop:'0.5px solid var(--border)',paddingTop:32,display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12}}>
-            {[
-              ['<i class="ti ti-search" aria-hidden="true"></i>','Find your listing','We look up your real GBP data — name, phone, hours, photos, and reviews.'],
-              ['<i class="ti ti-layout-dashboard" aria-hidden="true"></i>','Page is built for you','A call-conversion lander assembled from your actual profile, no templates.'],
-              ['<i class="ti ti-download" aria-hidden="true"></i>','Download and deploy','Get clean HTML you can host on any subdomain, ready for ad traffic.'],
-            ].map(([icon,title,desc])=>(
-              <div key={title} style={{textAlign:'left',padding:'14px',background:'var(--surface-1)',borderRadius:10,border:'0.5px solid var(--border)'}}>
-                <div style={{fontSize:18,color:'#FF5A1F',marginBottom:8}} dangerouslySetInnerHTML={{__html:icon}} />
-                <div style={{fontWeight:500,fontSize:13,color:'var(--text-primary)',marginBottom:4}}>{title}</div>
-                <div style={{fontSize:12,color:'var(--text-secondary)',lineHeight:1.5}}>{desc}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
+    <Home query={query} setQuery={setQuery} error={error} onSearch={handleSearch} />
   );
 
   /* ── loading ───────────────────────────────────────────────────────── */
