@@ -11,7 +11,7 @@ const EXAMPLE_QUERIES = [
    it generates). Scoped under .lb-home in home.css so its own color system
    doesn't leak into the candidates/preview/dashboard screens, which still
    use the app-shell theme in index.css. */
-export default function Home({ query, setQuery, error, onSearch }) {
+export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
   const rootRef = useRef(null);
 
   useEffect(() => {
@@ -48,7 +48,7 @@ export default function Home({ query, setQuery, error, onSearch }) {
             <a href="#examples">Examples</a>
             <a href="#faq">FAQ</a>
           </nav>
-          <a className="btn btn-primary header-cta" href="#top">Build my page</a>
+          <button className="btn btn-primary header-cta" type="button" onClick={onSignIn}>Sign In</button>
         </div>
       </header>
 

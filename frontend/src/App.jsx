@@ -265,6 +265,9 @@ const slugify = s => (String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').
 // Google OAuth navigates the whole app away; the in-progress lander + ads are
 // stashed under this key so the redirect back can rebuild the screen.
 const PENDING_KEY = 'lb-pending-save';
+// Set when the homepage "Sign In" button starts OAuth with nothing to save --
+// tells the redirect back to open the dashboard instead of the homepage.
+const SIGNIN_KEY = 'lb-signin-intent';
 
 // The stored photo URLs default to 800px wide (fine for thumbnails); ask the
 // proxy for more pixels when the photo is the full-bleed ad background.
@@ -678,6 +681,28 @@ export default function App() {
     return () => sub?.subscription?.unsubscribe();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Homepage "Sign In" redirect: nothing to save, just wait for the session
+  // and open the dashboard. The pending-save flow above takes priority.
+  useEffect(() => {
+    if (!supabase) return;
+    let intent = null;
+    try {
+      if (sessionStorage.getItem(PENDING_KEY)) return; // save flow owns this redirect
+      intent = sessionStorage.getItem(SIGNIN_KEY);
+      sessionStorage.removeItem(SIGNIN_KEY);
+    } catch { /* storage blocked */ }
+    if (!intent) return;
+    let handled = false;
+    const attempt = user => {
+      if (handled || !user) return;
+      handled = true;
+      enterDashboard();
+    };
+    supabase.auth.getSession().then(({ data }) => attempt(data?.session?.user));
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => attempt(session?.user));
+    return () => sub?.subscription?.unsubscribe();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     if (step !== 'preview' || !html || !iframeRef.current) return;
     if (blobRef.current) URL.revokeObjectURL(blobRef.current);
@@ -761,6 +786,42 @@ export default function App() {
 
   function reset() {
     setStep('search'); setQuery(''); setCandidates([]); setHtml(''); setBusiness(null); setError('');
+  }
+
+  /* ── returning users: sign in from the homepage, sign out anywhere ── */
+  async function enterDashboard() {
+    const { data: allLanders } = await supabase
+      .from('landers')
+      .select('*')
+      .order('created_at', { ascending: false });
+    setLanders(allLanders || []);
+    setDashboardTab('landers');
+    setStep('dashboard');
+  }
+
+  function handleHomeSignIn() {
+    if (!supabase) return;
+    supabase.auth.getSession().then(async ({ data }) => {
+      if (data?.session?.user) { enterDashboard(); return; }
+      try { sessionStorage.setItem(SIGNIN_KEY, '1'); } catch { /* storage blocked */ }
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.origin },
+      });
+      if (oauthError) setError(friendlyAuthError(oauthError, 'Could not start Google sign-in. Try again.'));
+    });
+  }
+
+  async function handleSignOut() {
+    try { await supabase?.auth.signOut(); } catch { /* already signed out */ }
+    try { sessionStorage.removeItem(PENDING_KEY); sessionStorage.removeItem(SIGNIN_KEY); } catch { /* ignore */ }
+    savedOnceRef.current = false;
+    adsDrawnRef.current = false;
+    adsStateRef.current = null;
+    pendingDownloadRef.current = null;
+    setRestoredAds(null);
+    setLanders([]);
+    reset();
   }
 
   /* ── Step 2: straight to ads, no account required ─────────────────── */
@@ -862,7 +923,9 @@ export default function App() {
   async function finishAuthedSave(user, biz) {
     setAccountBusy(true);
     try {
-      if (!savedOnceRef.current) {
+      // biz is null when a returning user signs in with nothing new built --
+      // nothing to save, but any freshly made ads still download below.
+      if (!savedOnceRef.current && biz) {
         const { error: profileError } = await supabase.from('profiles').upsert({
           id: user.id,
           name: user.user_metadata?.full_name || user.user_metadata?.name || user.email,
@@ -906,7 +969,7 @@ export default function App() {
 
   /* ── search (homepage) ────────────────────────────────────────────── */
   if (step === 'search') return (
-    <Home query={query} setQuery={setQuery} error={error} onSearch={handleSearch} />
+    <Home query={query} setQuery={setQuery} error={error} onSearch={handleSearch} onSignIn={handleHomeSignIn} />
   );
 
   /* ── loading ───────────────────────────────────────────────────────── */
@@ -992,6 +1055,7 @@ export default function App() {
           <button className="lb-btn-signal" style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:8,height:38}} onClick={handleStep3}>
             Step 3: Download Lander &amp; Ads <i className="ti ti-download" aria-hidden="true" />
           </button>
+          <button className="lb-btn-dark" onClick={handleSignOut}>Sign out</button>
         </div>
 
         <div style={{padding:'24px 20px 48px',maxWidth:720,margin:'0 auto'}}>
