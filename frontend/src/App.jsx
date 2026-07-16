@@ -226,6 +226,10 @@ async function generateOffer(payload) {
   return apiPost('/api/generate-offer', payload);
 }
 
+async function generateAdCopy(payload) {
+  return apiPost('/api/generate-ad-copy', payload);
+}
+
 /* ─── app styles (injected once) ────────────────────────────────────── */
 const GLOBAL_CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap');
@@ -252,6 +256,309 @@ body{margin:0;padding:0;font-family:'Inter',system-ui,sans-serif}
 @keyframes lb-bounce{0%,80%,100%{transform:scale(0)}40%{transform:scale(1)}}
 .lb-dot{width:10px;height:10px;border-radius:50%;background:#FF5A1F;animation:lb-bounce 1.2s ease-in-out infinite both}
 `;
+
+/* ─── Ads tab: lander photo + AI copy → downloadable ad graphic ─────── */
+const AD_SIZE = 1080; // square, works on Facebook/Instagram feed and Google display
+
+// The stored photo URLs default to 800px wide (fine for thumbnails); ask the
+// proxy for more pixels when the photo is the full-bleed ad background.
+const hiResPhoto = url => `${url}${url.includes('?') ? '&' : '?'}max_width=1600`;
+
+// Fonts the canvas needs ready before drawing -- canvas text doesn't trigger
+// webfont loading the way DOM text does, so we load them explicitly.
+const AD_FONTS = [
+  "700 84px 'Space Grotesk'",
+  "700 64px 'Space Grotesk'",
+  "400 36px 'Inter'",
+  "600 32px 'IBM Plex Mono'",
+  "600 30px 'IBM Plex Mono'",
+];
+
+function wrapLines(ctx, text, maxWidth) {
+  const words = String(text || '').trim().split(/\s+/).filter(Boolean);
+  const lines = [];
+  let line = '';
+  for (const w of words) {
+    const test = line ? `${line} ${w}` : w;
+    if (line && ctx.measureText(test).width > maxWidth) { lines.push(line); line = w; }
+    else line = test;
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
+function drawAd(canvas, img, copy, biz) {
+  const S = AD_SIZE, M = 84, maxW = S - M * 2;
+  const ctx = canvas.getContext('2d');
+  const signal = biz.brand_color || '#FF5A1F';
+
+  // photo, cover-fit
+  ctx.fillStyle = '#181D24';
+  ctx.fillRect(0, 0, S, S);
+  const scale = Math.max(S / img.naturalWidth, S / img.naturalHeight);
+  const iw = img.naturalWidth * scale, ih = img.naturalHeight * scale;
+  ctx.drawImage(img, (S - iw) / 2, (S - ih) / 2, iw, ih);
+
+  // scrim: photo stays visible up top, text zone goes near-solid below
+  const g = ctx.createLinearGradient(0, 0, 0, S);
+  g.addColorStop(0, 'rgba(24,29,36,.32)');
+  g.addColorStop(0.45, 'rgba(24,29,36,.38)');
+  g.addColorStop(1, 'rgba(24,29,36,.95)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, S, S);
+
+  // top-left eyebrow: brand square + business name
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = signal;
+  ctx.fillRect(M, M, 28, 28);
+  ctx.font = "600 30px 'IBM Plex Mono', monospace";
+  const rating = biz.rating
+    ? `★ ${Number(biz.rating).toFixed(1)} (${biz.review_count || 0})` : '';
+  const ratingW = rating ? ctx.measureText(rating).width : 0;
+  let label = (biz.name || '').toUpperCase();
+  const labelMax = maxW - 46 - (ratingW ? ratingW + 40 : 0);
+  if (ctx.measureText(label).width > labelMax) {
+    while (label.length > 1 && ctx.measureText(label + '…').width > labelMax) {
+      label = label.slice(0, -1).trimEnd();
+    }
+    label += '…';
+  }
+  ctx.fillStyle = '#fff';
+  ctx.fillText(label, M + 46, M + 16);
+  if (rating) ctx.fillText(rating, S - M - ratingW, M + 16);
+
+  // bottom stack: headline / subline / CTA pill, measured then laid out upward
+  const headline = (copy.headline || '').trim();
+  const subline = (copy.subline || '').trim();
+  const cta = (copy.cta || '').trim();
+
+  let headSize = 84;
+  ctx.font = `700 ${headSize}px 'Space Grotesk', sans-serif`;
+  let headLines = wrapLines(ctx, headline, maxW);
+  if (headLines.length > 3) {
+    headSize = 64;
+    ctx.font = `700 ${headSize}px 'Space Grotesk', sans-serif`;
+    headLines = wrapLines(ctx, headline, maxW);
+  }
+  const headLH = Math.round(headSize * 1.12);
+
+  ctx.font = "400 36px 'Inter', sans-serif";
+  const subLines = wrapLines(ctx, subline, maxW);
+  const subLH = 50;
+
+  const pillH = cta ? 96 : 0;
+  const total = headLines.length * headLH
+    + (subLines.length ? 20 + subLines.length * subLH : 0)
+    + (pillH ? 48 + pillH : 0);
+
+  ctx.textBaseline = 'top';
+  let y = S - M - total;
+
+  ctx.fillStyle = '#fff';
+  ctx.font = `700 ${headSize}px 'Space Grotesk', sans-serif`;
+  for (const ln of headLines) { ctx.fillText(ln, M, y); y += headLH; }
+
+  if (subLines.length) {
+    y += 20;
+    ctx.fillStyle = '#DCE0E2';
+    ctx.font = "400 36px 'Inter', sans-serif";
+    for (const ln of subLines) { ctx.fillText(ln, M, y); y += subLH; }
+  }
+
+  if (cta) {
+    y += 48;
+    ctx.font = "600 32px 'IBM Plex Mono', monospace";
+    const t = cta.toUpperCase();
+    const tw = ctx.measureText(t).width;
+    const pillW = Math.min(tw + 96, maxW);
+    ctx.fillStyle = signal;
+    if (ctx.roundRect) {
+      ctx.beginPath();
+      ctx.roundRect(M, y, pillW, pillH, 14);
+      ctx.fill();
+    } else {
+      ctx.fillRect(M, y, pillW, pillH);
+    }
+    ctx.fillStyle = contrastInk(signal);
+    ctx.textBaseline = 'middle';
+    ctx.fillText(t, M + (pillW - tw) / 2, y + pillH / 2 + 2);
+  }
+}
+
+function AdsTab({ landers }) {
+  const [lander, setLander] = useState(null);
+  const [photoUrl, setPhotoUrl] = useState('');
+  const [img, setImg] = useState(null);
+  const [imgLoading, setImgLoading] = useState(false);
+  const [copy, setCopy] = useState({ headline: '', subline: '', cta: '', primary_text: '' });
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [copied, setCopied] = useState(false);
+  const canvasRef = useRef(null);
+
+  const profile = lander?.profile || null;
+  const photos = profile?.photos || [];
+
+  const eyebrow = { fontFamily: "'IBM Plex Mono',monospace", fontSize: 11, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 10px' };
+
+  function pickLander(l) {
+    setLander(l); setPhotoUrl(''); setImg(null); setError('');
+    // Prefill from the lander's own offer so there's a usable ad before the
+    // AI call -- generation then just tightens what's already here.
+    const p = l.profile || {};
+    setCopy({
+      headline: p.offer_headline || p.tagline || l.name || '',
+      subline: p.offer_subhead || (p.rating ? `Rated ${Number(p.rating).toFixed(1)}★ by ${p.review_count || 0} customers on Google` : ''),
+      cta: 'Call Today',
+      primary_text: '',
+    });
+  }
+
+  useEffect(() => {
+    if (!photoUrl) { setImg(null); return; }
+    let cancelled = false;
+    setImgLoading(true);
+    const im = new Image();
+    im.crossOrigin = 'anonymous'; // backend proxy allows *, keeps the canvas exportable
+    im.onload = () => { if (!cancelled) { setImg(im); setImgLoading(false); } };
+    im.onerror = () => { if (!cancelled) { setImgLoading(false); setError('Could not load that photo. Try another one.'); } };
+    im.src = hiResPhoto(photoUrl);
+    return () => { cancelled = true; };
+  }, [photoUrl]);
+
+  useEffect(() => {
+    if (!img || !profile || !canvasRef.current) return;
+    let cancelled = false;
+    (async () => {
+      try { await Promise.all(AD_FONTS.map(f => document.fonts.load(f))); } catch { /* fall back to system fonts */ }
+      if (!cancelled && canvasRef.current) drawAd(canvasRef.current, img, copy, profile);
+    })();
+    return () => { cancelled = true; };
+  }, [img, copy, profile]);
+
+  async function handleGenerate() {
+    if (!profile) return;
+    setBusy(true); setError('');
+    try {
+      const res = await generateAdCopy({
+        name: profile.name || lander.name,
+        category: profile.category || '',
+        tagline: profile.tagline,
+        services: profile.services || [],
+        service_areas: profile.service_areas || [],
+        rating: profile.rating,
+        review_count: profile.review_count,
+        offer_headline: profile.offer_headline,
+        offer_subhead: profile.offer_subhead,
+        offer_guarantee: profile.offer_guarantee,
+        summary: profile.site_summary || profile.about_summary,
+      });
+      setCopy(c => ({
+        headline: res.headline || c.headline,
+        subline: res.subline ?? c.subline,
+        cta: res.cta || c.cta,
+        primary_text: res.primary_text || '',
+      }));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function handleDownload() {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    try {
+      const a = document.createElement('a');
+      const slug = (lander?.name || 'ad').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+      a.download = `${slug || 'ad'}-ad.png`;
+      a.href = canvas.toDataURL('image/png');
+      a.click();
+    } catch {
+      setError('Could not export the image — that photo blocked cross-origin use. Try another photo.');
+    }
+  }
+
+  async function copyPrimaryText() {
+    try {
+      await navigator.clipboard.writeText(copy.primary_text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1600);
+    } catch { /* clipboard unavailable -- the text is visible to copy by hand */ }
+  }
+
+  if (!landers.length) return (
+    <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Save a lander first — ads are built from a lander's photos and offer.</p>
+  );
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+      <div>
+        <p style={eyebrow}>1 · Lander</p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          {landers.map(l => (
+            <button key={l.id} className={`lb-btn-ghost${lander?.id === l.id ? ' active' : ''}`} onClick={() => pickLander(l)}>{l.name}</button>
+          ))}
+        </div>
+      </div>
+
+      {lander && (
+        <div>
+          <p style={eyebrow}>2 · Photo</p>
+          {photos.length === 0
+            ? <p style={{ color: 'var(--text-secondary)', fontSize: 14, margin: 0 }}>This lander has no photos to build an ad from.</p>
+            : <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(110px,1fr))', gap: 8 }}>
+                {photos.map((p, i) => (
+                  <button key={p} onClick={() => { setError(''); setPhotoUrl(p); }} style={{
+                    padding: 0, border: photoUrl === p ? '3px solid #FF5A1F' : '3px solid transparent',
+                    borderRadius: 10, overflow: 'hidden', cursor: 'pointer', background: 'var(--surface-1)',
+                    aspectRatio: '1', opacity: photoUrl && photoUrl !== p ? 0.6 : 1, transition: 'opacity .15s',
+                  }}>
+                    <img src={p} alt={`Photo ${i + 1}`} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                  </button>
+                ))}
+              </div>}
+        </div>
+      )}
+
+      {lander && photoUrl && (
+        <div>
+          <p style={eyebrow}>3 · Copy</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <button className="lb-btn-signal" onClick={handleGenerate} disabled={busy} style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 8 }}>
+              {busy ? 'Writing your ad…' : <>Generate ad copy <i className="ti ti-sparkles" aria-hidden="true" /></>}
+            </button>
+            <input className="lb-input" placeholder="Headline (big text on the image)" value={copy.headline} onChange={e => setCopy({ ...copy, headline: e.target.value })} />
+            <input className="lb-input" placeholder="Supporting line" value={copy.subline} onChange={e => setCopy({ ...copy, subline: e.target.value })} />
+            <input className="lb-input" placeholder="Button label (e.g. Get a Free Quote)" value={copy.cta} onChange={e => setCopy({ ...copy, cta: e.target.value })} />
+            <textarea className="lb-input" placeholder="Primary text (shown next to the image in the feed)" value={copy.primary_text} onChange={e => setCopy({ ...copy, primary_text: e.target.value })} style={{ height: 96, padding: '12px 14px', resize: 'vertical', lineHeight: 1.5 }} />
+          </div>
+        </div>
+      )}
+
+      {error && <div className="lb-error">{error}</div>}
+
+      {lander && photoUrl && (
+        <div>
+          <p style={eyebrow}>Preview</p>
+          {imgLoading && <p style={{ color: 'var(--text-secondary)', fontSize: 14, margin: 0 }}>Loading photo…</p>}
+          <canvas ref={canvasRef} width={AD_SIZE} height={AD_SIZE} style={{ width: '100%', maxWidth: 480, borderRadius: 12, border: '0.5px solid var(--border)', display: img ? 'block' : 'none' }} />
+          {img && (
+            <div style={{ display: 'flex', gap: 10, marginTop: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+              <button className="lb-btn-signal" onClick={handleDownload} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                Download PNG <i className="ti ti-download" aria-hidden="true" />
+              </button>
+              {copy.primary_text.trim() && (
+                <button className="lb-btn-ghost" onClick={copyPrimaryText}>{copied ? 'Copied!' : 'Copy primary text'}</button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 /* ─── main app ──────────────────────────────────────────────────────── */
 export default function App() {
@@ -606,9 +913,7 @@ export default function App() {
             </div>
           )}
 
-          {dashboardTab === 'ads' && (
-            <p style={{color:'var(--text-secondary)',fontSize:14}}>Pick a lander to create a matching ad — coming soon.</p>
-          )}
+          {dashboardTab === 'ads' && <AdsTab landers={landers} />}
         </div>
       </div>
     );

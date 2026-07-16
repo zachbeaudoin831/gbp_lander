@@ -81,11 +81,48 @@ states -- if unsure, return null and the heuristic list will be kept \
 as-is."""
 
 
+_AD_SYSTEM_PROMPT = """You write paid social ad copy (Facebook/Instagram/Google) \
+for local service businesses.
+
+You'll get a business's structured profile: name, category, tagline, services, \
+service areas, Google rating and review count, and the offer copy already \
+written for their landing page (if any). Write one tight ad that sends people \
+to that landing page. The ad is a photo with text overlaid on it, plus a \
+"primary text" paragraph shown next to the image in the feed.
+
+Return ONLY raw JSON, no markdown, no prose, matching exactly this shape:
+{
+  "headline": "the big text overlaid on the ad photo -- under 7 words, punchy, benefit-led, no trailing period",
+  "subline": "one supporting line under the headline -- under 12 words, adds specificity or credibility",
+  "cta": "a short button label, 2-4 words (e.g. 'Get a Free Quote', 'Call Today')",
+  "primary_text": "1-3 short sentences for the ad's primary text field -- plain and direct, no hashtags, no emojis, ends by telling the reader what to do"
+}
+
+Rules:
+- Never invent facts, numbers, discounts, or claims not present in the \
+provided profile. If the profile is thin, keep the copy general rather than \
+fabricating specifics.
+- Only cite the rating/review count if it's genuinely strong (4.5+ with a \
+meaningful number of reviews) -- social proof is often the best subline.
+- Write like a sharp human copywriter: short sentences, concrete words, no \
+corporate filler, no superlatives that aren't backed by something specific.
+- headline and subline must read well as large text on a photo -- no \
+placeholders, no brackets.
+- If landing-page offer copy is provided, echo it (same promise, tighter \
+wording) so the ad and the landing page feel like one campaign."""
+
+
 def _client() -> anthropic.Anthropic:
     key = os.environ.get("ANTHROPIC_API_KEY")
     if not key:
         raise RuntimeError("No API key provided. Set ANTHROPIC_API_KEY.")
     return anthropic.Anthropic(api_key=key)
+
+
+def _reply_json(resp) -> dict:
+    raw = "".join(b.text for b in resp.content if b.type == "text").strip()
+    raw = raw.removeprefix("```json").removeprefix("```").removesuffix("```").strip()
+    return json.loads(raw)
 
 
 def generate_extras(
@@ -122,6 +159,48 @@ SERVICE AREAS PAGE TEXT (raw, may include noise)
         system=_SYSTEM_PROMPT,
         messages=[{"role": "user", "content": user_content}],
     )
-    raw = "".join(b.text for b in resp.content if b.type == "text").strip()
-    raw = raw.removeprefix("```json").removeprefix("```").removesuffix("```").strip()
-    return json.loads(raw)
+    return _reply_json(resp)
+
+
+def generate_ad_copy(
+    *,
+    name: str,
+    category: str,
+    tagline: Optional[str],
+    services: list[str],
+    service_areas: Optional[list[str]] = None,
+    rating: Optional[float] = None,
+    review_count: Optional[int] = None,
+    offer_headline: Optional[str] = None,
+    offer_subhead: Optional[str] = None,
+    offer_guarantee: Optional[str] = None,
+    summary: Optional[str] = None,
+) -> dict:
+    """One Claude call turning a saved lander profile into ad copy: an
+    on-image headline/subline/CTA plus feed primary text. No scraping --
+    everything it needs is already in the stored profile jsonb.
+    """
+    user_content = f"""BUSINESS PROFILE
+Name: {name}
+Category: {category or "(unknown)"}
+Tagline: {tagline or "(none)"}
+Services: {", ".join(services) if services else "(none listed)"}
+Service areas: {", ".join(service_areas) if service_areas else "(none listed)"}
+Google rating: {f"{rating} stars ({review_count or 0} reviews)" if rating else "(none)"}
+
+LANDING PAGE OFFER COPY (already live on the page this ad points to)
+Headline: {offer_headline or "(none)"}
+Subhead: {offer_subhead or "(none)"}
+Guarantee: {offer_guarantee or "(none)"}
+
+WHAT THE BUSINESS DOES
+{summary or "(no summary available)"}"""
+
+    client = _client()
+    resp = client.messages.create(
+        model=MODEL,
+        max_tokens=400,
+        system=_AD_SYSTEM_PROMPT,
+        messages=[{"role": "user", "content": user_content}],
+    )
+    return _reply_json(resp)

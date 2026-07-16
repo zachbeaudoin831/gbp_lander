@@ -32,7 +32,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from src.ai_copy import generate_extras
+from src.ai_copy import generate_ad_copy, generate_extras
 from src.brand_color import fetch_brand_color
 from src.lander_builder import build_profile
 from src.lead_store import LeadStoreError, insert_lead
@@ -287,3 +287,46 @@ def generate_offer(req: OfferRequest):
         raise HTTPException(status_code=502, detail=f"Offer generation failed: {e}")
 
     return extras
+
+
+class AdCopyRequest(BaseModel):
+    """Everything here comes straight out of a saved lander's profile jsonb,
+    so the frontend can build the payload without any new fetches.
+    """
+    name: str
+    category: str = ""
+    tagline: Optional[str] = None
+    services: list[str] = []
+    service_areas: list[str] = []
+    rating: Optional[float] = None
+    review_count: Optional[int] = None
+    offer_headline: Optional[str] = None
+    offer_subhead: Optional[str] = None
+    offer_guarantee: Optional[str] = None
+    summary: Optional[str] = None
+
+
+@app.post("/api/generate-ad-copy")
+def generate_ad_copy_route(req: AdCopyRequest):
+    """One Claude call turning a saved lander profile into ad copy (on-image
+    headline/subline/CTA + feed primary text). No scraping and no Google
+    billing -- the stored profile already has everything the prompt needs.
+    """
+    try:
+        return generate_ad_copy(
+            name=req.name,
+            category=req.category,
+            tagline=req.tagline,
+            services=req.services,
+            service_areas=req.service_areas,
+            rating=req.rating,
+            review_count=req.review_count,
+            offer_headline=req.offer_headline,
+            offer_subhead=req.offer_subhead,
+            offer_guarantee=req.offer_guarantee,
+            summary=req.summary,
+        )
+    except RuntimeError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Ad copy generation failed: {e}")
