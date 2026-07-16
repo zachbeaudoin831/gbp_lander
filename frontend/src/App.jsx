@@ -262,6 +262,10 @@ const AD_SIZE = 1080; // square, works on Facebook/Instagram feed and Google dis
 
 const slugify = s => (String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')) || 'lander';
 
+// Google OAuth navigates the whole app away; the in-progress lander + ads are
+// stashed under this key so the redirect back can rebuild the screen.
+const PENDING_KEY = 'lb-pending-save';
+
 // The stored photo URLs default to 800px wide (fine for thumbnails); ask the
 // proxy for more pixels when the photo is the full-bleed ad background.
 const hiResPhoto = url => `${url}${url.includes('?') ? '&' : '?'}max_width=1600`;
@@ -389,11 +393,11 @@ function drawAd(canvas, img, copy, biz) {
 
 const MAX_ADS = 3;
 
-function AdsTab({ landers, canvasesRef }) {
+function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn }) {
   const [lander, setLander] = useState(null);
-  const [photoUrls, setPhotoUrls] = useState([]); // up to MAX_ADS, in click order
+  const [photoUrls, setPhotoUrls] = useState(initialAds?.photoUrls || []); // up to MAX_ADS, in click order
   const [imgs, setImgs] = useState({});           // url -> loaded HTMLImageElement
-  const [copy, setCopy] = useState({ headline: '', subline: '', cta: '', primary_text: '' });
+  const [copy, setCopy] = useState(initialAds?.copy || { headline: '', subline: '', cta: '', primary_text: '' });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
@@ -404,10 +408,20 @@ function AdsTab({ landers, canvasesRef }) {
   const eyebrow = { fontFamily: "'IBM Plex Mono',monospace", fontSize: 11, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 10px' };
 
   // Coming from "Step 2: Create Ads" there's exactly one lander -- skip the
-  // redundant click and drop the user straight into photo picking.
+  // redundant click and drop the user straight into photo picking. When
+  // state was restored after the OAuth redirect, keep the stashed photo
+  // selection + copy instead of pickLander's prefill.
   useEffect(() => {
-    if (landers.length === 1 && !lander) pickLander(landers[0]);
+    if (landers.length === 1 && !lander) {
+      if (initialAds) setLander(landers[0]);
+      else pickLander(landers[0]);
+    }
   }, [landers]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Let the parent stash the current selection before the OAuth redirect.
+  useEffect(() => {
+    onAdsState?.({ photoUrls, copy });
+  }, [photoUrls, copy]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function pickLander(l) {
     setLander(l); setPhotoUrls([]); setError('');
@@ -454,9 +468,12 @@ function AdsTab({ landers, canvasesRef }) {
         const img = imgs[url];
         if (canvas && img) drawAd(canvas, img, copy, profile);
       });
+      // Every selected photo rendered -- downloads queued behind the OAuth
+      // redirect can fire now.
+      if (photoUrls.length && photoUrls.every(u => imgs[u])) onAllDrawn?.();
     })();
     return () => { cancelled = true; };
-  }, [photoUrls, imgs, copy, profile, canvasesRef]);
+  }, [photoUrls, imgs, copy, profile, canvasesRef]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleGenerate() {
     if (!profile) return;
@@ -592,17 +609,20 @@ export default function App() {
   const [html,       setHtml]       = useState('');
   const [business,   setBusiness]   = useState(null);
   const [error,      setError]      = useState('');
-  const [accountModal, setAccountModal] = useState('closed'); // 'closed' | 'form' | 'otp'
-  const [accountForm,  setAccountForm]  = useState({ name:'', email:'', phone:'' });
-  const [otpCode,       setOtpCode]      = useState('');
+  const [accountModal, setAccountModal] = useState('closed'); // 'closed' | 'auth'
   const [accountError,  setAccountError] = useState('');
   const [accountBusy,   setAccountBusy]  = useState(false);
   const [landers,       setLanders]      = useState([]);
   const [dashboardTab,  setDashboardTab] = useState('landers');
+  const [restoredAds,   setRestoredAds]  = useState(null); // ads state rebuilt after the OAuth redirect
   const iframeRef = useRef(null);
   const blobRef   = useRef(null);
   const timerRef  = useRef(null);
-  const adCanvasesRef = useRef([]); // canvases drawn by AdsTab, exported at Step 3
+  const adCanvasesRef = useRef([]);     // canvases drawn by AdsTab, exported at Step 3
+  const adsStateRef = useRef(null);     // AdsTab's current {photoUrls, copy}, for the pre-redirect stash
+  const adsDrawnRef = useRef(false);    // all selected ad canvases have rendered
+  const pendingDownloadRef = useRef(null); // {biz, wantAds} queued until canvases are ready
+  const savedOnceRef = useRef(false);   // guard against duplicate lander inserts on repeat Step 3 clicks
 
   useEffect(() => {
     let s = document.getElementById('lb-global-css');
@@ -614,6 +634,49 @@ export default function App() {
     }
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, []);
+
+  // After the Google OAuth redirect the app boots fresh -- rebuild the
+  // dashboard from the pre-redirect stash and, once the session lands,
+  // finish the save + downloads.
+  useEffect(() => {
+    let raw = null;
+    try { raw = sessionStorage.getItem(PENDING_KEY); } catch { /* storage blocked */ }
+    if (!raw) return;
+    let pending = null;
+    try { pending = JSON.parse(raw); } catch { /* corrupt stash */ }
+    if (!pending?.business) {
+      try { sessionStorage.removeItem(PENDING_KEY); } catch { /* ignore */ }
+      return;
+    }
+
+    setBusiness(pending.business);
+    setHtml(buildLanderHTML(pending.business));
+    setLanders([{
+      id: 'local',
+      name: pending.business.name || 'My lander',
+      created_at: new Date().toISOString(),
+      profile: pending.business,
+      local: true,
+    }]);
+    setRestoredAds(pending.ads || null);
+    setDashboardTab('ads');
+    setStep('dashboard');
+
+    if (!supabase) return;
+    // detectSessionInUrl parses the OAuth callback asynchronously -- check
+    // for a session AND listen for one; whichever lands first wins. If the
+    // user cancelled sign-in, neither fires and they're simply back on the
+    // dashboard with their work intact, free to hit Step 3 again.
+    let handled = false;
+    const attempt = user => {
+      if (handled || !user) return;
+      handled = true;
+      finishAuthedSave(user, pending.business);
+    };
+    supabase.auth.getSession().then(({ data }) => attempt(data?.session?.user));
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => attempt(session?.user));
+    return () => sub?.subscription?.unsubscribe();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (step !== 'preview' || !html || !iframeRef.current) return;
@@ -716,12 +779,19 @@ export default function App() {
     setStep('dashboard');
   }
 
-  /* ── Step 3: hand over the files (runs after the lead is captured) ── */
-  function downloadAll() {
-    const slug = slugify(business?.name || landers[0]?.name);
+  /* ── Step 3: hand over the files (runs after the lead is captured) ──
+     Downloads are queued rather than fired directly: after the OAuth
+     redirect the ad canvases need a moment to re-render, so the queue
+     waits for AdsTab's "all drawn" signal before exporting them. */
+  function maybeDownload() {
+    const pend = pendingDownloadRef.current;
+    if (!pend) return;
+    if (pend.wantAds && !adsDrawnRef.current) return; // canvases still rendering
+    pendingDownloadRef.current = null;
+    const slug = slugify(pend.biz?.name);
     const files = [];
-    if (html) {
-      const url = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+    if (pend.biz) {
+      const url = URL.createObjectURL(new Blob([buildLanderHTML(pend.biz)], { type: 'text/html' }));
       files.push({ href: url, name: `${slug}-lander.html`, blob: true });
     }
     (adCanvasesRef.current || []).filter(Boolean).forEach((canvas, i) => {
@@ -739,85 +809,96 @@ export default function App() {
     }, i * 400));
   }
 
-  /* ── account creation (Step 2) ────────────────────────────────────── */
-  function openAccountModal() {
-    setAccountError(supabase ? '' : 'Account creation isn’t configured yet — check back soon.');
-    setAccountForm({ name:'', email:'', phone:'' });
-    setOtpCode('');
-    setAccountModal('form');
+  function handleAdsDrawn() {
+    adsDrawnRef.current = true;
+    maybeDownload();
   }
 
+  /* ── Step 3 auth: Google sign-in, then save + download ────────────── */
   function closeAccountModal() {
     setAccountModal('closed');
     setAccountError('');
-    setOtpCode('');
   }
 
-  async function submitAccountForm(e) {
-    e.preventDefault();
-    if (!supabase) return;
-    const { name, email, phone } = accountForm;
-    if (!name.trim() || !email.trim() || !phone.trim()) {
-      setAccountError('Fill in all three fields.');
+  function handleStep3() {
+    if (!supabase) {
+      setAccountError('Account creation isn’t configured yet — check back soon.');
+      setAccountModal('auth');
       return;
     }
-    setAccountBusy(true);
-    setAccountError('');
-    try {
-      const { error: otpError } = await supabase.auth.signInWithOtp({
-        email: email.trim(),
-        options: { data: { name: name.trim(), phone: phone.trim() } },
-      });
-      if (otpError) throw otpError;
-      setAccountModal('otp');
-    } catch (err) {
-      setAccountError(friendlyAuthError(err, 'Could not send the code. Try again.'));
-    } finally {
-      setAccountBusy(false);
-    }
+    // Already signed in (e.g. downloading a second time this session)?
+    // Skip the modal entirely.
+    supabase.auth.getSession().then(({ data }) => {
+      const user = data?.session?.user;
+      if (user) {
+        finishAuthedSave(user, business);
+      } else {
+        setAccountError('');
+        setAccountModal('auth');
+      }
+    });
   }
 
-  async function submitOtp(e) {
-    e.preventDefault();
+  async function startGoogleAuth() {
     if (!supabase) return;
-    if (!otpCode.trim()) { setAccountError('Enter the code from your email.'); return; }
+    // The OAuth redirect unloads the whole app -- stash everything needed to
+    // rebuild this screen (and finish the save) when Google sends us back.
+    try {
+      sessionStorage.setItem(PENDING_KEY, JSON.stringify({ business, ads: adsStateRef.current }));
+    } catch { /* storage blocked -- worst case the user redoes the ads */ }
     setAccountBusy(true);
     setAccountError('');
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin },
+    });
+    if (error) {
+      setAccountBusy(false);
+      setAccountError(friendlyAuthError(error, 'Could not start Google sign-in. Try again.'));
+    }
+    // On success the browser navigates away; nothing more to do here.
+  }
+
+  async function finishAuthedSave(user, biz) {
+    setAccountBusy(true);
     try {
-      const { data, error: verifyError } = await supabase.auth.verifyOtp({
-        email: accountForm.email.trim(),
-        token: otpCode.trim(),
-        type: 'email',
-      });
-      if (verifyError) throw verifyError;
-      const user = data.user;
+      if (!savedOnceRef.current) {
+        const { error: profileError } = await supabase.from('profiles').upsert({
+          id: user.id,
+          name: user.user_metadata?.full_name || user.user_metadata?.name || user.email,
+          email: user.email,
+          // No form field for phone anymore -- Google doesn't provide one, so
+          // use the business's own number from their Google listing, which is
+          // already in the profile data we're saving.
+          phone: biz?.phone_national || biz?.phone_international || null,
+        });
+        if (profileError) throw profileError;
 
-      const { error: profileError } = await supabase.from('profiles').upsert({
-        id: user.id,
-        name: accountForm.name.trim(),
-        phone: accountForm.phone.trim(),
-        email: accountForm.email.trim(),
-      });
-      if (profileError) throw profileError;
+        const { error: landerError } = await supabase.from('landers').insert({
+          user_id: user.id,
+          name: biz?.name || 'Untitled lander',
+          profile: biz,
+        });
+        if (landerError) throw landerError;
+        savedOnceRef.current = true;
 
-      const { error: landerError } = await supabase.from('landers').insert({
-        user_id: user.id,
-        name: business?.name || 'Untitled lander',
-        profile: business,
-      });
-      if (landerError) throw landerError;
-
-      const { data: allLanders, error: listError } = await supabase
-        .from('landers')
-        .select('*')
-        .order('created_at', { ascending: false });
-      if (listError) throw listError;
-
-      setLanders(allLanders || []);
+        const { data: allLanders } = await supabase
+          .from('landers')
+          .select('*')
+          .order('created_at', { ascending: false });
+        if (allLanders?.length) setLanders(allLanders);
+      }
+      try { sessionStorage.removeItem(PENDING_KEY); } catch { /* ignore */ }
       setAccountModal('closed');
-      downloadAll();
+      setAccountError('');
+      pendingDownloadRef.current = {
+        biz,
+        wantAds: (adsStateRef.current?.photoUrls?.length || 0) > 0,
+      };
+      maybeDownload();
     } catch (err) {
-      setAccountError(friendlyAuthError(err, 'Invalid code. Try again.'));
+      setAccountError(friendlyAuthError(err, 'Could not save your account. Try again.'));
+      setAccountModal('auth');
     } finally {
       setAccountBusy(false);
     }
@@ -843,7 +924,7 @@ export default function App() {
     <div>
       <div style={{background:'#181D24',padding:'12px 20px',display:'flex',alignItems:'center',gap:10}}>
         <span style={{width:26,height:26,background:'#FF5A1F',borderRadius:6,display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,color:'#fff',flexShrink:0}}>▲</span>
-        <span style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:14,color:'#fff',letterSpacing:'-.01em'}}>LanderBuilder</span>
+        <span style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:14,color:'#fff',letterSpacing:'-.01em'}}>SendKPI</span>
       </div>
 
       <div style={{padding:'32px 20px 48px',maxWidth:600,margin:'0 auto'}}>
@@ -907,8 +988,8 @@ export default function App() {
       <div>
         <div style={{background:'#181D24',padding:'12px 20px',display:'flex',alignItems:'center',gap:10}}>
           <span style={{width:26,height:26,background:'#FF5A1F',borderRadius:6,display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,color:'#fff',flexShrink:0}}>▲</span>
-          <span style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:14,color:'#fff',letterSpacing:'-.01em'}}>LanderBuilder</span>
-          <button className="lb-btn-signal" style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:8,height:38}} onClick={openAccountModal}>
+          <span style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:14,color:'#fff',letterSpacing:'-.01em'}}>SendKPI</span>
+          <button className="lb-btn-signal" style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:8,height:38}} onClick={handleStep3}>
             Step 3: Download Lander &amp; Ads <i className="ti ti-download" aria-hidden="true" />
           </button>
         </div>
@@ -941,7 +1022,15 @@ export default function App() {
             </div>
           )}
 
-          {dashboardTab === 'ads' && <AdsTab landers={landers} canvasesRef={adCanvasesRef} />}
+          {dashboardTab === 'ads' && (
+            <AdsTab
+              landers={landers}
+              canvasesRef={adCanvasesRef}
+              initialAds={restoredAds}
+              onAdsState={s => { adsStateRef.current = s; }}
+              onAllDrawn={handleAdsDrawn}
+            />
+          )}
         </div>
 
         {accountModal !== 'closed' && (
@@ -949,36 +1038,13 @@ export default function App() {
             <div style={{position:'absolute',inset:0,background:'rgba(14,19,24,.7)'}} onClick={closeAccountModal} />
             <div style={{position:'relative',background:'#fff',borderRadius:14,maxWidth:380,width:'100%',padding:'28px 24px',boxShadow:'0 20px 60px rgba(0,0,0,.4)'}}>
               <button onClick={closeAccountModal} aria-label="Close" style={{position:'absolute',top:10,right:14,background:'none',border:0,fontSize:26,lineHeight:1,color:'var(--text-secondary)',cursor:'pointer'}}>&times;</button>
-
-              {accountModal === 'form' && (
-                <>
-                  <h3 style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:20,letterSpacing:'-.01em',margin:'0 0 8px',color:'var(--text-primary)'}}>Almost there</h3>
-                  <p style={{fontSize:14,color:'var(--text-secondary)',margin:'0 0 20px',lineHeight:1.5}}>Tell us who you are and we'll save your lander and ads to an account, then download the files.</p>
-                  <form onSubmit={submitAccountForm} style={{display:'flex',flexDirection:'column',gap:12}}>
-                    <input className="lb-input" placeholder="Your name" autoComplete="name" value={accountForm.name} onChange={e=>setAccountForm({...accountForm, name:e.target.value})} />
-                    <input className="lb-input" type="email" placeholder="Email" autoComplete="email" value={accountForm.email} onChange={e=>setAccountForm({...accountForm, email:e.target.value})} />
-                    <input className="lb-input" type="tel" placeholder="Phone number" autoComplete="tel" value={accountForm.phone} onChange={e=>setAccountForm({...accountForm, phone:e.target.value})} />
-                    {accountError && <div className="lb-error">{accountError}</div>}
-                    <button className="lb-btn-signal" type="submit" disabled={accountBusy || !supabase} style={{width:'100%',justifyContent:'center'}}>
-                      {accountBusy ? 'Sending code…' : 'Continue'}
-                    </button>
-                  </form>
-                </>
-              )}
-
-              {accountModal === 'otp' && (
-                <>
-                  <h3 style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:20,letterSpacing:'-.01em',margin:'0 0 8px',color:'var(--text-primary)'}}>Check your email</h3>
-                  <p style={{fontSize:14,color:'var(--text-secondary)',margin:'0 0 20px',lineHeight:1.5}}>We sent a verification code to {accountForm.email}.</p>
-                  <form onSubmit={submitOtp} style={{display:'flex',flexDirection:'column',gap:12}}>
-                    <input className="lb-input" placeholder="Verification code" inputMode="numeric" autoComplete="one-time-code" value={otpCode} onChange={e=>setOtpCode(e.target.value)} />
-                    {accountError && <div className="lb-error">{accountError}</div>}
-                    <button className="lb-btn-signal" type="submit" disabled={accountBusy} style={{width:'100%',justifyContent:'center'}}>
-                      {accountBusy ? 'Verifying…' : 'Verify & Download'}
-                    </button>
-                  </form>
-                </>
-              )}
+              <h3 style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:20,letterSpacing:'-.01em',margin:'0 0 8px',color:'var(--text-primary)'}}>Almost there</h3>
+              <p style={{fontSize:14,color:'var(--text-secondary)',margin:'0 0 20px',lineHeight:1.5}}>Sign in with Google and we'll save your lander and ads to your account, then download your files.</p>
+              {accountError && <div className="lb-error" style={{marginBottom:12}}>{accountError}</div>}
+              <button className="lb-btn-signal" onClick={startGoogleAuth} disabled={accountBusy || !supabase} style={{width:'100%',display:'flex',alignItems:'center',justifyContent:'center',gap:10}}>
+                <i className="ti ti-brand-google" aria-hidden="true" /> {accountBusy ? 'Working…' : 'Continue with Google'}
+              </button>
+              <p style={{fontSize:12,color:'var(--text-secondary)',margin:'14px 0 0',lineHeight:1.5}}>We only use your Google name and email to create your account — no access to anything else.</p>
             </div>
           </div>
         )}
