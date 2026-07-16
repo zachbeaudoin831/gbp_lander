@@ -40,7 +40,7 @@ export default function Home({ query, setQuery, error, onSearch }) {
             <span className="logo-mark" aria-hidden="true">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 3 21 20H3L12 3Z" fill="#fff" /></svg>
             </span>
-            LanderBuilder
+            SendKPI
           </a>
           <nav className="nav-links" aria-label="Main">
             <a href="#how">How it works</a>
@@ -59,7 +59,7 @@ export default function Home({ query, setQuery, error, onSearch }) {
             <div className="hero-copy">
               <p className="eyebrow">Google Business Profile → Landing page</p>
               <h1>Your Google listing, rebuilt to make the <span className="ring">phone ring<svg viewBox="0 0 200 24" preserveAspectRatio="none" aria-hidden="true"><path d="M4 18 C 50 8, 150 8, 196 14" /></svg></span></h1>
-              <p className="hero-sub">Search your Google Business Profile and LanderBuilder assembles a ready-to-deploy, call-conversion landing page from <strong>your real photos, hours, reviews, and services</strong> — no templates, no lorem ipsum.</p>
+              <p className="hero-sub">Search your Google Business Profile and SendKPI assembles a ready-to-deploy, call-conversion landing page from <strong>your real photos, hours, reviews, and services</strong> — no templates, no lorem ipsum.</p>
 
               <form className="finder" onSubmit={e => { e.preventDefault(); onSearch(e); }}>
                 <div className="finder-box">
@@ -180,7 +180,7 @@ export default function Home({ query, setQuery, error, onSearch }) {
             <div className="section-head reveal">
               <p className="eyebrow">Built from your profile</p>
               <h2>Everything Google already knows about your business, working for you</h2>
-              <p>Your profile is full of proof you've spent years earning. LanderBuilder pulls it onto one page designed to turn a click into a call.</p>
+              <p>Your profile is full of proof you've spent years earning. SendKPI pulls it onto one page designed to turn a click into a call.</p>
             </div>
             <div className="pull-grid">
               <div className="pull reveal">
@@ -270,7 +270,7 @@ export default function Home({ query, setQuery, error, onSearch }) {
               <div className="section-head reveal">
                 <p className="eyebrow">Made for ad traffic</p>
                 <h2>The page your ad spend deserves</h2>
-                <p>Sending Google Ads or Local Services traffic to a slow homepage burns budget. LanderBuilder pages are built to do one job: convert the click into a call.</p>
+                <p>Sending Google Ads or Local Services traffic to a slow homepage burns budget. SendKPI pages are built to do one job: convert the click into a call.</p>
               </div>
               <div className="ads-points reveal">
                 <div className="ads-point">
@@ -333,7 +333,7 @@ export default function Home({ query, setQuery, error, onSearch }) {
               </details>
               <details className="faq-item">
                 <summary>I run an agency — can I build pages for clients?</summary>
-                <p>That's one of the most common ways LanderBuilder is used. Search any client's listing, generate their lander, and deploy it on a subdomain you manage — one per client, campaign, or service area.</p>
+                <p>That's one of the most common ways SendKPI is used. Search any client's listing, generate their lander, and deploy it on a subdomain you manage — one per client, campaign, or service area.</p>
               </details>
               <details className="faq-item">
                 <summary>What if my profile is thin or out of date?</summary>
@@ -363,7 +363,7 @@ export default function Home({ query, setQuery, error, onSearch }) {
             <span className="logo-mark" style={{ width: 24, height: 24, borderRadius: 7 }} aria-hidden="true">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M12 3 21 20H3L12 3Z" fill="#fff" /></svg>
             </span>
-            LanderBuilder
+            SendKPI
           </a>
           <nav className="foot-links" aria-label="Footer">
             <a href="#how">How it works</a>
@@ -371,7 +371,7 @@ export default function Home({ query, setQuery, error, onSearch }) {
             <a href="#faq">FAQ</a>
             <a href="#">Contact</a>
           </nav>
-          <p className="foot-note">© 2026 LanderBuilder. Not affiliated with Google.</p>
+          <p className="foot-note">© 2026 SendKPI. Not affiliated with Google.</p>
         </div>
       </footer>
     </div>
