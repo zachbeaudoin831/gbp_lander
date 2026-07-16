@@ -260,6 +260,8 @@ body{margin:0;padding:0;font-family:'Inter',system-ui,sans-serif}
 /* ─── Ads tab: lander photo + AI copy → downloadable ad graphic ─────── */
 const AD_SIZE = 1080; // square, works on Facebook/Instagram feed and Google display
 
+const slugify = s => (String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')) || 'lander';
+
 // The stored photo URLs default to 800px wide (fine for thumbnails); ask the
 // proxy for more pixels when the photo is the full-bleed ad background.
 const hiResPhoto = url => `${url}${url.includes('?') ? '&' : '?'}max_width=1600`;
@@ -385,24 +387,30 @@ function drawAd(canvas, img, copy, biz) {
   }
 }
 
-function AdsTab({ landers }) {
+const MAX_ADS = 3;
+
+function AdsTab({ landers, canvasesRef }) {
   const [lander, setLander] = useState(null);
-  const [photoUrl, setPhotoUrl] = useState('');
-  const [img, setImg] = useState(null);
-  const [imgLoading, setImgLoading] = useState(false);
+  const [photoUrls, setPhotoUrls] = useState([]); // up to MAX_ADS, in click order
+  const [imgs, setImgs] = useState({});           // url -> loaded HTMLImageElement
   const [copy, setCopy] = useState({ headline: '', subline: '', cta: '', primary_text: '' });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
-  const canvasRef = useRef(null);
 
   const profile = lander?.profile || null;
   const photos = profile?.photos || [];
 
   const eyebrow = { fontFamily: "'IBM Plex Mono',monospace", fontSize: 11, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 10px' };
 
+  // Coming from "Step 2: Create Ads" there's exactly one lander -- skip the
+  // redundant click and drop the user straight into photo picking.
+  useEffect(() => {
+    if (landers.length === 1 && !lander) pickLander(landers[0]);
+  }, [landers]); // eslint-disable-line react-hooks/exhaustive-deps
+
   function pickLander(l) {
-    setLander(l); setPhotoUrl(''); setImg(null); setError('');
+    setLander(l); setPhotoUrls([]); setError('');
     // Prefill from the lander's own offer so there's a usable ad before the
     // AI call -- generation then just tightens what's already here.
     const p = l.profile || {};
@@ -414,27 +422,41 @@ function AdsTab({ landers }) {
     });
   }
 
-  useEffect(() => {
-    if (!photoUrl) { setImg(null); return; }
-    let cancelled = false;
-    setImgLoading(true);
-    const im = new Image();
-    im.crossOrigin = 'anonymous'; // backend proxy allows *, keeps the canvas exportable
-    im.onload = () => { if (!cancelled) { setImg(im); setImgLoading(false); } };
-    im.onerror = () => { if (!cancelled) { setImgLoading(false); setError('Could not load that photo. Try another one.'); } };
-    im.src = hiResPhoto(photoUrl);
-    return () => { cancelled = true; };
-  }, [photoUrl]);
+  function togglePhoto(url) {
+    setError('');
+    setPhotoUrls(prev => prev.includes(url)
+      ? prev.filter(u => u !== url)
+      : prev.length >= MAX_ADS ? prev : [...prev, url]);
+  }
 
   useEffect(() => {
-    if (!img || !profile || !canvasRef.current) return;
     let cancelled = false;
+    photoUrls.forEach(url => {
+      if (imgs[url]) return;
+      const im = new Image();
+      im.crossOrigin = 'anonymous'; // backend proxy allows *, keeps the canvas exportable
+      im.onload = () => { if (!cancelled) setImgs(prev => ({ ...prev, [url]: im })); };
+      im.onerror = () => { if (!cancelled) setError('Could not load one of the photos. Try another one.'); };
+      im.src = hiResPhoto(url);
+    });
+    return () => { cancelled = true; };
+  }, [photoUrls]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!profile) return;
+    let cancelled = false;
+    canvasesRef.current.length = photoUrls.length; // drop stale canvases from deselected ads
     (async () => {
       try { await Promise.all(AD_FONTS.map(f => document.fonts.load(f))); } catch { /* fall back to system fonts */ }
-      if (!cancelled && canvasRef.current) drawAd(canvasRef.current, img, copy, profile);
+      if (cancelled) return;
+      photoUrls.forEach((url, i) => {
+        const canvas = canvasesRef.current[i];
+        const img = imgs[url];
+        if (canvas && img) drawAd(canvas, img, copy, profile);
+      });
     })();
     return () => { cancelled = true; };
-  }, [img, copy, profile]);
+  }, [photoUrls, imgs, copy, profile, canvasesRef]);
 
   async function handleGenerate() {
     if (!profile) return;
@@ -466,20 +488,6 @@ function AdsTab({ landers }) {
     }
   }
 
-  function handleDownload() {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    try {
-      const a = document.createElement('a');
-      const slug = (lander?.name || 'ad').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-      a.download = `${slug || 'ad'}-ad.png`;
-      a.href = canvas.toDataURL('image/png');
-      a.click();
-    } catch {
-      setError('Could not export the image — that photo blocked cross-origin use. Try another photo.');
-    }
-  }
-
   async function copyPrimaryText() {
     try {
       await navigator.clipboard.writeText(copy.primary_text);
@@ -505,24 +513,34 @@ function AdsTab({ landers }) {
 
       {lander && (
         <div>
-          <p style={eyebrow}>2 · Photo</p>
+          <p style={eyebrow}>2 · Photos — pick up to {MAX_ADS}</p>
           {photos.length === 0
-            ? <p style={{ color: 'var(--text-secondary)', fontSize: 14, margin: 0 }}>This lander has no photos to build an ad from.</p>
+            ? <p style={{ color: 'var(--text-secondary)', fontSize: 14, margin: 0 }}>This lander has no photos to build ads from.</p>
             : <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(110px,1fr))', gap: 8 }}>
-                {photos.map((p, i) => (
-                  <button key={p} onClick={() => { setError(''); setPhotoUrl(p); }} style={{
-                    padding: 0, border: photoUrl === p ? '3px solid #FF5A1F' : '3px solid transparent',
-                    borderRadius: 10, overflow: 'hidden', cursor: 'pointer', background: 'var(--surface-1)',
-                    aspectRatio: '1', opacity: photoUrl && photoUrl !== p ? 0.6 : 1, transition: 'opacity .15s',
-                  }}>
-                    <img src={p} alt={`Photo ${i + 1}`} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                  </button>
-                ))}
+                {photos.map((p, i) => {
+                  const idx = photoUrls.indexOf(p);
+                  return (
+                    <button key={p} onClick={() => togglePhoto(p)} style={{
+                      position: 'relative', padding: 0, border: idx > -1 ? '3px solid #FF5A1F' : '3px solid transparent',
+                      borderRadius: 10, overflow: 'hidden', cursor: 'pointer', background: 'var(--surface-1)',
+                      aspectRatio: '1', opacity: photoUrls.length && idx === -1 ? 0.6 : 1, transition: 'opacity .15s',
+                    }}>
+                      <img src={p} alt={`Photo ${i + 1}`} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                      {idx > -1 && (
+                        <span style={{
+                          position: 'absolute', top: 6, right: 6, width: 22, height: 22, borderRadius: '50%',
+                          background: '#FF5A1F', color: '#fff', fontSize: 12, fontWeight: 700,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}>{idx + 1}</span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>}
         </div>
       )}
 
-      {lander && photoUrl && (
+      {lander && photoUrls.length > 0 && (
         <div>
           <p style={eyebrow}>3 · Copy</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -539,21 +557,26 @@ function AdsTab({ landers }) {
 
       {error && <div className="lb-error">{error}</div>}
 
-      {lander && photoUrl && (
+      {lander && photoUrls.length > 0 && (
         <div>
-          <p style={eyebrow}>Preview</p>
-          {imgLoading && <p style={{ color: 'var(--text-secondary)', fontSize: 14, margin: 0 }}>Loading photo…</p>}
-          <canvas ref={canvasRef} width={AD_SIZE} height={AD_SIZE} style={{ width: '100%', maxWidth: 480, borderRadius: 12, border: '0.5px solid var(--border)', display: img ? 'block' : 'none' }} />
-          {img && (
-            <div style={{ display: 'flex', gap: 10, marginTop: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-              <button className="lb-btn-signal" onClick={handleDownload} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                Download PNG <i className="ti ti-download" aria-hidden="true" />
-              </button>
-              {copy.primary_text.trim() && (
-                <button className="lb-btn-ghost" onClick={copyPrimaryText}>{copied ? 'Copied!' : 'Copy primary text'}</button>
-              )}
+          <p style={eyebrow}>Your ads ({photoUrls.length})</p>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            {photoUrls.map((url, i) => (
+              <div key={url} style={{ flex: '1 1 220px', maxWidth: 340 }}>
+                {!imgs[url] && <p style={{ color: 'var(--text-secondary)', fontSize: 13, margin: '0 0 6px' }}>Loading photo…</p>}
+                <canvas ref={el => { canvasesRef.current[i] = el; }} width={AD_SIZE} height={AD_SIZE}
+                  style={{ width: '100%', borderRadius: 12, border: '0.5px solid var(--border)', display: imgs[url] ? 'block' : 'none' }} />
+              </div>
+            ))}
+          </div>
+          {copy.primary_text.trim() && (
+            <div style={{ marginTop: 12 }}>
+              <button className="lb-btn-ghost" onClick={copyPrimaryText}>{copied ? 'Copied!' : 'Copy primary text'}</button>
             </div>
           )}
+          <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 14 }}>
+            Happy with them? Hit <b>Step 3: Download Lander &amp; Ads</b> up top to get the files.
+          </p>
         </div>
       )}
     </div>
@@ -579,6 +602,7 @@ export default function App() {
   const iframeRef = useRef(null);
   const blobRef   = useRef(null);
   const timerRef  = useRef(null);
+  const adCanvasesRef = useRef([]); // canvases drawn by AdsTab, exported at Step 3
 
   useEffect(() => {
     let s = document.getElementById('lb-global-css');
@@ -676,6 +700,45 @@ export default function App() {
     setStep('search'); setQuery(''); setCandidates([]); setHtml(''); setBusiness(null); setError('');
   }
 
+  /* ── Step 2: straight to ads, no account required ─────────────────── */
+  function goToAds() {
+    // The lander only lives in React state until Step 3 saves it -- that's
+    // deliberate: let people build their ads first, capture the lead when
+    // they want the files.
+    setLanders([{
+      id: 'local',
+      name: business?.name || 'My lander',
+      created_at: new Date().toISOString(),
+      profile: business,
+      local: true,
+    }]);
+    setDashboardTab('ads');
+    setStep('dashboard');
+  }
+
+  /* ── Step 3: hand over the files (runs after the lead is captured) ── */
+  function downloadAll() {
+    const slug = slugify(business?.name || landers[0]?.name);
+    const files = [];
+    if (html) {
+      const url = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+      files.push({ href: url, name: `${slug}-lander.html`, blob: true });
+    }
+    (adCanvasesRef.current || []).filter(Boolean).forEach((canvas, i) => {
+      try { files.push({ href: canvas.toDataURL('image/png'), name: `${slug}-ad-${i + 1}.png` }); }
+      catch { /* tainted canvas -- skip this ad rather than fail the batch */ }
+    });
+    // Stagger the clicks -- firing several programmatic downloads in the same
+    // tick makes browsers silently drop all but the first.
+    files.forEach((f, i) => setTimeout(() => {
+      const a = document.createElement('a');
+      a.href = f.href;
+      a.download = f.name;
+      a.click();
+      if (f.blob) setTimeout(() => URL.revokeObjectURL(f.href), 2000);
+    }, i * 400));
+  }
+
   /* ── account creation (Step 2) ────────────────────────────────────── */
   function openAccountModal() {
     setAccountError(supabase ? '' : 'Account creation isn’t configured yet — check back soon.');
@@ -752,8 +815,7 @@ export default function App() {
 
       setLanders(allLanders || []);
       setAccountModal('closed');
-      setDashboardTab('landers');
-      setStep('dashboard');
+      downloadAll();
     } catch (err) {
       setAccountError(friendlyAuthError(err, 'Invalid code. Try again.'));
     } finally {
@@ -827,53 +889,14 @@ export default function App() {
       <div style={{display:'flex',flexDirection:'column',height:'100dvh',background:'#0E1318'}}>
         <div style={{flex:'0 0 10%',minHeight:52,background:'#181D24',padding:'0 16px',display:'flex',alignItems:'center',gap:8,borderBottom:'1px solid rgba(255,255,255,.08)'}}>
           <span style={{width:24,height:24,background:'#FF5A1F',borderRadius:5,display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,color:'#fff',flexShrink:0}}>▲</span>
-          <button className="lb-btn-signal" style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:8}} onClick={openAccountModal}>
-            Step 2: Create Account <i className="ti ti-arrow-right" aria-hidden="true" />
+          <button className="lb-btn-signal" style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:8}} onClick={goToAds}>
+            Step 2: Create Ads <i className="ti ti-arrow-right" aria-hidden="true" />
           </button>
         </div>
 
         <div style={{flex:'1 1 90%',minHeight:0,padding:'0 10px',display:'flex',justifyContent:'center'}}>
           <iframe ref={iframeRef} style={{width:'100%',maxWidth:480,height:'100%',border:'none',display:'block',background:'#fff'}} title="Lander preview — mobile" />
         </div>
-
-        {accountModal !== 'closed' && (
-          <div style={{position:'fixed',inset:0,zIndex:200,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
-            <div style={{position:'absolute',inset:0,background:'rgba(14,19,24,.7)'}} onClick={closeAccountModal} />
-            <div style={{position:'relative',background:'#fff',borderRadius:14,maxWidth:380,width:'100%',padding:'28px 24px',boxShadow:'0 20px 60px rgba(0,0,0,.4)'}}>
-              <button onClick={closeAccountModal} aria-label="Close" style={{position:'absolute',top:10,right:14,background:'none',border:0,fontSize:26,lineHeight:1,color:'var(--text-secondary)',cursor:'pointer'}}>&times;</button>
-
-              {accountModal === 'form' && (
-                <>
-                  <h3 style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:20,letterSpacing:'-.01em',margin:'0 0 8px',color:'var(--text-primary)'}}>Create an account</h3>
-                  <p style={{fontSize:14,color:'var(--text-secondary)',margin:'0 0 20px',lineHeight:1.5}}>Create an account to save your landing page and create matching ads (next step).</p>
-                  <form onSubmit={submitAccountForm} style={{display:'flex',flexDirection:'column',gap:12}}>
-                    <input className="lb-input" placeholder="Your name" autoComplete="name" value={accountForm.name} onChange={e=>setAccountForm({...accountForm, name:e.target.value})} />
-                    <input className="lb-input" type="email" placeholder="Email" autoComplete="email" value={accountForm.email} onChange={e=>setAccountForm({...accountForm, email:e.target.value})} />
-                    <input className="lb-input" type="tel" placeholder="Phone number" autoComplete="tel" value={accountForm.phone} onChange={e=>setAccountForm({...accountForm, phone:e.target.value})} />
-                    {accountError && <div className="lb-error">{accountError}</div>}
-                    <button className="lb-btn-signal" type="submit" disabled={accountBusy || !supabase} style={{width:'100%',justifyContent:'center'}}>
-                      {accountBusy ? 'Sending code…' : 'Create Account'}
-                    </button>
-                  </form>
-                </>
-              )}
-
-              {accountModal === 'otp' && (
-                <>
-                  <h3 style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:20,letterSpacing:'-.01em',margin:'0 0 8px',color:'var(--text-primary)'}}>Check your email</h3>
-                  <p style={{fontSize:14,color:'var(--text-secondary)',margin:'0 0 20px',lineHeight:1.5}}>We sent a verification code to {accountForm.email}.</p>
-                  <form onSubmit={submitOtp} style={{display:'flex',flexDirection:'column',gap:12}}>
-                    <input className="lb-input" placeholder="Verification code" inputMode="numeric" autoComplete="one-time-code" value={otpCode} onChange={e=>setOtpCode(e.target.value)} />
-                    {accountError && <div className="lb-error">{accountError}</div>}
-                    <button className="lb-btn-signal" type="submit" disabled={accountBusy} style={{width:'100%',justifyContent:'center'}}>
-                      {accountBusy ? 'Verifying…' : 'Verify & Continue'}
-                    </button>
-                  </form>
-                </>
-              )}
-            </div>
-          </div>
-        )}
       </div>
     );
   }
@@ -885,6 +908,9 @@ export default function App() {
         <div style={{background:'#181D24',padding:'12px 20px',display:'flex',alignItems:'center',gap:10}}>
           <span style={{width:26,height:26,background:'#FF5A1F',borderRadius:6,display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,color:'#fff',flexShrink:0}}>▲</span>
           <span style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:14,color:'#fff',letterSpacing:'-.01em'}}>LanderBuilder</span>
+          <button className="lb-btn-signal" style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:8,height:38}} onClick={openAccountModal}>
+            Step 3: Download Lander &amp; Ads <i className="ti ti-download" aria-hidden="true" />
+          </button>
         </div>
 
         <div style={{padding:'24px 20px 48px',maxWidth:720,margin:'0 auto'}}>
@@ -906,15 +932,56 @@ export default function App() {
                 <div key={l.id} className="lb-card" style={{cursor:'default'}}>
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:15,color:'var(--text-primary)'}}>{l.name}</div>
-                    <div style={{fontSize:12,color:'var(--text-secondary)',marginTop:2}}>Saved {new Date(l.created_at).toLocaleDateString()}</div>
+                    <div style={{fontSize:12,color:'var(--text-secondary)',marginTop:2}}>
+                      {l.local ? 'Ready — download it in Step 3' : `Saved ${new Date(l.created_at).toLocaleDateString()}`}
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
           )}
 
-          {dashboardTab === 'ads' && <AdsTab landers={landers} />}
+          {dashboardTab === 'ads' && <AdsTab landers={landers} canvasesRef={adCanvasesRef} />}
         </div>
+
+        {accountModal !== 'closed' && (
+          <div style={{position:'fixed',inset:0,zIndex:200,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
+            <div style={{position:'absolute',inset:0,background:'rgba(14,19,24,.7)'}} onClick={closeAccountModal} />
+            <div style={{position:'relative',background:'#fff',borderRadius:14,maxWidth:380,width:'100%',padding:'28px 24px',boxShadow:'0 20px 60px rgba(0,0,0,.4)'}}>
+              <button onClick={closeAccountModal} aria-label="Close" style={{position:'absolute',top:10,right:14,background:'none',border:0,fontSize:26,lineHeight:1,color:'var(--text-secondary)',cursor:'pointer'}}>&times;</button>
+
+              {accountModal === 'form' && (
+                <>
+                  <h3 style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:20,letterSpacing:'-.01em',margin:'0 0 8px',color:'var(--text-primary)'}}>Almost there</h3>
+                  <p style={{fontSize:14,color:'var(--text-secondary)',margin:'0 0 20px',lineHeight:1.5}}>Tell us who you are and we'll save your lander and ads to an account, then download the files.</p>
+                  <form onSubmit={submitAccountForm} style={{display:'flex',flexDirection:'column',gap:12}}>
+                    <input className="lb-input" placeholder="Your name" autoComplete="name" value={accountForm.name} onChange={e=>setAccountForm({...accountForm, name:e.target.value})} />
+                    <input className="lb-input" type="email" placeholder="Email" autoComplete="email" value={accountForm.email} onChange={e=>setAccountForm({...accountForm, email:e.target.value})} />
+                    <input className="lb-input" type="tel" placeholder="Phone number" autoComplete="tel" value={accountForm.phone} onChange={e=>setAccountForm({...accountForm, phone:e.target.value})} />
+                    {accountError && <div className="lb-error">{accountError}</div>}
+                    <button className="lb-btn-signal" type="submit" disabled={accountBusy || !supabase} style={{width:'100%',justifyContent:'center'}}>
+                      {accountBusy ? 'Sending code…' : 'Continue'}
+                    </button>
+                  </form>
+                </>
+              )}
+
+              {accountModal === 'otp' && (
+                <>
+                  <h3 style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:20,letterSpacing:'-.01em',margin:'0 0 8px',color:'var(--text-primary)'}}>Check your email</h3>
+                  <p style={{fontSize:14,color:'var(--text-secondary)',margin:'0 0 20px',lineHeight:1.5}}>We sent a verification code to {accountForm.email}.</p>
+                  <form onSubmit={submitOtp} style={{display:'flex',flexDirection:'column',gap:12}}>
+                    <input className="lb-input" placeholder="Verification code" inputMode="numeric" autoComplete="one-time-code" value={otpCode} onChange={e=>setOtpCode(e.target.value)} />
+                    {accountError && <div className="lb-error">{accountError}</div>}
+                    <button className="lb-btn-signal" type="submit" disabled={accountBusy} style={{width:'100%',justifyContent:'center'}}>
+                      {accountBusy ? 'Verifying…' : 'Verify & Download'}
+                    </button>
+                  </form>
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     );
   }
