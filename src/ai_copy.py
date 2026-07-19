@@ -306,7 +306,9 @@ WHAT THE BUSINESS DOES
     client = _client()
     resp = client.messages.create(
         model=MODEL,
-        max_tokens=400,
+        # 400 was enough for offer-style copy but the don't-delay primary_text
+        # runs longer -- a truncated reply fails JSON parsing outright.
+        max_tokens=800,
         system=system,
         messages=[{"role": "user", "content": user_content}],
     )
