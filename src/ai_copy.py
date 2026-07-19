@@ -112,6 +112,99 @@ placeholders, no brackets.
 wording) so the ad and the landing page feel like one campaign."""
 
 
+_AD_DONT_DELAY_SYSTEM = """You write paid social ads (Facebook/Instagram) for local service \
+businesses using the "don't delay" angle: name a problem people ignore, show \
+what it turns into when they wait, and position this business as the fast fix.
+
+You'll get the business's structured profile plus a list of known delay-prone \
+problem arcs for their trade, each shaped "ignored symptom -> what it becomes". \
+Pick the ONE arc that best matches this business's actual services and build \
+the ad around it. If no arcs are provided, derive one plausible arc strictly \
+from their stated category and services -- same shape, nothing exotic.
+
+Return ONLY raw JSON, no markdown, no prose, matching exactly this shape:
+{
+  "headline": "names the ignored symptom as a warning, second person -- under 8 words, no trailing period (e.g. 'That Slow Drain Isn't Fixing Itself')",
+  "subline": "what it becomes if they keep waiting -- under 12 words, concrete, not hysterical",
+  "cta": "an urgency button label, 2-4 words (e.g. 'Fix It Today', 'Call Before It Spreads')",
+  "primary_text": "2-4 short sentences: the symptom people ignore -> what it turns into if they wait -> this business fixes it fast (cite the real rating and review count if strong) -> end by telling them to call now. No hashtags, no emojis."
+}
+
+Rules:
+- Never invent statistics, dollar amounts, timeframes, guarantees, or claims \
+not present in the provided profile. Consequences must be qualitative and \
+truthful for the trade (e.g. 'a backed-up sewer line', 'a flooded hallway') -- \
+no made-up numbers, no fabricated averages.
+- Only reference problems this business can actually fix per its category and \
+services list.
+- Urgent but honest: the real consequence is scary enough. No fake scarcity, \
+no countdown pressure, no shaming.
+- Only cite the rating/review count if genuinely strong (4.5+ with a \
+meaningful number of reviews).
+- headline and subline must read well as large text on a photo -- no \
+placeholders, no brackets."""
+
+# Known "ignored symptom -> what it becomes" arcs per trade. Matched against
+# the business's category + services text; the model picks the best fit.
+_DELAY_ARCS: list[tuple[tuple[str, ...], list[str]]] = [
+    (("plumb", "drain", "sewer", "rooter", "water heater"), [
+        "slow drain -> a full blockage, then sewage backing up into the house",
+        "running toilet -> wasted water on every single bill until it's fixed",
+        "dripping faucet -> a worn valve and water wasted around the clock",
+        "rumbling or rusty water from an aging water heater -> it fails and floods the space it lives in",
+        "gurgling drains or sewer smell -> roots in the line, then a collapsed line and a dug-up yard",
+        "small leak under the sink -> rotted cabinets and mold behind them",
+        "brown water stain on the ceiling -> a hidden pipe leak eating the drywall",
+    ]),
+    (("hvac", "heating", "cooling", "air condition", "furnace"), [
+        "weak airflow or rattling from the unit -> a dead compressor in the hottest week of the year",
+        "unit short-cycling and power bills creeping up -> a full breakdown when every company is booked out",
+        "skipped seasonal tune-up -> a mid-season failure at peak-demand prices",
+    ]),
+    (("electric", "wiring", "panel"), [
+        "flickering lights -> loose or overloaded wiring behind the walls",
+        "warm outlets or a faint burning smell -> a genuine fire risk",
+        "breakers tripping every week -> an overloaded or failing panel",
+        "a decades-old panel -> a fire hazard that also blocks insurance and home sales",
+    ]),
+    (("roof", "shingle", "gutter"), [
+        "shingle granules collecting in the gutters -> a roof at the end of its life letting water into the decking",
+        "one lifted or missing shingle -> a leak that rots the deck beneath it",
+        "a small ceiling stain -> interior water damage and mold",
+        "clogged gutters -> water backing under the roofline and down the walls",
+    ]),
+    (("pest", "termite", "exterminat", "rodent"), [
+        "one discarded termite wing or a pile of sawdust -> an active colony eating the structure",
+        "droppings in the pantry -> a growing nest inside the walls",
+        "a few carpenter ants -> hollowed-out framing where they've settled in",
+    ]),
+    (("tree", "arborist", "stump"), [
+        "dead limbs hanging over the roof -> the next storm drops them on the house or car",
+        "a leaning tree or mushrooms at the base -> root failure and an uncontrolled fall",
+        "limbs growing into the power lines -> an outage or worse in the next wind",
+    ]),
+    (("garage door",), [
+        "a grinding, uneven garage door -> a snapped spring with the car stuck inside",
+        "frayed cables -> a sudden failure of a very heavy door",
+    ]),
+    (("auto", "mechanic", "brake", "transmission", "tire", "oil change"), [
+        "squealing brakes -> worn pads scoring the rotors, a bigger repair every week it waits",
+        "an ignored check-engine light -> a small fix growing into engine damage",
+        "bald tires -> a blowout at highway speed",
+        "an overdue oil change -> engine wear that never reverses",
+    ]),
+]
+
+
+def _delay_arcs_for(category: str, services: list[str]) -> list[str]:
+    hay = " ".join([category or "", *(services or [])]).lower()
+    arcs: list[str] = []
+    for keywords, entries in _DELAY_ARCS:
+        if any(k in hay for k in keywords):
+            arcs.extend(entries)
+    return arcs
+
+
 def _client() -> anthropic.Anthropic:
     key = os.environ.get("ANTHROPIC_API_KEY")
     if not key:
@@ -175,10 +268,14 @@ def generate_ad_copy(
     offer_subhead: Optional[str] = None,
     offer_guarantee: Optional[str] = None,
     summary: Optional[str] = None,
+    angle: str = "offer",
 ) -> dict:
     """One Claude call turning a saved lander profile into ad copy: an
     on-image headline/subline/CTA plus feed primary text. No scraping --
     everything it needs is already in the stored profile jsonb.
+
+    angle='offer' sells the landing page's offer; angle='dont_delay' runs the
+    ignored-symptom -> consequence -> fast-fix arc for the business's trade.
     """
     user_content = f"""BUSINESS PROFILE
 Name: {name}
@@ -196,11 +293,21 @@ Guarantee: {offer_guarantee or "(none)"}
 WHAT THE BUSINESS DOES
 {summary or "(no summary available)"}"""
 
+    system = _AD_SYSTEM_PROMPT
+    if angle == "dont_delay":
+        system = _AD_DONT_DELAY_SYSTEM
+        arcs = _delay_arcs_for(category, services)
+        user_content += "\n\nKNOWN DELAY-PRONE PROBLEM ARCS FOR THIS TRADE\n" + (
+            "\n".join(f"- {a}" for a in arcs)
+            if arcs
+            else "(none on file -- derive one strictly from the category and services above)"
+        )
+
     client = _client()
     resp = client.messages.create(
         model=MODEL,
         max_tokens=400,
-        system=_AD_SYSTEM_PROMPT,
+        system=system,
         messages=[{"role": "user", "content": user_content}],
     )
     return _reply_json(resp)

@@ -398,6 +398,7 @@ const MAX_ADS = 3;
 
 function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn }) {
   const [lander, setLander] = useState(null);
+  const [angle, setAngle] = useState('offer'); // 'offer' | 'dont_delay' ad angle for AI copy
   const [photoUrls, setPhotoUrls] = useState(initialAds?.photoUrls || []); // up to MAX_ADS, in click order
   const [imgs, setImgs] = useState({});           // url -> loaded HTMLImageElement
   const [copy, setCopy] = useState(initialAds?.copy || { headline: '', subline: '', cta: '', primary_text: '' });
@@ -494,6 +495,7 @@ function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn }) {
         offer_subhead: profile.offer_subhead,
         offer_guarantee: profile.offer_guarantee,
         summary: profile.site_summary || profile.about_summary,
+        angle,
       });
       setCopy(c => ({
         headline: res.headline || c.headline,
@@ -564,6 +566,14 @@ function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn }) {
         <div>
           <p style={eyebrow}>3 · Copy</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 11, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Angle</span>
+              {[['offer', 'Our offer'], ['dont_delay', "Don't delay"]].map(([val, label]) => (
+                <button key={val} className={`lb-btn-ghost${angle === val ? ' active' : ''}`} onClick={() => setAngle(val)} title={val === 'dont_delay' ? 'Name a problem people ignore, show what it becomes, position you as the fast fix' : "Sell the landing page's offer"}>
+                  {label}
+                </button>
+              ))}
+            </div>
             <button className="lb-btn-signal" onClick={handleGenerate} disabled={busy} style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 8 }}>
               {busy ? 'Writing your ad…' : <>Generate ad copy <i className="ti ti-sparkles" aria-hidden="true" /></>}
             </button>

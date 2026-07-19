@@ -304,6 +304,7 @@ class AdCopyRequest(BaseModel):
     offer_subhead: Optional[str] = None
     offer_guarantee: Optional[str] = None
     summary: Optional[str] = None
+    angle: str = "offer"  # 'offer' | 'dont_delay'
 
 
 @app.post("/api/generate-ad-copy")
@@ -325,6 +326,7 @@ def generate_ad_copy_route(req: AdCopyRequest):
             offer_subhead=req.offer_subhead,
             offer_guarantee=req.offer_guarantee,
             summary=req.summary,
+            angle=req.angle if req.angle in ("offer", "dont_delay") else "offer",
         )
     except RuntimeError as e:
         raise HTTPException(status_code=500, detail=str(e))
