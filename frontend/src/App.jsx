@@ -192,6 +192,15 @@ ${phone?askModal:''}
    that's expected, not a bug. */
 const API_BASE = "https://gbp-lander.vercel.app";
 
+/* ─── thank-you page config ─────────────────────────────────────────
+   VSL_EMBED_URL: paste a YouTube/Vimeo/Loom embed URL once the video is
+   recorded (e.g. https://www.youtube.com/embed/XXXX). Until then the page
+   shows a written launch guide in its place.
+   BOOKING_URL: your $100 setup-call booking link (Calendly etc.). The
+   booking section hides itself while this is empty. */
+const VSL_EMBED_URL = "";
+const BOOKING_URL = "";
+
 async function apiGet(path) {
   const res = await fetch(`${API_BASE}${path}`);
   if (!res.ok) {
@@ -628,6 +637,7 @@ export default function App() {
   const [landers,       setLanders]      = useState([]);
   const [dashboardTab,  setDashboardTab] = useState('landers');
   const [restoredAds,   setRestoredAds]  = useState(null); // ads state rebuilt after the OAuth redirect
+  const [deliverables,  setDeliverables] = useState([]);   // files listed on the thank-you page
   const iframeRef = useRef(null);
   const blobRef   = useRef(null);
   const timerRef  = useRef(null);
@@ -851,9 +861,12 @@ export default function App() {
   }
 
   /* ── Step 3: hand over the files (runs after the lead is captured) ──
-     Downloads are queued rather than fired directly: after the OAuth
-     redirect the ad canvases need a moment to re-render, so the queue
-     waits for AdsTab's "all drawn" signal before exporting them. */
+     Nothing auto-downloads. Once the save lands (and, after the OAuth
+     redirect, once the ad canvases have re-rendered) the files are
+     captured into state and the user lands on the thank-you page, where
+     each file has its own download button. Capturing happens here, while
+     the canvases are still mounted -- they unmount when we leave the
+     dashboard. */
   function maybeDownload() {
     const pend = pendingDownloadRef.current;
     if (!pend) return;
@@ -863,26 +876,28 @@ export default function App() {
     const files = [];
     if (pend.biz) {
       const url = URL.createObjectURL(new Blob([buildLanderHTML(pend.biz)], { type: 'text/html' }));
-      files.push({ href: url, name: `${slug}-lander.html`, blob: true });
+      files.push({ href: url, name: `${slug}-lander.html`, label: 'Landing page', detail: 'Single HTML file — host it on any subdomain' });
     }
     (adCanvasesRef.current || []).filter(Boolean).forEach((canvas, i) => {
-      try { files.push({ href: canvas.toDataURL('image/png'), name: `${slug}-ad-${i + 1}.png` }); }
-      catch { /* tainted canvas -- skip this ad rather than fail the batch */ }
+      try {
+        files.push({ href: canvas.toDataURL('image/png'), name: `${slug}-ad-${i + 1}.png`, label: `Ad graphic ${i + 1}`, detail: '1080×1080 PNG — ready for Meta' });
+      } catch { /* tainted canvas -- skip this ad rather than fail the batch */ }
     });
-    // Stagger the clicks -- firing several programmatic downloads in the same
-    // tick makes browsers silently drop all but the first.
-    files.forEach((f, i) => setTimeout(() => {
-      const a = document.createElement('a');
-      a.href = f.href;
-      a.download = f.name;
-      a.click();
-      if (f.blob) setTimeout(() => URL.revokeObjectURL(f.href), 2000);
-    }, i * 400));
+    setDeliverables(files);
+    setStep('thankyou');
+    window.scrollTo(0, 0);
   }
 
   function handleAdsDrawn() {
     adsDrawnRef.current = true;
     maybeDownload();
+  }
+
+  function downloadDeliverable(f) {
+    const a = document.createElement('a');
+    a.href = f.href;
+    a.download = f.name;
+    a.click();
   }
 
   /* ── Step 3 auth: Google sign-in, then save + download ────────────── */
@@ -1055,6 +1070,73 @@ export default function App() {
     );
   }
 
+  /* ── thank-you (post-save: VSL + gated downloads + call offer) ────── */
+  if (step === 'thankyou') {
+    const first = (business?.name || landers[0]?.name || 'your business').split(',')[0];
+    return (
+      <div style={{minHeight:'100dvh',background:'var(--surface-1)'}}>
+        <div style={{background:'#181D24',padding:'12px 20px',display:'flex',alignItems:'center',gap:10}}>
+          <span style={{width:26,height:26,background:'#FF5A1F',borderRadius:6,display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,color:'#fff',flexShrink:0}}>▲</span>
+          <span style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:14,color:'#fff',letterSpacing:'-.01em'}}>SendKPI</span>
+          <button className="lb-btn-dark" style={{marginLeft:'auto'}} onClick={()=>setStep('dashboard')}>Back to dashboard</button>
+        </div>
+
+        <div style={{padding:'40px 20px 64px',maxWidth:680,margin:'0 auto'}}>
+          <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:12,letterSpacing:'.1em',textTransform:'uppercase',color:'#FF5A1F',margin:'0 0 12px'}}>You're all set</p>
+          <h1 style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:'clamp(26px,5vw,36px)',letterSpacing:'-.01em',color:'var(--text-primary)',margin:'0 0 10px',lineHeight:1.15}}>Your lander and ads for {first} are ready</h1>
+          <p style={{fontSize:15,color:'var(--text-secondary)',margin:'0 0 32px',lineHeight:1.6}}>They're saved to your account, and the files are below. First — two minutes on how to get them live and making the phone ring:</p>
+
+          {VSL_EMBED_URL ? (
+            <div style={{position:'relative',paddingTop:'56.25%',borderRadius:12,overflow:'hidden',background:'#181D24',marginBottom:32}}>
+              <iframe src={VSL_EMBED_URL} title="How to launch your lander and ads" allow="autoplay; fullscreen; picture-in-picture" allowFullScreen style={{position:'absolute',inset:0,width:'100%',height:'100%',border:0}} />
+            </div>
+          ) : (
+            <div style={{background:'var(--surface-2)',border:'0.5px solid var(--border)',borderRadius:12,padding:'22px 24px',marginBottom:32}}>
+              <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,letterSpacing:'.1em',textTransform:'uppercase',color:'var(--text-muted)',margin:'0 0 14px'}}>How to launch — 3 steps</p>
+              {[
+                ['1 · Put the lander on a subdomain', 'Upload the HTML file to any host and point a subdomain at it (e.g. go.yourcompany.com). It’s one self-contained file — no plugins, no builder.'],
+                ['2 · Load the ads into Meta', 'In Meta Ads Manager, create a campaign optimized for calls or traffic, upload the ad graphics, and set the destination to your new subdomain.'],
+                ['3 · Start small and watch the calls', 'Run $10–20/day for a week. Leads from the lander’s question form are tagged with the ad click they came from, so you’ll see what’s working.'],
+              ].map(([t, b]) => (
+                <div key={t} style={{marginBottom:14}}>
+                  <p style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:15,color:'var(--text-primary)',margin:'0 0 4px'}}>{t}</p>
+                  <p style={{fontSize:14,color:'var(--text-secondary)',margin:0,lineHeight:1.55}}>{b}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,letterSpacing:'.1em',textTransform:'uppercase',color:'var(--text-muted)',margin:'0 0 12px'}}>Your files</p>
+          <div style={{display:'flex',flexDirection:'column',gap:10,marginBottom:36}}>
+            {deliverables.length === 0 && <p style={{color:'var(--text-secondary)',fontSize:14}}>No files here yet — head back to the dashboard and hit Step 3 again.</p>}
+            {deliverables.map(f => (
+              <div key={f.name} className="lb-card" style={{cursor:'default'}}>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:14,color:'var(--text-primary)'}}>{f.label}</div>
+                  <div style={{fontSize:12,color:'var(--text-secondary)',marginTop:2}}>{f.detail}</div>
+                </div>
+                <button className="lb-btn-signal" style={{height:40,display:'flex',alignItems:'center',gap:8}} onClick={()=>downloadDeliverable(f)}>
+                  Download <i className="ti ti-download" aria-hidden="true" />
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {BOOKING_URL && (
+            <div style={{background:'#181D24',borderRadius:14,padding:'26px 24px'}}>
+              <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,letterSpacing:'.1em',textTransform:'uppercase',color:'#8FE3B8',margin:'0 0 10px'}}>Want it live today?</p>
+              <p style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:20,color:'#fff',margin:'0 0 8px',letterSpacing:'-.01em'}}>Book a $100 setup call</p>
+              <p style={{fontSize:14,color:'#C7CDD2',margin:'0 0 18px',lineHeight:1.6}}>We'll get on a call and set it all up together — lander on your subdomain, ads loaded into Meta, tracking on. You leave with a live funnel.</p>
+              <a className="lb-btn-signal" href={BOOKING_URL} target="_blank" rel="noopener" style={{display:'inline-flex',alignItems:'center',gap:8,textDecoration:'none',lineHeight:'48px'}}>
+                Book my setup call <i className="ti ti-arrow-right" aria-hidden="true" />
+              </a>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   /* ── dashboard (post-signup: Landers + Ads) ───────────────────────── */
   if (step === 'dashboard') {
     return (
@@ -1113,7 +1195,7 @@ export default function App() {
             <div style={{position:'relative',background:'#fff',borderRadius:14,maxWidth:380,width:'100%',padding:'28px 24px',boxShadow:'0 20px 60px rgba(0,0,0,.4)'}}>
               <button onClick={closeAccountModal} aria-label="Close" style={{position:'absolute',top:10,right:14,background:'none',border:0,fontSize:26,lineHeight:1,color:'var(--text-secondary)',cursor:'pointer'}}>&times;</button>
               <h3 style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:20,letterSpacing:'-.01em',margin:'0 0 8px',color:'var(--text-primary)'}}>Almost there</h3>
-              <p style={{fontSize:14,color:'var(--text-secondary)',margin:'0 0 20px',lineHeight:1.5}}>Sign in with Google and we'll save your lander and ads to your account, then download your files.</p>
+              <p style={{fontSize:14,color:'var(--text-secondary)',margin:'0 0 20px',lineHeight:1.5}}>Sign in with Google and we'll save your lander and ads to your account — your files will be waiting on the next page.</p>
               {accountError && <div className="lb-error" style={{marginBottom:12}}>{accountError}</div>}
               <button className="lb-btn-signal" onClick={startGoogleAuth} disabled={accountBusy || !supabase} style={{width:'100%',display:'flex',alignItems:'center',justifyContent:'center',gap:10}}>
                 <i className="ti ti-brand-google" aria-hidden="true" /> {accountBusy ? 'Working…' : 'Continue with Google'}
