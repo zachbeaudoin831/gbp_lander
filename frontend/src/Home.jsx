@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./home.css";
 
 const EXAMPLE_QUERIES = [
@@ -7,12 +7,35 @@ const EXAMPLE_QUERIES = [
   "Pacific HVAC, Seattle WA",
 ];
 
+// Keep in sync with scripts/build_niche_pages.py (the /for-* pages).
+const INDUSTRIES = [
+  { label: "Plumbers", href: "/for-plumbers" },
+  { label: "HVAC", href: "/for-hvac" },
+  { label: "Electricians", href: "/for-electricians" },
+  { label: "Roofers", href: "/for-roofers" },
+  { label: "Pest control", href: "/for-pest-control" },
+  { label: "Tree services", href: "/for-tree-service" },
+  { label: "Garage door", href: "/for-garage-door" },
+  { label: "Auto repair", href: "/for-auto-repair" },
+];
+
 /* Marketing homepage for the builder tool itself (distinct from the pages
    it generates). Scoped under .lb-home in home.css so its own color system
    doesn't leak into the candidates/preview/dashboard screens, which still
    use the app-shell theme in index.css. */
 export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
   const rootRef = useRef(null);
+  const dropRef = useRef(null);
+  const [industriesOpen, setIndustriesOpen] = useState(false);
+
+  useEffect(() => {
+    if (!industriesOpen) return;
+    const onDown = e => { if (dropRef.current && !dropRef.current.contains(e.target)) setIndustriesOpen(false); };
+    const onKey = e => { if (e.key === "Escape") setIndustriesOpen(false); };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => { document.removeEventListener("mousedown", onDown); document.removeEventListener("keydown", onKey); };
+  }, [industriesOpen]);
 
   useEffect(() => {
     const els = rootRef.current?.querySelectorAll(".reveal") || [];
@@ -45,6 +68,15 @@ export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
           <nav className="nav-links" aria-label="Main">
             <a href="#how">How it works</a>
             <a href="#pulls">What we pull in</a>
+            <div className={`nav-drop${industriesOpen ? " open" : ""}`} ref={dropRef}>
+              <button type="button" className="nav-drop-btn" aria-expanded={industriesOpen} aria-haspopup="true" onClick={() => setIndustriesOpen(o => !o)}>
+                Top Industries
+                <svg width="10" height="6" viewBox="0 0 10 6" fill="none" aria-hidden="true"><path d="M1 1l4 4 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+              </button>
+              <div className="nav-drop-panel" role="menu">
+                {INDUSTRIES.map(i => <a key={i.href} href={i.href} role="menuitem">{i.label}</a>)}
+              </div>
+            </div>
             <a href="#examples">Examples</a>
             <a href="#faq">FAQ</a>
           </nav>

@@ -156,6 +156,29 @@ html { scroll-behavior: smooth; }
   transition:color .15s;
 }
 .lb-home .nav-links a:hover{color:var(--ink)}
+.lb-home .nav-drop{position:relative}
+.lb-home .nav-drop-btn{
+  display:flex;align-items:center;gap:6px;
+  background:none;border:none;padding:0;cursor:pointer;
+  font:inherit;font-size:14.5px;font-weight:500;color:var(--ink-2);
+  transition:color .15s;
+}
+.lb-home .nav-drop-btn:hover,.lb-home .nav-drop.open .nav-drop-btn{color:var(--ink)}
+.lb-home .nav-drop-btn svg{transition:transform .15s}
+.lb-home .nav-drop.open .nav-drop-btn svg{transform:rotate(180deg)}
+.lb-home .nav-drop-panel{
+  display:none;position:absolute;top:calc(100% + 16px);left:50%;transform:translateX(-50%);
+  min-width:200px;padding:8px;
+  background:var(--paper);border:1px solid var(--line);border-radius:12px;
+  box-shadow:0 16px 40px -12px rgba(0,0,0,.5);
+}
+.lb-home .nav-drop.open .nav-drop-panel{display:block}
+.lb-home .nav-drop-panel a{
+  display:block;padding:9px 12px;border-radius:8px;
+  font-size:14px;font-weight:500;color:var(--ink-2);text-decoration:none;
+  transition:background .12s,color .12s;
+}
+.lb-home .nav-drop-panel a:hover{background:color-mix(in srgb,var(--orange) 10%,transparent);color:var(--ink)}
 .lb-home .btn{
   display:inline-flex;align-items:center;justify-content:center;gap:8px;
   border-radius:10px;border:none;text-decoration:none;
