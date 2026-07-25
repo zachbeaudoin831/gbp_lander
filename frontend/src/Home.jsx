@@ -90,7 +90,7 @@ export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
           <div className="wrap">
             <div className="hero-copy">
               <p className="eyebrow">For business owners who need more leads</p>
-              <h1>Turn Your Google Listing Into A Lander With Matching Ads In <span className="ring">30 Seconds<svg viewBox="0 0 200 24" preserveAspectRatio="none" aria-hidden="true"><path d="M4 18 C 50 8, 150 8, 196 14" /></svg></span></h1>
+              <h1>Turn Your Google Listing Into A Lander In <span className="ring">30 Seconds<svg viewBox="0 0 200 24" preserveAspectRatio="none" aria-hidden="true"><path d="M4 18 C 50 8, 150 8, 196 14" /></svg></span></h1>
               <p className="hero-sub">Search your Google Business Profile and SendKPI assembles a ready-to-deploy, call-conversion landing page from <strong>your real photos, hours, reviews, and services</strong> — no templates, no lorem ipsum.</p>
 
               <form className="finder" onSubmit={e => { e.preventDefault(); onSearch(e); }}>
