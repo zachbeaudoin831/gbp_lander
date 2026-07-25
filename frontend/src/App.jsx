@@ -43,6 +43,10 @@ function buildLanderHTML(d) {
   const city  = (d.address||'').split(',')[1]?.trim()||'';
   const first = (d.name||'Us').split(' ')[0];
   const today = todayName();
+  // Trailing country makes the maps embed treat the query as an address
+  // search; without it Google resolves the business entity and shows the
+  // place card with the rating + review count on the map.
+  const mapAddr = (d.address||'').replace(/,\s*(USA|United States|Canada)\s*$/i,'');
 
   const ticket = () => href ? `
 <div class="ticket">
@@ -173,7 +177,7 @@ ${(d.service_areas||[]).length?`<section><p class="eyebrow">Areas we service</p>
 ${phone?`<section class="cta-band"><div class="wrap"><h2 class="cta-band-heading">${esc(d.name)} is ready to help</h2>${ticket()}</div></section>`:''}
 
 <div class="wrap">
-  ${d.address?`<section><p class="eyebrow">Location</p><iframe class="map-embed" src="https://maps.google.com/maps?q=${encodeURIComponent(`${d.name||''}, ${d.address}`)}&z=14&output=embed" loading="lazy" title="Map to ${esc(d.name)}" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe><p class="addr">${esc(d.address)}${d.maps_url?` · <a href="${esc(d.maps_url)}" target="_blank" rel="noopener">Get directions</a>`:''}</p></section>`:''}
+  ${d.address?`<section><p class="eyebrow">Location</p><iframe class="map-embed" src="https://maps.google.com/maps?q=${encodeURIComponent(`${d.name||''}, ${mapAddr}`)}&z=14&output=embed" loading="lazy" title="Map to ${esc(d.name)}" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe><p class="addr">${esc(d.address)}${d.maps_url?` · <a href="${esc(d.maps_url)}" target="_blank" rel="noopener">Get directions</a>`:''}</p></section>`:''}
   <footer><p class="fine">${esc(d.name)}</p></footer>
 </div>
 
