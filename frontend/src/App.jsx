@@ -239,6 +239,17 @@ async function generateAdCopy(payload) {
   return apiPost('/api/generate-ad-copy', payload);
 }
 
+/* ─── preview-only CTA appended below the lander in the preview iframe.
+   Styled as builder chrome (matches the top bar) so it reads as part of
+   the tool, not the lander -- and it's never in the downloaded file,
+   which regenerates clean from the profile. Extra bottom padding clears
+   the lander's fixed call bar. ─────────────────────────────────────── */
+const PREVIEW_CTA_HTML = `
+<div style="background:#181D24;padding:40px 20px 130px;text-align:center;border-top:2px dashed rgba(255,255,255,.25)">
+  <p style="font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#9AA3A8;margin:0 0 16px">Happy with your page?</p>
+  <button onclick="parent.postMessage('sendkpi-create-ads','*')" style="background:#FF5A1F;color:#fff;border:none;border-radius:10px;padding:16px 30px;font-family:'IBM Plex Mono',ui-monospace,monospace;font-weight:600;font-size:15px;letter-spacing:.02em;cursor:pointer">Step 2: Create Ads →</button>
+</div>`;
+
 /* ─── app styles (injected once) ────────────────────────────────────── */
 const GLOBAL_CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap');
@@ -726,11 +737,20 @@ export default function App() {
   useEffect(() => {
     if (step !== 'preview' || !html || !iframeRef.current) return;
     if (blobRef.current) URL.revokeObjectURL(blobRef.current);
-    const blob = new Blob([html], { type: 'text/html' });
+    const blob = new Blob([html.replace('</body>', `${PREVIEW_CTA_HTML}</body>`)], { type: 'text/html' });
     blobRef.current = URL.createObjectURL(blob);
     iframeRef.current.src = blobRef.current;
     return () => { if (blobRef.current) URL.revokeObjectURL(blobRef.current); };
   }, [step, html]);
+
+  // The injected preview CTA lives inside the iframe -- it signals back up
+  // via postMessage to advance to the ads step.
+  useEffect(() => {
+    if (step !== 'preview') return;
+    const onMsg = e => { if (e.data === 'sendkpi-create-ads') goToAds(); };
+    window.addEventListener('message', onMsg);
+    return () => window.removeEventListener('message', onMsg);
+  }, [step]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function cycleMsgs(msgs, interval=2800) {
     if (timerRef.current) clearInterval(timerRef.current);
