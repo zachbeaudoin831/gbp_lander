@@ -215,7 +215,10 @@ def _client() -> anthropic.Anthropic:
 def _reply_json(resp) -> dict:
     raw = "".join(b.text for b in resp.content if b.type == "text").strip()
     raw = raw.removeprefix("```json").removeprefix("```").removesuffix("```").strip()
-    return json.loads(raw)
+    # strict=False: the model occasionally puts literal newlines inside string
+    # values (multi-paragraph primary_text); default parsing rejects those as
+    # invalid control characters.
+    return json.loads(raw, strict=False)
 
 
 def generate_extras(
