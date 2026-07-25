@@ -100,7 +100,7 @@ export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
                     type="text"
                     value={query}
                     onChange={e => setQuery(e.target.value)}
-                    placeholder="Business name and city — e.g. Joe's Plumbing, Austin TX"
+                    placeholder="Business name and city"
                     aria-label="Business name and city"
                   />
                   <button className="btn btn-primary" type="submit">Find my listing →</button>
