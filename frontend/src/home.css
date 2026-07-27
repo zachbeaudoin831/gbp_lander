@@ -284,6 +284,19 @@ html { scroll-behavior: smooth; }
   animation:lb-home-route-flow 1.1s linear infinite;
 }
 @keyframes lb-home-route-flow{to{stroke-dashoffset:-10}}
+
+/* Guided spotlight: listing -> pill -> lander, then loop. One shared
+   timeline (7.5s), each element lit for its third via staggered delays. */
+.lb-home .gbp-card,.lb-home .route-label,.lb-home .lander-mock{
+  outline:3px solid transparent;outline-offset:4px;
+  animation:lb-home-spotlight 7.5s ease-in-out infinite;
+}
+.lb-home .route-label{animation-delay:2.5s}
+.lb-home .lander-mock{animation-delay:5s}
+@keyframes lb-home-spotlight{
+  0%,33%,100%{outline-color:transparent;transform:none}
+  7%,26%{outline-color:color-mix(in srgb,var(--orange) 45%,transparent);transform:scale(1.015)}
+}
 .lb-home .route-label{
   position:relative;z-index:2;
   background:var(--ink);color:var(--paper);
