@@ -14,9 +14,9 @@ html { scroll-behavior: smooth; }
   --ink-3:#8A8178;
   --line:#E4DFD5;
   --line-2:#D5CFC2;
-  --orange:#E85D24;
-  --orange-deep:#C4491A;
-  --orange-soft:#FBE9DF;
+  --orange:#0D57D0;
+  --orange-deep:#0A46A8;
+  --orange-soft:#E7EEFB;
   --green:#0E8A5F;
   --green-deep:#0A6B49;
   --green-soft:#E3F2EA;
@@ -39,74 +39,8 @@ html { scroll-behavior: smooth; }
   -webkit-font-smoothing:antialiased;
   text-rendering:optimizeLegibility;
 }
-@media (prefers-color-scheme:dark){
-  .lb-home{
-    --paper:#161210;
-    --paper-2:#1E1915;
-    --card:#221D18;
-    --ink:#F4EFE7;
-    --ink-2:#BDB2A4;
-    --ink-3:#8F8578;
-    --line:#332C25;
-    --line-2:#413931;
-    --orange:#FF7A3D;
-    --orange-deep:#FF8E5A;
-    --orange-soft:#3A2418;
-    --green:#31B57F;
-    --green-deep:#4CCB96;
-    --green-soft:#123024;
-    --star:#F0B04F;
-    --dark:#0F0C0A;
-    --dark-ink:#F4EFE7;
-    --dark-ink-2:#B5AA9C;
-    --shadow:0 1px 2px rgba(0,0,0,.3),0 12px 32px -12px rgba(0,0,0,.5);
-    --shadow-lg:0 2px 4px rgba(0,0,0,.35),0 28px 64px -20px rgba(0,0,0,.6);
-  }
-}
-.lb-home[data-theme="dark"], [data-theme="dark"] .lb-home{
-  --paper:#161210;
-  --paper-2:#1E1915;
-  --card:#221D18;
-  --ink:#F4EFE7;
-  --ink-2:#BDB2A4;
-  --ink-3:#8F8578;
-  --line:#332C25;
-  --line-2:#413931;
-  --orange:#FF7A3D;
-  --orange-deep:#FF8E5A;
-  --orange-soft:#3A2418;
-  --green:#31B57F;
-  --green-deep:#4CCB96;
-  --green-soft:#123024;
-  --star:#F0B04F;
-  --dark:#0F0C0A;
-  --dark-ink:#F4EFE7;
-  --dark-ink-2:#B5AA9C;
-  --shadow:0 1px 2px rgba(0,0,0,.3),0 12px 32px -12px rgba(0,0,0,.5);
-  --shadow-lg:0 2px 4px rgba(0,0,0,.35),0 28px 64px -20px rgba(0,0,0,.6);
-}
-.lb-home[data-theme="light"], [data-theme="light"] .lb-home{
-  --paper:#FBFAF7;
-  --paper-2:#F3F0E9;
-  --card:#FFFFFF;
-  --ink:#181310;
-  --ink-2:#5C544C;
-  --ink-3:#8A8178;
-  --line:#E4DFD5;
-  --line-2:#D5CFC2;
-  --orange:#E85D24;
-  --orange-deep:#C4491A;
-  --orange-soft:#FBE9DF;
-  --green:#0E8A5F;
-  --green-deep:#0A6B49;
-  --green-soft:#E3F2EA;
-  --star:#EDA83C;
-  --dark:#1C1712;
-  --dark-ink:#F4EFE7;
-  --dark-ink-2:#B5AA9C;
-  --shadow:0 1px 2px rgba(24,19,16,.05),0 12px 32px -12px rgba(24,19,16,.18);
-  --shadow-lg:0 2px 4px rgba(24,19,16,.06),0 28px 64px -20px rgba(24,19,16,.28);
-}
+/* Single light theme on every device -- the dark prefers-color-scheme
+   variant was removed so desktop and mobile match. */
 
 .lb-home *{box-sizing:border-box}
 .lb-home h1,.lb-home h2,.lb-home h3{font-family:var(--font-display);text-wrap:balance;margin:0}
