@@ -41,16 +41,21 @@ export const LogoMark = ({ size = 30, ring = "#FBFAF7" }) => (
 export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
   const rootRef = useRef(null);
   const dropRef = useRef(null);
+  const mobileRef = useRef(null);
   const [industriesOpen, setIndustriesOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   useEffect(() => {
-    if (!industriesOpen) return;
-    const onDown = e => { if (dropRef.current && !dropRef.current.contains(e.target)) setIndustriesOpen(false); };
-    const onKey = e => { if (e.key === "Escape") setIndustriesOpen(false); };
+    if (!industriesOpen && !mobileNavOpen) return;
+    const onDown = e => {
+      if (industriesOpen && dropRef.current && !dropRef.current.contains(e.target)) setIndustriesOpen(false);
+      if (mobileNavOpen && mobileRef.current && !mobileRef.current.contains(e.target)) setMobileNavOpen(false);
+    };
+    const onKey = e => { if (e.key === "Escape") { setIndustriesOpen(false); setMobileNavOpen(false); } };
     document.addEventListener("mousedown", onDown);
     document.addEventListener("keydown", onKey);
     return () => { document.removeEventListener("mousedown", onDown); document.removeEventListener("keydown", onKey); };
-  }, [industriesOpen]);
+  }, [industriesOpen, mobileNavOpen]);
 
   useEffect(() => {
     const els = rootRef.current?.querySelectorAll(".reveal") || [];
@@ -93,6 +98,21 @@ export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
             <a href="#examples">Examples</a>
             <a href="#faq">FAQ</a>
           </nav>
+          <div className={`mobile-nav${mobileNavOpen ? " open" : ""}`} ref={mobileRef}>
+            <button className="mobile-nav-btn" type="button" aria-label="Menu" aria-expanded={mobileNavOpen} onClick={() => setMobileNavOpen(o => !o)}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
+                <line x1="4" y1="7" x2="20" y2="7" /><line x1="4" y1="12" x2="20" y2="12" /><line x1="4" y1="17" x2="20" y2="17" />
+              </svg>
+            </button>
+            <div className="mobile-nav-panel" role="menu">
+              <a href="#how" onClick={() => setMobileNavOpen(false)}>How it works</a>
+              <a href="#pulls" onClick={() => setMobileNavOpen(false)}>What we pull in</a>
+              <a href="#examples" onClick={() => setMobileNavOpen(false)}>Examples</a>
+              <a href="#faq" onClick={() => setMobileNavOpen(false)}>FAQ</a>
+              <div className="mobile-nav-sep">Top Industries</div>
+              {INDUSTRIES.map(i => <a key={i.href} href={i.href}>{i.label}</a>)}
+            </div>
+          </div>
           <button className="btn btn-primary header-cta" type="button" onClick={onSignIn}>Sign In</button>
         </div>
       </header>
