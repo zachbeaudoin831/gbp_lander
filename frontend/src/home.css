@@ -163,8 +163,8 @@ html { scroll-behavior: smooth; }
 }
 .lb-home .hero-copy{display:flex;flex-direction:column;gap:26px;min-width:0}
 .lb-home .hero h1{
-  font-size:clamp(34px,4.3vw,52px);
-  line-height:1.05;
+  font-size:clamp(32px,3.9vw,44px);
+  line-height:1.07;
   font-weight:800;
   letter-spacing:-.025em;
 }
