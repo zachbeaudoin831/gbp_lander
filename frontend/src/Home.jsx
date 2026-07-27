@@ -146,7 +146,7 @@ export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
           <div className="wrap">
             <div className="hero-copy">
               <h1>Turn Your Business Listing Into A Call Now Page <span className="ring">With Matching Ads<svg viewBox="0 0 200 24" preserveAspectRatio="none" aria-hidden="true"><path d="M4 18 C 50 8, 150 8, 196 14" /></svg></span></h1>
-              <p className="hero-sub">SendKPI was created to help owners get clear on their numbers. The number everyone wanted to increase was <strong>inbound calls</strong>. Select your Google Business Listing below and we'll create a Call CTA page, do the research on winning angles, and create the ads focused on increasing inbound calls.</p>
+              <p className="hero-sub">We build landing pages and ads around the main needle mover for local businesses: <strong>inbound calls</strong>. Start with your Google Business Listing below, and we'll handle the page, conversion research, and the ad creatives.</p>
 
               <form className="finder" onSubmit={e => { e.preventDefault(); onSearch(e); }}>
                 <div className="finder-box">
