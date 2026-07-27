@@ -19,15 +19,16 @@ const INDUSTRIES = [
   { label: "Auto repair", href: "/for-auto-repair" },
 ];
 
-/* SendKPI mark: dialpad key (#) with a "new report" badge. ring = the
-   background color behind the badge's cutout ring. */
+/* SendKPI mark: dialpad key (#) with a "new report" badge. The # is the
+   true typographic glyph (Inter SemiBold outline, baked in as a path so it
+   renders identically everywhere). ring = the background color behind the
+   badge's cutout ring. */
 export const LogoMark = ({ size = 30, ring = "#FBFAF7" }) => (
   <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true" style={{ display: "block", flex: "none" }}>
     <defs><linearGradient id="skpiG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#0D57D0" /><stop offset="1" stopColor="#0A46A8" /></linearGradient></defs>
-    <rect x="6" y="8" width="48" height="48" rx="13" fill="url(#skpiG)" />
-    <g stroke="#fff" strokeWidth="5" strokeLinecap="round">
-      <line x1="26" y1="21" x2="23" y2="43" /><line x1="38" y1="21" x2="35" y2="43" />
-      <line x1="18.5" y1="28.5" x2="42.5" y2="28.5" /><line x1="17.5" y1="36" x2="41.5" y2="36" />
+    <rect x="6" y="8" width="48" height="48" rx="9" fill="url(#skpiG)" />
+    <g transform="translate(17.09 47.00) scale(0.02013 -0.02013)">
+      <path d="M674.6 0 919.7 1490H1131.1L886.2 0ZM4.8 380.3 40.6 591.7H1191.8L1156.0 380.3ZM151.7 0 395.7 1490H607.1L363.1 0ZM91.0 897.2 126.8 1109.7H1276.9L1242.2 897.2Z" fill="#fff" />
     </g>
     <circle cx="53" cy="12" r="9.5" fill="#0E8A5F" stroke={ring} strokeWidth="3" />
   </svg>
