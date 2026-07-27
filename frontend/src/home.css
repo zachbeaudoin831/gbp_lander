@@ -592,6 +592,9 @@ html { scroll-behavior: smooth; }
   .lb-home .nav-links{display:none}
   .lb-home .site-header .wrap{gap:16px}
   .lb-home .mobile-nav{display:block;margin-left:auto}
+  .lb-home .hero .chips{display:none}
+  .lb-home .hero-proof{display:none}
+  .lb-home .hero .wrap{gap:32px}
   .lb-home .steps,.lb-home .pull-grid,.lb-home .ex-grid{grid-template-columns:1fr}
   .lb-home .finder-box{flex-direction:column;padding:10px}
   .lb-home .finder-box svg.pin{display:none}
