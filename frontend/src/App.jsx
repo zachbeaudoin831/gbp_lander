@@ -1051,7 +1051,7 @@ export default function App() {
 
   /* ── candidates ────────────────────────────────────────────────────── */
   if (step === 'candidates') return (
-    <div>
+    <div style={{background:'#fff',minHeight:'100dvh'}}>
       <div style={{background:'#181D24',padding:'12px 20px',display:'flex',alignItems:'center',gap:10}}>
         <LogoMark size={26} ring="#181D24" />
         <span style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:14,color:'#fff',letterSpacing:'-.01em'}}>SendKPI</span>
@@ -1066,7 +1066,7 @@ export default function App() {
 
         <div style={{display:'flex',flexDirection:'column',gap:10}}>
           {candidates.map((c,i)=>(
-            <div key={i} className="lb-card" onClick={()=>runBuild(c)}>
+            <div key={i} className="lb-card" onClick={()=>runBuild(c)} style={{background:'#F4F5F3',borderColor:'#E5E7E3'}}>
               <div style={{width:56,height:56,borderRadius:8,overflow:'hidden',flexShrink:0,background:'var(--surface-1)',border:'0.5px solid var(--border)',display:'flex',alignItems:'center',justifyContent:'center'}}>
                 {c.photo
                   ? <img src={c.photo} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}} onError={e=>{e.target.style.display='none'; e.target.nextSibling.style.display='flex';}} />
@@ -1082,7 +1082,7 @@ export default function App() {
                   {c.phone&&<span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:12,color:'var(--text-secondary)'}}>{c.phone}</span>}
                 </div>
               </div>
-              <span style={{flexShrink:0,fontFamily:"'IBM Plex Mono',monospace",fontSize:12,color:'#FF5A1F',fontWeight:600,letterSpacing:'.02em',display:'flex',alignItems:'center',gap:4}}>
+              <span style={{flexShrink:0,fontFamily:"'IBM Plex Mono',monospace",fontSize:12,color:'#0D57D0',fontWeight:600,letterSpacing:'.02em',display:'flex',alignItems:'center',gap:4}}>
                 Build lander <i className="ti ti-arrow-right" aria-hidden="true" />
               </span>
             </div>
