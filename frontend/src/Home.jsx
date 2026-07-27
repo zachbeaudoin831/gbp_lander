@@ -217,7 +217,7 @@ export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
                   <p className="mock-sub">Licensed &amp; insured · Free inspections · Serving Davidson County since 2009</p>
                   <button className="mock-call" type="button" aria-label="Example call button">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.13.96.36 1.9.7 2.8a2 2 0 0 1-.45 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.45c.9.34 1.84.57 2.8.7a2 2 0 0 1 1.7 2.05Z" /></svg>
-                    Call (615) 555-0119
+                    Call Now (615) 555-0119
                   </button>
                   <div className="mock-meta">
                     <span><span className="stars" aria-hidden="true">★★★★★</span> 4.9 · 212 reviews</span>
