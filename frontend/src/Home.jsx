@@ -104,7 +104,6 @@ export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
                   />
                   <button className="btn btn-primary" type="submit">Find my listing →</button>
                 </div>
-                <p className="finder-hint">One box — type the business name and city/state together, then hit Find.</p>
                 <div className="chips" role="group" aria-label="Example searches">
                   {EXAMPLE_QUERIES.map(ex => (
                     <button key={ex} className="chip" type="button" onClick={() => setQuery(ex)}>{ex}</button>
