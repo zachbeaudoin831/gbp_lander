@@ -171,7 +171,7 @@ a{color:inherit}img{max-width:100%}
 .wrap{max-width:980px;margin:0 auto;padding:0 24px}
 .topbar{position:sticky;top:0;z-index:30;background:rgba(23,19,16,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
 .topbar-inner{max-width:980px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-.logo{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:700;font-size:17px;text-decoration:none;letter-spacing:-.01em}
+.logo{display:flex;align-items:center;gap:10px;font-family:'Plus Jakarta Sans',var(--display);font-weight:700;font-size:17px;text-decoration:none;letter-spacing:-.01em}
 .logo-mark{width:28px;height:28px;display:block;flex:none}
 .top-cta{background:var(--signal);color:#fff;font-family:var(--mono);font-weight:600;font-size:13px;padding:10px 18px;border-radius:999px;text-decoration:none;white-space:nowrap}
 .hero{padding:72px 0 56px}
@@ -246,7 +246,7 @@ def page(n: dict) -> str:
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&family=Plus+Jakarta+Sans:wght@700&display=swap" rel="stylesheet">
 <style>{CSS}</style></head><body>
 
 <div class="topbar"><div class="topbar-inner">
