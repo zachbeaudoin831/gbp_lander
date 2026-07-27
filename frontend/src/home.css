@@ -116,7 +116,7 @@ html { scroll-behavior: smooth; }
 /* hero build log: code rolling upward, Claude-Code-style */
 .lb-home .build-log{
   margin-top:22px;height:208px;overflow:hidden;position:relative;
-  background:var(--paper);border:1px solid var(--line);border-radius:14px;
+  background:var(--paper);border-radius:14px;
   padding:0 20px;
   -webkit-mask-image:linear-gradient(180deg,transparent 0,#000 26px,#000 calc(100% - 26px),transparent 100%);
   mask-image:linear-gradient(180deg,transparent 0,#000 26px,#000 calc(100% - 26px),transparent 100%);
