@@ -172,7 +172,7 @@ a{color:inherit}img{max-width:100%}
 .topbar{position:sticky;top:0;z-index:30;background:rgba(23,19,16,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
 .topbar-inner{max-width:980px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px}
 .logo{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:700;font-size:17px;text-decoration:none;letter-spacing:-.01em}
-.logo-mark{width:28px;height:28px;background:var(--signal);border-radius:7px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px}
+.logo-mark{width:28px;height:28px;display:block;flex:none}
 .top-cta{background:var(--signal);color:#fff;font-family:var(--mono);font-weight:600;font-size:13px;padding:10px 18px;border-radius:999px;text-decoration:none;white-space:nowrap}
 .hero{padding:72px 0 56px}
 .eyebrow{font-family:var(--mono);font-weight:600;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--amber);margin:0 0 18px}
@@ -243,13 +243,14 @@ def page(n: dict) -> str:
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>SendKPI for {esc(n["trade"])} — don't-delay ads + a landing page from your Google listing</title>
 <meta name="description" content="SendKPI turns a {esc(n["trade_singular"])}'s Google Business Profile into a call-focused landing page and matching don't-delay Meta ads — in about two minutes.">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>{CSS}</style></head><body>
 
 <div class="topbar"><div class="topbar-inner">
-  <a class="logo" href="/"><span class="logo-mark">▲</span>SendKPI</a>
+  <a class="logo" href="/"><span class="logo-mark"><svg width="28" height="28" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="skpiG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0D57D0"/><stop offset="1" stop-color="#0A46A8"/></linearGradient></defs><rect x="6" y="8" width="48" height="48" rx="13" fill="url(#skpiG)"/><g stroke="#fff" stroke-width="5" stroke-linecap="round"><line x1="26" y1="21" x2="23" y2="43"/><line x1="38" y1="21" x2="35" y2="43"/><line x1="18.5" y1="28.5" x2="42.5" y2="28.5"/><line x1="17.5" y1="36" x2="41.5" y2="36"/></g><circle cx="53" cy="12" r="9.5" fill="#0E8A5F" stroke="#171310" stroke-width="3"/></svg></span>SendKPI</a>
   <a class="top-cta" href="/">Build mine free</a>
 </div></div>
 

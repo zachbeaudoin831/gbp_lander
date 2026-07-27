@@ -19,6 +19,20 @@ const INDUSTRIES = [
   { label: "Auto repair", href: "/for-auto-repair" },
 ];
 
+/* SendKPI mark: dialpad key (#) with a "new report" badge. ring = the
+   background color behind the badge's cutout ring. */
+export const LogoMark = ({ size = 30, ring = "#FBFAF7" }) => (
+  <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true" style={{ display: "block", flex: "none" }}>
+    <defs><linearGradient id="skpiG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#0D57D0" /><stop offset="1" stopColor="#0A46A8" /></linearGradient></defs>
+    <rect x="6" y="8" width="48" height="48" rx="13" fill="url(#skpiG)" />
+    <g stroke="#fff" strokeWidth="5" strokeLinecap="round">
+      <line x1="26" y1="21" x2="23" y2="43" /><line x1="38" y1="21" x2="35" y2="43" />
+      <line x1="18.5" y1="28.5" x2="42.5" y2="28.5" /><line x1="17.5" y1="36" x2="41.5" y2="36" />
+    </g>
+    <circle cx="53" cy="12" r="9.5" fill="#0E8A5F" stroke={ring} strokeWidth="3" />
+  </svg>
+);
+
 /* Marketing homepage for the builder tool itself (distinct from the pages
    it generates). Scoped under .lb-home in home.css so its own color system
    doesn't leak into the candidates/preview/dashboard screens, which still
@@ -60,9 +74,7 @@ export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
       <header className="site-header">
         <div className="wrap">
           <a className="logo" href="#top">
-            <span className="logo-mark" aria-hidden="true">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 3 21 20H3L12 3Z" fill="#fff" /></svg>
-            </span>
+            <LogoMark />
             SendKPI
           </a>
           <nav className="nav-links" aria-label="Main">
@@ -390,9 +402,7 @@ export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
       <footer className="site-footer">
         <div className="wrap">
           <a className="logo" href="#top" style={{ fontSize: 16 }}>
-            <span className="logo-mark" style={{ width: 24, height: 24, borderRadius: 7 }} aria-hidden="true">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M12 3 21 20H3L12 3Z" fill="#fff" /></svg>
-            </span>
+            <LogoMark size={24} />
             SendKPI
           </a>
           <nav className="foot-links" aria-label="Footer">

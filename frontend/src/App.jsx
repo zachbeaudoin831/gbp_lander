@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "./supabaseClient";
-import Home from "./Home";
+import Home, { LogoMark } from "./Home";
 
 /* ─── html helpers ─────────────────────────────────────────────────── */
 const esc = s => s == null ? '' : String(s)
@@ -1053,7 +1053,7 @@ export default function App() {
   if (step === 'candidates') return (
     <div>
       <div style={{background:'#181D24',padding:'12px 20px',display:'flex',alignItems:'center',gap:10}}>
-        <span style={{width:26,height:26,background:'#FF5A1F',borderRadius:6,display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,color:'#fff',flexShrink:0}}>▲</span>
+        <LogoMark size={26} ring="#181D24" />
         <span style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:14,color:'#fff',letterSpacing:'-.01em'}}>SendKPI</span>
       </div>
 
@@ -1099,7 +1099,7 @@ export default function App() {
     return (
       <div style={{display:'flex',flexDirection:'column',height:'100dvh',background:'#0E1318'}}>
         <div style={{flex:'0 0 10%',minHeight:52,background:'#181D24',padding:'0 16px',display:'flex',alignItems:'center',gap:8,borderBottom:'1px solid rgba(255,255,255,.08)'}}>
-          <span style={{width:24,height:24,background:'#FF5A1F',borderRadius:5,display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,color:'#fff',flexShrink:0}}>▲</span>
+          <LogoMark size={24} ring="#181D24" />
           <button className="lb-btn-signal" style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:8}} onClick={goToAds}>
             Step 2: Create Ads <i className="ti ti-arrow-right" aria-hidden="true" />
           </button>
@@ -1118,7 +1118,7 @@ export default function App() {
     return (
       <div style={{minHeight:'100dvh',background:'var(--surface-1)'}}>
         <div style={{background:'#181D24',padding:'12px 20px',display:'flex',alignItems:'center',gap:10}}>
-          <span style={{width:26,height:26,background:'#FF5A1F',borderRadius:6,display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,color:'#fff',flexShrink:0}}>▲</span>
+          <LogoMark size={26} ring="#181D24" />
           <span style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:14,color:'#fff',letterSpacing:'-.01em'}}>SendKPI</span>
           <button className="lb-btn-dark" style={{marginLeft:'auto'}} onClick={()=>setStep('dashboard')}>Back to dashboard</button>
         </div>
@@ -1184,7 +1184,7 @@ export default function App() {
     return (
       <div>
         <div style={{background:'#181D24',padding:'12px 20px',display:'flex',alignItems:'center',gap:10}}>
-          <span style={{width:26,height:26,background:'#FF5A1F',borderRadius:6,display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,color:'#fff',flexShrink:0}}>▲</span>
+          <LogoMark size={26} ring="#181D24" />
           <span style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:14,color:'#fff',letterSpacing:'-.01em'}}>SendKPI</span>
           <button className="lb-btn-signal" style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:8,height:38}} onClick={handleStep3}>
             Step 3: Download Lander &amp; Ads <i className="ti ti-download" aria-hidden="true" />
