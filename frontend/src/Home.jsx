@@ -145,7 +145,7 @@ export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
         <section className="hero" id="top">
           <div className="wrap">
             <div className="hero-copy">
-              <h1>Turn Your Business Listing Into A <span style={{whiteSpace:'nowrap'}}>Call Now Page</span> <span className="ring">With Matching Ads<svg viewBox="0 0 200 24" preserveAspectRatio="none" aria-hidden="true"><path d="M4 18 C 50 8, 150 8, 196 14" /></svg></span></h1>
+              <h1>Convert Your Google Listing<br />Into More <span className="ring" style={{whiteSpace:'nowrap'}}>Inbound Calls<svg viewBox="0 0 200 24" preserveAspectRatio="none" aria-hidden="true"><path d="M4 18 C 50 8, 150 8, 196 14" /></svg></span></h1>
               <p className="hero-sub">We build landing pages and ads around the main needle mover for local businesses: <strong>inbound calls</strong>. Start with your Google Business Listing below.</p>
 
               <form className="finder" onSubmit={e => { e.preventDefault(); onSearch(e); }}>
