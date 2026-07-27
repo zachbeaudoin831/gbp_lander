@@ -622,7 +622,6 @@ html { scroll-behavior: smooth; }
   .lb-home .nav-links{display:none}
   .lb-home .site-header .wrap{gap:16px}
   .lb-home .mobile-nav{display:block;margin-left:auto}
-  .lb-home .build-log{display:none}
   .lb-home .hero .wrap{gap:32px}
   .lb-home .hero h1{font-size:min(32px,calc(8.9vw - 4px))}
   .lb-home .steps,.lb-home .pull-grid,.lb-home .ex-grid{grid-template-columns:1fr}
