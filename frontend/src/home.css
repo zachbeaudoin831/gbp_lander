@@ -190,7 +190,7 @@ html { scroll-behavior: smooth; }
 }
 .lb-home .hero-copy{display:flex;flex-direction:column;gap:26px;min-width:0}
 .lb-home .hero h1{
-  font-size:clamp(32px,3.6vw,40px);
+  font-size:clamp(32px,3.75vw,48px);
   line-height:1.07;
   font-weight:700;
   letter-spacing:-.025em;
@@ -624,6 +624,7 @@ html { scroll-behavior: smooth; }
   .lb-home .mobile-nav{display:block;margin-left:auto}
   .lb-home .build-log{display:none}
   .lb-home .hero .wrap{gap:32px}
+  .lb-home .hero h1{font-size:min(32px,calc(8.9vw - 4px))}
   .lb-home .steps,.lb-home .pull-grid,.lb-home .ex-grid{grid-template-columns:1fr}
   .lb-home .finder-box{flex-direction:column;padding:10px}
   .lb-home .finder-box svg.pin{display:none}
