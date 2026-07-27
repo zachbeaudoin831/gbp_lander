@@ -1,10 +1,33 @@
 import { useEffect, useRef, useState } from "react";
 import "./home.css";
 
-const EXAMPLE_QUERIES = [
-  "Mike's Roofing, Nashville TN",
-  "Sunrise Dental, Phoenix AZ",
-  "Pacific HVAC, Seattle WA",
+/* The hero "build log": phases the tool runs, rendered as code rolling by. */
+const BUILD_LOG = [
+  { head: "creating page", lines: [
+    '<section class="hero"> <h1>{business.name}</h1>',
+    'render(call_button, phone="tap-to-call")',
+    "✓ page scaffold ready",
+  ]},
+  { head: "pulling photos & reviews from your listing", lines: [
+    "fetch(listing.photos)  → 8 photos",
+    "fetch(listing.reviews) → ★ 4.9 · 212 reviews",
+    "✓ proof attached above the fold",
+  ]},
+  { head: "scanning logo for color palette", lines: [
+    "palette.extract(logo.png)",
+    'brand_color: "#1F5FBF" · cta: high-contrast',
+    "✓ palette applied to buttons",
+  ]},
+  { head: "researching winning angles", lines: [
+    'angle("don\'t delay"): symptom → consequence → call',
+    "match(services, symptom_library) → 7 hits",
+    "✓ strongest angle selected",
+  ]},
+  { head: "creating ads", lines: [
+    'compose(1080×1080, headline, cta="Call Today")',
+    "write(primary_text, cite_rating=true)",
+    "✓ 3 ads exported",
+  ]},
 ];
 
 // Keep in sync with scripts/build_niche_pages.py (the /for-* pages).
@@ -137,15 +160,25 @@ export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
                   />
                   <button className="btn btn-primary" type="submit">Find my listing →</button>
                 </div>
-                <div className="chips" role="group" aria-label="Example searches">
-                  {EXAMPLE_QUERIES.map(ex => (
-                    <button key={ex} className="chip" type="button" onClick={() => setQuery(ex)}>{ex}</button>
-                  ))}
-                </div>
                 {error && <p className="finder-hint" style={{ color: "var(--orange-deep)" }}>{error}</p>}
               </form>
 
-              <p className="hero-proof"><span className="stars" aria-hidden="true">★★★★★</span> Built from the reviews and photos your customers already trust on Google.</p>
+              <div className="build-log" aria-hidden="true">
+                <div className="build-log-roll">
+                  {[0, 1].map(copy => (
+                    <div key={copy}>
+                      {BUILD_LOG.map(phase => (
+                        <div key={phase.head} className="build-log-phase">
+                          <p className="build-log-head"><span className="caret">▸</span> {phase.head}</p>
+                          {phase.lines.map(ln => (
+                            <p key={ln} className={`build-log-line${ln.startsWith("✓") ? " ok" : ""}`}>{ln}</p>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
             {/* listing → lander transformation */}

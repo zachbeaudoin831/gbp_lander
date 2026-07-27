@@ -113,6 +113,28 @@ html { scroll-behavior: smooth; }
   transition:background .12s,color .12s;
 }
 .lb-home .nav-drop-panel a:hover{background:color-mix(in srgb,var(--orange) 10%,transparent);color:var(--ink)}
+/* hero build log: code rolling upward, Claude-Code-style */
+.lb-home .build-log{
+  margin-top:22px;height:208px;overflow:hidden;position:relative;
+  background:var(--paper);border:1px solid var(--line);border-radius:14px;
+  padding:0 20px;
+  -webkit-mask-image:linear-gradient(180deg,transparent 0,#000 26px,#000 calc(100% - 26px),transparent 100%);
+  mask-image:linear-gradient(180deg,transparent 0,#000 26px,#000 calc(100% - 26px),transparent 100%);
+}
+.lb-home .build-log-roll{animation:lb-home-log-roll 26s linear infinite}
+@keyframes lb-home-log-roll{to{transform:translateY(-50%)}}
+.lb-home .build-log-phase{padding:12px 0 4px}
+.lb-home .build-log-head{
+  font-family:var(--font-mono);font-size:12.5px;font-weight:600;
+  color:var(--ink);margin:0 0 6px;letter-spacing:.02em;
+}
+.lb-home .build-log-head .caret{color:var(--orange);margin-right:2px}
+.lb-home .build-log-line{
+  font-family:var(--font-mono);font-size:12px;line-height:1.75;
+  color:var(--ink-3);margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.lb-home .build-log-line.ok{color:var(--green)}
+
 .lb-home .mobile-nav{display:none;position:relative}
 .lb-home .mobile-nav-btn{
   background:none;border:none;padding:8px;cursor:pointer;
@@ -285,25 +307,6 @@ html { scroll-behavior: smooth; }
 }
 @keyframes lb-home-route-flow{to{stroke-dashoffset:-10}}
 
-/* Guided spotlight: listing -> pill -> lander, then loop. One shared
-   timeline (7.5s), each element lit for its third via staggered delays.
-   drop-shadow (not outline/box-shadow) gives a soft gradient halo and
-   leaves each card's own resting shadow untouched. */
-.lb-home .gbp-card,.lb-home .route-label,.lb-home .lander-mock{
-  animation:lb-home-spotlight 7.5s ease-in-out infinite;
-}
-.lb-home .route-label{animation-delay:2.5s}
-.lb-home .lander-mock{animation-delay:5s}
-@keyframes lb-home-spotlight{
-  0%,33%,100%{
-    filter:drop-shadow(0 0 0 color-mix(in srgb,var(--orange) 0%,transparent)) drop-shadow(0 0 0 color-mix(in srgb,var(--orange) 0%,transparent));
-    transform:none;
-  }
-  7%,26%{
-    filter:drop-shadow(0 0 9px color-mix(in srgb,var(--orange) 50%,transparent)) drop-shadow(0 0 28px color-mix(in srgb,var(--orange) 35%,transparent));
-    transform:scale(1.015);
-  }
-}
 .lb-home .route-label{
   position:relative;z-index:2;
   background:var(--ink);color:var(--paper);
@@ -614,8 +617,7 @@ html { scroll-behavior: smooth; }
   .lb-home .nav-links{display:none}
   .lb-home .site-header .wrap{gap:16px}
   .lb-home .mobile-nav{display:block;margin-left:auto}
-  .lb-home .hero .chips{display:none}
-  .lb-home .hero-proof{display:none}
+  .lb-home .build-log{display:none}
   .lb-home .hero .wrap{gap:32px}
   .lb-home .steps,.lb-home .pull-grid,.lb-home .ex-grid{grid-template-columns:1fr}
   .lb-home .finder-box{flex-direction:column;padding:10px}
