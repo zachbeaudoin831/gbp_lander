@@ -1054,7 +1054,7 @@ export default function App() {
     <div style={{background:'#fff',minHeight:'100dvh'}}>
       <div style={{background:'#181D24',padding:'12px 20px',display:'flex',alignItems:'center',gap:10}}>
         <LogoMark size={26} ring="#181D24" />
-        <span style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:14,color:'#fff',letterSpacing:'-.01em'}}>SendKPI</span>
+        <span style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:14,color:'#fff',letterSpacing:'-.01em',marginLeft:-5}}>SendKPI</span>
       </div>
 
       <div style={{padding:'32px 20px 48px',maxWidth:600,margin:'0 auto'}}>
@@ -1119,7 +1119,7 @@ export default function App() {
       <div style={{minHeight:'100dvh',background:'var(--surface-1)'}}>
         <div style={{background:'#181D24',padding:'12px 20px',display:'flex',alignItems:'center',gap:10}}>
           <LogoMark size={26} ring="#181D24" />
-          <span style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:14,color:'#fff',letterSpacing:'-.01em'}}>SendKPI</span>
+          <span style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:14,color:'#fff',letterSpacing:'-.01em',marginLeft:-5}}>SendKPI</span>
           <button className="lb-btn-dark" style={{marginLeft:'auto'}} onClick={()=>setStep('dashboard')}>Back to dashboard</button>
         </div>
 
@@ -1185,7 +1185,7 @@ export default function App() {
       <div>
         <div style={{background:'#181D24',padding:'12px 20px',display:'flex',alignItems:'center',gap:10}}>
           <LogoMark size={26} ring="#181D24" />
-          <span style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:14,color:'#fff',letterSpacing:'-.01em'}}>SendKPI</span>
+          <span style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:14,color:'#fff',letterSpacing:'-.01em',marginLeft:-5}}>SendKPI</span>
           <button className="lb-btn-signal" style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:8,height:38}} onClick={handleStep3}>
             Step 3: Download Lander &amp; Ads <i className="ti ti-download" aria-hidden="true" />
           </button>

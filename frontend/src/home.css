@@ -73,7 +73,7 @@ html { scroll-behavior: smooth; }
   height:66px;
 }
 .lb-home .logo{
-  display:flex;align-items:center;gap:10px;
+  display:flex;align-items:center;gap:5px;
   font-family:var(--font-display);font-weight:700;font-size:19px;
   text-decoration:none;letter-spacing:-.01em;
 }
