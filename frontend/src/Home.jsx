@@ -136,7 +136,7 @@ export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
               {INDUSTRIES.map(i => <a key={i.href} href={i.href}>{i.label}</a>)}
             </div>
           </div>
-          <button className="btn btn-primary header-cta" type="button" onClick={onSignIn}>My Account</button>
+          <button className="btn btn-primary header-cta" type="button" onClick={onSignIn}>Login</button>
         </div>
       </header>
 
