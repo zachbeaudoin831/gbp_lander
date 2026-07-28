@@ -284,7 +284,7 @@ const PREVIEW_CTA_HTML = `
 const GLOBAL_CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&family=Plus+Jakarta+Sans:wght@700&display=swap');
 *{box-sizing:border-box}
-body{margin:0;padding:0;font-family:'Inter',system-ui,sans-serif}
+body{margin:0;padding:0;font-family:'Instrument Sans',system-ui,sans-serif}
 .lb-input{width:100%;height:48px;border:1.5px solid rgba(255,90,31,.45);border-radius:8px;padding:0 14px;font-size:15px;font-family:inherit;background:var(--surface-2);color:var(--text-primary);outline:none;transition:border-color .15s,box-shadow .15s;box-shadow:0 0 0 3px rgba(255,90,31,.10)}
 .lb-input:focus{border-color:#FF5A1F;box-shadow:0 0 0 3px rgba(255,90,31,.22)}
 .lb-input::placeholder{color:var(--text-muted)}
@@ -1216,7 +1216,7 @@ export default function App() {
         <button className="lb-back" onClick={reset} style={{marginBottom:24}}>
           <i className="ti ti-arrow-left" aria-hidden="true" /> Back to search
         </button>
-        <h2 style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:22,letterSpacing:'-.01em',color:'var(--text-primary)',margin:'0 0 6px'}}>Which business is yours?</h2>
+        <h2 style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:22,letterSpacing:'-.01em',color:'var(--text-primary)',margin:'0 0 6px'}}>Which business is yours?</h2>
         <p style={{color:'var(--text-secondary)',fontSize:14,margin:'0 0 24px'}}>Found {candidates.length} matches for "{query}"</p>
 
         <div style={{display:'flex',flexDirection:'column',gap:10}}>
@@ -1229,7 +1229,7 @@ export default function App() {
                 <span style={{display:c.photo?'none':'flex',width:'100%',height:'100%',alignItems:'center',justifyContent:'center',fontSize:18,color:'var(--text-muted)'}}><i className="ti ti-building-store" aria-hidden="true" /></span>
               </div>
               <div style={{flex:1,minWidth:0}}>
-                <div style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:16,color:'var(--text-primary)',marginBottom:4,letterSpacing:'-.01em',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{c.name}</div>
+                <div style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:16,color:'var(--text-primary)',marginBottom:4,letterSpacing:'-.01em',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{c.name}</div>
                 <div style={{fontSize:13,color:'var(--text-secondary)',marginBottom:6,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{c.address}</div>
                 <div style={{display:'flex',gap:12,flexWrap:'wrap',alignItems:'center'}}>
                   {c.category&&<span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,letterSpacing:'.06em',textTransform:'uppercase',color:'var(--text-muted)'}}>{c.category}</span>}
@@ -1267,7 +1267,7 @@ export default function App() {
             </p>
           </div>
 
-          <h2 style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:22,letterSpacing:'-.01em',color:'var(--text-primary)',margin:'0 0 6px'}}>
+          <h2 style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:22,letterSpacing:'-.01em',color:'var(--text-primary)',margin:'0 0 6px'}}>
             While we scan — what's the main service you want more calls for?
           </h2>
           <p style={{color:'var(--text-secondary)',fontSize:14,margin:'0 0 20px',lineHeight:1.55}}>
@@ -1306,7 +1306,7 @@ export default function App() {
           <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,letterSpacing:'.1em',textTransform:'uppercase',color:'#0D57D0',margin:'0 0 10px'}}>
             {angles.length} winning angles found
           </p>
-          <h2 style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:24,letterSpacing:'-.01em',color:'var(--text-primary)',margin:'0 0 6px'}}>
+          <h2 style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:24,letterSpacing:'-.01em',color:'var(--text-primary)',margin:'0 0 6px'}}>
             Pick the angle for your campaign
           </h2>
           <p style={{color:'var(--text-secondary)',fontSize:14,margin:'0 0 26px',lineHeight:1.55}}>
@@ -1323,7 +1323,7 @@ export default function App() {
                     Use this angle <i className="ti ti-arrow-right" aria-hidden="true" />
                   </span>
                 </div>
-                <div style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:17,letterSpacing:'-.01em',color:'var(--text-primary)',lineHeight:1.25}}>
+                <div style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:17,letterSpacing:'-.01em',color:'var(--text-primary)',lineHeight:1.25}}>
                   "{a.hook}"
                 </div>
                 {a.why && <p style={{fontSize:13.5,color:'var(--text-secondary)',margin:0,lineHeight:1.5}}>{a.why}</p>}
@@ -1368,7 +1368,7 @@ export default function App() {
 
         <div style={{padding:'40px 20px 64px',maxWidth:680,margin:'0 auto'}}>
           <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:12,letterSpacing:'.1em',textTransform:'uppercase',color:'#FF5A1F',margin:'0 0 12px'}}>You're all set</p>
-          <h1 style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:'clamp(26px,5vw,36px)',letterSpacing:'-.01em',color:'var(--text-primary)',margin:'0 0 10px',lineHeight:1.15}}>Your lander and ads for {first} are ready</h1>
+          <h1 style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:'clamp(26px,5vw,36px)',letterSpacing:'-.01em',color:'var(--text-primary)',margin:'0 0 10px',lineHeight:1.15}}>Your lander and ads for {first} are ready</h1>
           <p style={{fontSize:15,color:'var(--text-secondary)',margin:'0 0 32px',lineHeight:1.6}}>They're saved to your account, and the files are below. First — two minutes on how to get them live and making the phone ring:</p>
 
           {VSL_EMBED_URL ? (
@@ -1384,7 +1384,7 @@ export default function App() {
                 ['3 · Start small and watch the calls', 'Run $10–20/day for a week. Leads from the lander’s question form are tagged with the ad click they came from, so you’ll see what’s working.'],
               ].map(([t, b]) => (
                 <div key={t} style={{marginBottom:14}}>
-                  <p style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:15,color:'var(--text-primary)',margin:'0 0 4px'}}>{t}</p>
+                  <p style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:15,color:'var(--text-primary)',margin:'0 0 4px'}}>{t}</p>
                   <p style={{fontSize:14,color:'var(--text-secondary)',margin:0,lineHeight:1.55}}>{b}</p>
                 </div>
               ))}
@@ -1397,7 +1397,7 @@ export default function App() {
             {deliverables.map(f => (
               <div key={f.name} className="lb-card" style={{cursor:'default'}}>
                 <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:14,color:'var(--text-primary)'}}>{f.label}</div>
+                  <div style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:14,color:'var(--text-primary)'}}>{f.label}</div>
                   <div style={{fontSize:12,color:'var(--text-secondary)',marginTop:2}}>{f.detail}</div>
                 </div>
                 <button className="lb-btn-signal" style={{height:40,display:'flex',alignItems:'center',gap:8}} onClick={()=>downloadDeliverable(f)}>
@@ -1410,7 +1410,7 @@ export default function App() {
           {BOOKING_URL && (
             <div style={{background:'#181D24',borderRadius:14,padding:'26px 24px'}}>
               <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,letterSpacing:'.1em',textTransform:'uppercase',color:'#8FE3B8',margin:'0 0 10px'}}>Want it live today?</p>
-              <p style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:20,color:'#fff',margin:'0 0 8px',letterSpacing:'-.01em'}}>Book a $100 setup call</p>
+              <p style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:20,color:'#fff',margin:'0 0 8px',letterSpacing:'-.01em'}}>Book a $100 setup call</p>
               <p style={{fontSize:14,color:'#C7CDD2',margin:'0 0 18px',lineHeight:1.6}}>We'll get on a call and set it all up together — lander on your subdomain, ads loaded into Meta, tracking on. You leave with a live funnel.</p>
               <a className="lb-btn-signal" href={BOOKING_URL} target="_blank" rel="noopener" style={{display:'inline-flex',alignItems:'center',gap:8,textDecoration:'none',lineHeight:'48px'}}>
                 Book my setup call <i className="ti ti-arrow-right" aria-hidden="true" />
@@ -1453,7 +1453,7 @@ export default function App() {
               {landers.map(l => (
                 <div key={l.id} className="lb-card" style={{cursor:'default'}}>
                   <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:15,color:'var(--text-primary)'}}>{l.name}</div>
+                    <div style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:15,color:'var(--text-primary)'}}>{l.name}</div>
                     <div style={{fontSize:12,color:'var(--text-secondary)',marginTop:2}}>
                       {l.local ? 'Ready — download it in Step 3' : `Saved ${new Date(l.created_at).toLocaleDateString()}`}
                     </div>
@@ -1479,7 +1479,7 @@ export default function App() {
             <div style={{position:'absolute',inset:0,background:'rgba(14,19,24,.7)'}} onClick={closeAccountModal} />
             <div style={{position:'relative',background:'#fff',borderRadius:14,maxWidth:380,width:'100%',padding:'28px 24px',boxShadow:'0 20px 60px rgba(0,0,0,.4)'}}>
               <button onClick={closeAccountModal} aria-label="Close" style={{position:'absolute',top:10,right:14,background:'none',border:0,fontSize:26,lineHeight:1,color:'var(--text-secondary)',cursor:'pointer'}}>&times;</button>
-              <h3 style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:20,letterSpacing:'-.01em',margin:'0 0 8px',color:'var(--text-primary)'}}>Almost there</h3>
+              <h3 style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:20,letterSpacing:'-.01em',margin:'0 0 8px',color:'var(--text-primary)'}}>Almost there</h3>
               <p style={{fontSize:14,color:'var(--text-secondary)',margin:'0 0 20px',lineHeight:1.5}}>Sign in with Google and we'll save your lander and ads to your account — your files will be waiting on the next page.</p>
               {accountError && <div className="lb-error" style={{marginBottom:12}}>{accountError}</div>}
               <button className="lb-btn-signal" onClick={startGoogleAuth} disabled={accountBusy || !supabase} style={{width:'100%',display:'flex',alignItems:'center',justifyContent:'center',gap:10}}>
