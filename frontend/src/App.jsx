@@ -277,7 +277,7 @@ async function generateAngleAds(payload) {
 const PREVIEW_CTA_HTML = `
 <div style="background:#181D24;padding:40px 20px 130px;text-align:center;border-top:2px dashed rgba(255,255,255,.25)">
   <p style="font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#9AA3A8;margin:0 0 16px">Happy with your page?</p>
-  <button onclick="parent.postMessage('sendkpi-create-ads','*')" style="background:#FF5A1F;color:#fff;border:none;border-radius:10px;padding:16px 30px;font-family:'IBM Plex Mono',ui-monospace,monospace;font-weight:600;font-size:15px;letter-spacing:.02em;cursor:pointer">Step 2: Create Ads →</button>
+  <button onclick="parent.postMessage('sendkpi-create-ads','*')" style="background:#0D57D0;color:#fff;border:none;border-radius:10px;padding:16px 30px;font-family:'IBM Plex Mono',ui-monospace,monospace;font-weight:600;font-size:15px;letter-spacing:.02em;cursor:pointer">Step 2: Create Ads →</button>
 </div>`;
 
 /* ─── app styles (injected once) ────────────────────────────────────── */
@@ -285,19 +285,19 @@ const GLOBAL_CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&family=Plus+Jakarta+Sans:wght@700&display=swap');
 *{box-sizing:border-box}
 body{margin:0;padding:0;font-family:'Instrument Sans',system-ui,sans-serif}
-.lb-input{width:100%;height:48px;border:1.5px solid rgba(255,90,31,.45);border-radius:8px;padding:0 14px;font-size:15px;font-family:inherit;background:var(--surface-2);color:var(--text-primary);outline:none;transition:border-color .15s,box-shadow .15s;box-shadow:0 0 0 3px rgba(255,90,31,.10)}
-.lb-input:focus{border-color:#FF5A1F;box-shadow:0 0 0 3px rgba(255,90,31,.22)}
+.lb-input{width:100%;height:48px;border:1.5px solid rgba(13,87,208,.45);border-radius:8px;padding:0 14px;font-size:15px;font-family:inherit;background:var(--surface-2);color:var(--text-primary);outline:none;transition:border-color .15s,box-shadow .15s;box-shadow:0 0 0 3px rgba(13,87,208,.10)}
+.lb-input:focus{border-color:#0D57D0;box-shadow:0 0 0 3px rgba(13,87,208,.22)}
 .lb-input::placeholder{color:var(--text-muted)}
-.lb-btn-signal{background:#FF5A1F;color:#fff;border:none;border-radius:8px;padding:0 20px;height:48px;font-size:14px;font-weight:600;font-family:'IBM Plex Mono',monospace;letter-spacing:.02em;cursor:pointer;white-space:nowrap;transition:opacity .15s;flex-shrink:0}
-.lb-btn-signal:hover{opacity:.88}
+.lb-btn-signal{background:#0D57D0;color:#fff;border:none;border-radius:10px;padding:0 20px;height:48px;font-size:15px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap;transition:background .15s,transform .15s;flex-shrink:0;box-shadow:0 6px 16px -4px rgba(13,87,208,.6)}
+.lb-btn-signal:hover{background:#0A46A8;transform:translateY(-1px)}
 .lb-btn-signal:disabled{opacity:.5;cursor:not-allowed}
 .lb-btn-ghost{background:transparent;border:1px solid var(--border);border-radius:7px;padding:7px 14px;font-size:12px;color:var(--text-secondary);font-family:'IBM Plex Mono',monospace;letter-spacing:.02em;cursor:pointer;white-space:nowrap;transition:all .15s}
 .lb-btn-ghost:hover{background:var(--surface-1);color:var(--text-primary)}
-.lb-btn-ghost.active{background:#FF5A1F;color:#fff;border-color:#FF5A1F}
+.lb-btn-ghost.active{background:#0D57D0;color:#fff;border-color:#0D57D0}
 .lb-btn-dark{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.12);border-radius:7px;padding:7px 14px;font-size:12px;color:#C7CDD2;font-family:'IBM Plex Mono',monospace;letter-spacing:.02em;cursor:pointer;white-space:nowrap;transition:all .15s}
 .lb-btn-dark:hover{background:rgba(255,255,255,.18);color:#fff}
 .lb-pill{cursor:pointer;background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:6px 14px;font-size:13px;color:var(--text-secondary);transition:all .15s;font-family:inherit}
-.lb-pill:hover{border-color:#FF5A1F;color:#FF5A1F;background:#FFF8F5}
+.lb-pill:hover{border-color:#0D57D0;color:#0D57D0;background:#F0F5FE}
 .lb-card{background:var(--surface-2);border:0.5px solid var(--border);border-radius:12px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:16px;cursor:pointer;transition:box-shadow .15s,border-color .15s}
 .lb-card:hover{box-shadow:0 4px 20px rgba(0,0,0,.08);border-color:var(--border-strong)}
 .lb-back{background:none;border:none;color:var(--text-secondary);font-size:14px;cursor:pointer;display:flex;align-items:center;gap:6px;padding:0;font-family:inherit;transition:color .15s}
@@ -307,6 +307,36 @@ body{margin:0;padding:0;font-family:'Instrument Sans',system-ui,sans-serif}
 .lb-spinner{width:44px;height:44px;border-radius:50%;border:4px solid #E7EEFB;border-top-color:#0D57D0;animation:lb-spin .8s linear infinite}
 @media (prefers-reduced-motion:reduce){.lb-spinner{animation-duration:1.6s}}
 `;
+
+/* ─── main-service placeholder examples ─────────────────────────────
+   Curated call-getting services per trade, matched against the searched
+   business's category + services. Falls back to the business's own
+   services list, then to a generic pair. */
+const SERVICE_EXAMPLES = [
+  [['plumb', 'drain', 'sewer', 'rooter'], ['water heater replacement', 'drain cleaning']],
+  [['hvac', 'heating', 'cooling', 'air condition', 'furnace'], ['AC repair', 'furnace replacement']],
+  [['electric', 'wiring'], ['panel upgrades', 'EV charger installation']],
+  [['roof', 'gutter', 'shingle'], ['roof repair', 'storm damage inspections']],
+  [['pest', 'exterminat', 'termite'], ['termite treatment', 'rodent removal']],
+  [['tree', 'arborist', 'stump'], ['tree removal', 'storm cleanup']],
+  [['garage door'], ['spring replacement', 'new garage doors']],
+  [['auto', 'mechanic', 'brake', 'transmission', 'tire'], ['brake service', 'transmission repair']],
+  [['dental', 'dentist', 'orthodont'], ['new patient exams', 'teeth whitening']],
+  [['landscap', 'lawn', 'irrigation'], ['lawn care', 'irrigation repair']],
+  [['clean', 'maid', 'janitorial'], ['deep cleaning', 'move-out cleaning']],
+  [['paint'], ['exterior painting', 'cabinet refinishing']],
+  [['lock', 'locksmith'], ['lockouts', 'lock rekeying']],
+];
+
+function serviceExamples(profile) {
+  const hay = `${profile?.category || ''} ${(profile?.services || []).join(' ')}`.toLowerCase();
+  for (const [keys, examples] of SERVICE_EXAMPLES) {
+    if (keys.some(k => hay.includes(k))) return examples;
+  }
+  const own = (profile?.services || []).filter(s => s && s.length >= 4 && s.length <= 30).slice(0, 2);
+  if (own.length === 2) return own;
+  return ['water heater replacement', 'roof repair'];
+}
 
 /* ─── Ads tab: lander photo + AI copy → downloadable ad graphic ─────── */
 const AD_SIZE = 1080; // square, works on Facebook/Instagram feed and Google display
@@ -645,7 +675,7 @@ function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn }) {
                   const idx = photoUrls.indexOf(p);
                   return (
                     <button key={p} onClick={() => togglePhoto(p)} style={{
-                      position: 'relative', padding: 0, border: idx > -1 ? '3px solid #FF5A1F' : '3px solid transparent',
+                      position: 'relative', padding: 0, border: idx > -1 ? '3px solid #0D57D0' : '3px solid transparent',
                       borderRadius: 10, overflow: 'hidden', cursor: 'pointer', background: 'var(--surface-1)',
                       aspectRatio: '1', opacity: photoUrls.length && idx === -1 ? 0.6 : 1, transition: 'opacity .15s',
                     }}>
@@ -653,7 +683,7 @@ function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn }) {
                       {idx > -1 && (
                         <span style={{
                           position: 'absolute', top: 6, right: 6, width: 22, height: 22, borderRadius: '50%',
-                          background: '#FF5A1F', color: '#fff', fontSize: 12, fontWeight: 700,
+                          background: '#0D57D0', color: '#fff', fontSize: 12, fontWeight: 700,
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                         }}>{idx + 1}</span>
                       )}
@@ -1277,7 +1307,7 @@ export default function App() {
             <input
               className="lb-input"
               autoFocus
-              placeholder='e.g. "water heater replacement" or "roof repair"'
+              placeholder={(() => { const [a, b] = serviceExamples(pendingProfile); return `e.g. "${a}" or "${b}"`; })()}
               value={mainService}
               onChange={e => setMainService(e.target.value)}
             />
@@ -1366,7 +1396,7 @@ export default function App() {
         </div>
 
         <div style={{padding:'40px 20px 64px',maxWidth:680,margin:'0 auto'}}>
-          <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:12,letterSpacing:'.1em',textTransform:'uppercase',color:'#FF5A1F',margin:'0 0 12px'}}>You're all set</p>
+          <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:12,letterSpacing:'.1em',textTransform:'uppercase',color:'#0D57D0',margin:'0 0 12px'}}>You're all set</p>
           <h1 style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:'clamp(26px,5vw,36px)',letterSpacing:'-.01em',color:'var(--text-primary)',margin:'0 0 10px',lineHeight:1.15}}>Your lander and ads for {first} are ready</h1>
           <p style={{fontSize:15,color:'var(--text-secondary)',margin:'0 0 32px',lineHeight:1.6}}>They're saved to your account, and the files are below. First, two minutes on how to get them live and making the phone ring:</p>
 
@@ -1441,7 +1471,7 @@ export default function App() {
                 background:'none',border:'none',cursor:'pointer',fontFamily:'inherit',
                 padding:'10px 2px',fontSize:14,fontWeight:600,textTransform:'capitalize',
                 color: dashboardTab===tab ? 'var(--text-primary)' : 'var(--text-secondary)',
-                borderBottom: dashboardTab===tab ? '2px solid #FF5A1F' : '2px solid transparent',
+                borderBottom: dashboardTab===tab ? '2px solid #0D57D0' : '2px solid transparent',
               }}>{tab}</button>
             ))}
           </div>
