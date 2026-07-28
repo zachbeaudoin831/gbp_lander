@@ -303,8 +303,9 @@ body{margin:0;padding:0;font-family:'Instrument Sans',system-ui,sans-serif}
 .lb-back{background:none;border:none;color:var(--text-secondary);font-size:14px;cursor:pointer;display:flex;align-items:center;gap:6px;padding:0;font-family:inherit;transition:color .15s}
 .lb-back:hover{color:var(--text-primary)}
 .lb-error{background:#FFF2EE;border:1.5px solid #FF5A1F;border-radius:8px;padding:14px 16px;color:#C0391A;font-size:14px;font-weight:500}
-@keyframes lb-bounce{0%,80%,100%{transform:scale(0)}40%{transform:scale(1)}}
-.lb-dot{width:10px;height:10px;border-radius:50%;background:#FF5A1F;animation:lb-bounce 1.2s ease-in-out infinite both}
+@keyframes lb-spin{to{transform:rotate(360deg)}}
+.lb-spinner{width:44px;height:44px;border-radius:50%;border:4px solid #E7EEFB;border-top-color:#0D57D0;animation:lb-spin .8s linear infinite}
+@media (prefers-reduced-motion:reduce){.lb-spinner{animation-duration:1.6s}}
 `;
 
 /* ─── Ads tab: lander photo + AI copy → downloadable ad graphic ─────── */
@@ -1196,11 +1197,9 @@ export default function App() {
 
   /* ── loading ───────────────────────────────────────────────────────── */
   if (step === 'loading') return (
-    <div style={{minHeight:460,background:'#181D24',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:20,padding:32}}>
-      <div style={{display:'flex',gap:8}}>
-        {[0,1,2].map(i=><div key={i} className="lb-dot" style={{animationDelay:`${i*0.2}s`}}/>)}
-      </div>
-      <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:13,color:'#9AA3A8',letterSpacing:'.04em',margin:0,textAlign:'center',minHeight:20}}>{loadMsg}</p>
+    <div style={{minHeight:'100dvh',background:'#fff',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:22,padding:32}}>
+      <div className="lb-spinner" aria-hidden="true" />
+      <p style={{fontSize:14.5,color:'#5C544C',margin:0,textAlign:'center',minHeight:22}}>{loadMsg}</p>
     </div>
   );
 
