@@ -406,29 +406,36 @@ html { scroll-behavior: smooth; }
 }
 .lb-home .section-head p{color:var(--ink-2);font-size:17px;max-width:56ch}
 
-/* how it works: numbered flow timeline */
-.lb-home .flow{
-  position:relative;max-width:760px;
-  display:flex;flex-direction:column;gap:clamp(24px,3vw,36px);
+/* how it works: build-ticket (dark job card matching the hero build log) */
+.lb-home .ticket{
+  background:var(--dark);border-radius:18px;padding:8px;
+  max-width:860px;
+  box-shadow:0 24px 60px -24px color-mix(in srgb,var(--dark) 50%,transparent);
 }
-.lb-home .flow::before{
-  content:"";position:absolute;left:21px;top:22px;bottom:22px;
-  border-left:2px dashed color-mix(in srgb,var(--orange) 38%,transparent);
+.lb-home .ticket-head{
+  display:flex;align-items:center;gap:8px;padding:12px 16px;
+  color:#8A93A0;font-family:var(--font-mono);font-size:11.5px;
 }
-.lb-home .flow-item{
-  position:relative;display:grid;grid-template-columns:44px 1fr;
-  gap:20px;align-items:start;
+.lb-home .ticket-head i{width:9px;height:9px;border-radius:50%;background:#3A4250}
+.lb-home .ticket-head span{margin-left:4px}
+.lb-home .ticket-body{background:#1E242D;border-radius:12px;padding:10px 0}
+.lb-home .ticket-row{
+  display:grid;grid-template-columns:52px 1fr auto;gap:0 14px;
+  align-items:center;padding:16px 22px;
+  border-bottom:1px solid rgba(255,255,255,.05);
 }
-.lb-home .flow-num{
-  position:relative;z-index:1;
-  width:44px;height:44px;border-radius:50%;
-  background:var(--orange-soft);color:var(--orange);
-  border:2px solid color-mix(in srgb,var(--orange) 45%,var(--paper));
-  display:grid;place-items:center;
-  font-family:var(--font-display);font-weight:800;font-size:17px;
+.lb-home .ticket-row:last-child{border-bottom:none}
+.lb-home .ticket-num{font-family:var(--font-mono);font-size:12px;color:#5C6675}
+.lb-home .ticket-row h3{
+  font-family:var(--font-display);color:#F2F4F6;font-weight:700;
+  font-size:16.5px;letter-spacing:-.01em;margin:0 0 3px;
 }
-.lb-home .flow-item h3{font-size:19px;font-weight:700;letter-spacing:-.01em;margin:9px 0 6px}
-.lb-home .flow-item p{font-size:15px;color:var(--ink-2);line-height:1.6;max-width:60ch}
+.lb-home .ticket-row p{color:#9AA3AE;font-size:13.5px;margin:0;line-height:1.5;max-width:56ch}
+.lb-home .ticket-tag{
+  font-family:var(--font-mono);font-size:10.5px;letter-spacing:.06em;
+  text-transform:uppercase;color:#7FD4AC;white-space:nowrap;
+}
+.lb-home .ticket-tag.you{color:#8FB4F2}
 
 /* angle research section + picker mock */
 .lb-home .angle-sec .wrap{
@@ -759,6 +766,8 @@ html { scroll-behavior: smooth; }
   .lb-home .hero .wrap{gap:32px}
   .lb-home .hero h1{font-size:min(32px,calc(8.9vw - 4px))}
   .lb-home .pull-grid,.lb-home .ex-grid{grid-template-columns:1fr}
+  .lb-home .ticket-row{grid-template-columns:38px 1fr}
+  .lb-home .ticket-tag{grid-column:2;justify-self:start;margin-top:8px}
   .lb-home .finder-box{flex-direction:column;padding:10px}
   .lb-home .finder-box svg.pin{display:none}
   .lb-home .finder-box input{padding:8px 6px}
