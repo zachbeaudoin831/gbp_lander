@@ -229,16 +229,6 @@ export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
           </div>
         </section>
 
-        {/* STRIP */}
-        <div className="strip">
-          <div className="wrap">
-            <div className="strip-item"><b>One search</b><span>builds your page from your listing</span></div>
-            <div className="strip-item"><b>5 to 7 angles</b><span>researched and written for your trade</span></div>
-            <div className="strip-item"><b>4 matching ads</b><span>same message from feed to phone</span></div>
-            <div className="strip-item"><b>One HTML file</b><span>host it wherever your ads point</span></div>
-          </div>
-        </div>
-
         {/* HOW IT WORKS */}
         <section className="section how" id="how">
           <div className="wrap">
