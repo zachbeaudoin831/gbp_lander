@@ -18,6 +18,13 @@ import anthropic
 
 MODEL = "claude-sonnet-5"
 
+# Appended to every system prompt. House style: no em/en dashes in anything
+# we generate (they read as AI-ish and clash with the site's voice).
+_STYLE_RULES = """
+
+House style rule: never use em dashes (—) or en dashes (–) anywhere \
+in any output text. Rewrite with a period, comma, or colon instead."""
+
 _SYSTEM_PROMPT = """You write landing page copy for local service businesses.
 
 You'll get: the business's basic profile, raw scraped text from their \
@@ -312,13 +319,29 @@ def _client() -> anthropic.Anthropic:
     return anthropic.Anthropic(api_key=key)
 
 
+def _scrub_dashes(value):
+    """Belt-and-braces behind the prompt rule: if an em/en dash slips into a
+    reply anyway, rewrite it as the comma it almost always stands for."""
+    if isinstance(value, str):
+        return (
+            value.replace(" — ", ", ").replace("—", ", ")
+            .replace(" – ", ", ").replace("–", ", ")
+            .replace(" ,", ",").replace(",,", ",")
+        )
+    if isinstance(value, list):
+        return [_scrub_dashes(v) for v in value]
+    if isinstance(value, dict):
+        return {k: _scrub_dashes(v) for k, v in value.items()}
+    return value
+
+
 def _reply_json(resp) -> dict:
     raw = "".join(b.text for b in resp.content if b.type == "text").strip()
     raw = raw.removeprefix("```json").removeprefix("```").removesuffix("```").strip()
     # strict=False: the model occasionally puts literal newlines inside string
     # values (multi-paragraph primary_text); default parsing rejects those as
     # invalid control characters.
-    return json.loads(raw, strict=False)
+    return _scrub_dashes(json.loads(raw, strict=False))
 
 
 def generate_extras(
@@ -352,7 +375,7 @@ SERVICE AREAS PAGE TEXT (raw, may include noise)
     resp = client.messages.create(
         model=MODEL,
         max_tokens=600,
-        system=_SYSTEM_PROMPT,
+        system=_SYSTEM_PROMPT + _STYLE_RULES,
         messages=[{"role": "user", "content": user_content}],
     )
     return _reply_json(resp)
@@ -412,7 +435,7 @@ WHAT THE BUSINESS DOES
         # 400 was enough for offer-style copy but the don't-delay primary_text
         # runs longer -- a truncated reply fails JSON parsing outright.
         max_tokens=800,
-        system=system,
+        system=system + _STYLE_RULES,
         messages=[{"role": "user", "content": user_content}],
     )
     return _reply_json(resp)
@@ -490,7 +513,7 @@ MAIN SERVICE THE OWNER WANTS MORE CALLS FOR
         # 7 angles x ~7 short fields runs long -- a truncated reply fails JSON
         # parsing outright, so leave real headroom.
         max_tokens=2500,
-        system=_ANGLES_SYSTEM,
+        system=_ANGLES_SYSTEM + _STYLE_RULES,
         messages=[{"role": "user", "content": user_content}],
     )
     return _reply_json(resp)
@@ -533,7 +556,7 @@ Call button: {angle.get("cta_label") or "(none)"}"""
         model=MODEL,
         # 4 variations x 4 fields, primary_text runs longest.
         max_tokens=1600,
-        system=_ANGLE_ADS_SYSTEM,
+        system=_ANGLE_ADS_SYSTEM + _STYLE_RULES,
         messages=[{"role": "user", "content": user_content}],
     )
     return _reply_json(resp)

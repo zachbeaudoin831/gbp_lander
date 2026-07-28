@@ -150,7 +150,7 @@ function buildLanderHTML(d) {
 
   return `<!DOCTYPE html><html lang="en"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>${esc(d.name)}${d.category?` — ${esc(d.category)}`:''}</title>
+<title>${esc(d.name)}${d.category?` · ${esc(d.category)}`:''}</title>
 ${d.tagline?`<meta name="description" content="${esc(d.tagline)}">`:``}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -528,7 +528,7 @@ function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn }) {
       });
       const list = (Array.isArray(res.variations) ? res.variations : [])
         .filter(v => v && v.headline).slice(0, MAX_ADS);
-      if (!list.length) throw new Error('Could not write the ad variations — hit Regenerate to retry.');
+      if (!list.length) throw new Error('Could not write the ad variations. Hit Regenerate to retry.');
       setVariations(list);
     } catch (err) {
       setError(err.message);
@@ -620,7 +620,7 @@ function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn }) {
   }
 
   if (!landers.length) return (
-    <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Save a lander first — ads are built from a lander's photos and offer.</p>
+    <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Save a lander first. Ads are built from a lander's photos and offer.</p>
   );
 
   return (
@@ -636,7 +636,7 @@ function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn }) {
 
       {lander && (
         <div>
-          <p style={eyebrow}>{angleMeta ? `2 · Photos — we picked ${photoUrls.length || MAX_ADS}, tap to swap` : `2 · Photos — pick up to ${MAX_ADS}`}</p>
+          <p style={eyebrow}>{angleMeta ? `2 · Photos: we picked ${photoUrls.length || MAX_ADS}, tap to swap` : `2 · Photos: pick up to ${MAX_ADS}`}</p>
           {photos.length === 0
             ? <p style={{ color: 'var(--text-secondary)', fontSize: 14, margin: 0 }}>This lander has no photos to build ads from.</p>
             : <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(110px,1fr))', gap: 8 }}>
@@ -665,7 +665,7 @@ function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn }) {
 
       {lander && photoUrls.length > 0 && angleMeta && (
         <div>
-          <p style={eyebrow}>3 · Copy — 4 takes on your angle</p>
+          <p style={eyebrow}>3 · Copy: 4 takes on your angle</p>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
             <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 10.5, letterSpacing: '.08em', textTransform: 'uppercase', color: '#0D57D0', fontWeight: 600, background: '#E7EEFB', borderRadius: 999, padding: '4px 10px' }}>
               {angleMeta.label}
@@ -881,7 +881,7 @@ export default function App() {
 
   async function handleSearch(e) {
     if (e?.preventDefault) e.preventDefault();
-    if (!query.trim()) { setError('Type a business name first — e.g. "Joe\'s Plumbing, Austin TX".'); return; }
+    if (!query.trim()) { setError('Type a business name first, e.g. "Joe\'s Plumbing, Austin TX".'); return; }
     setError('');
     setStep('loading');
     const stop = cycleMsgs(['Searching Google Business listings…', 'Looking up matching businesses…', 'Finding the right profile…']);
@@ -938,7 +938,7 @@ export default function App() {
   async function handleServiceSubmit(e) {
     if (e?.preventDefault) e.preventDefault();
     const svc = mainService.trim();
-    if (!svc) { setError('Type the service you want more calls for — e.g. "water heater replacement".'); return; }
+    if (!svc) { setError('Type the service you want more calls for, e.g. "water heater replacement".'); return; }
     setError('');
     setStep('loading');
     const cat = (pendingProfile?.category || 'your trade').toLowerCase();
@@ -969,7 +969,7 @@ export default function App() {
       });
       stop();
       const list = (Array.isArray(res.angles) ? res.angles : []).filter(a => a && a.label && a.hook);
-      if (!list.length) throw new Error('Could not build angles for this business — try again.');
+      if (!list.length) throw new Error('Could not build angles for this business. Try again.');
       setBusiness(merged);
       setAngles(list);
       setStep('angles');
@@ -1073,11 +1073,11 @@ export default function App() {
     const files = [];
     if (pend.biz) {
       const url = URL.createObjectURL(new Blob([buildLanderHTML(pend.biz)], { type: 'text/html' }));
-      files.push({ href: url, name: `${slug}-lander.html`, label: 'Landing page', detail: 'Single HTML file — host it on any subdomain' });
+      files.push({ href: url, name: `${slug}-lander.html`, label: 'Landing page', detail: 'Single HTML file. Host it on any subdomain' });
     }
     (adCanvasesRef.current || []).filter(Boolean).forEach((canvas, i) => {
       try {
-        files.push({ href: canvas.toDataURL('image/png'), name: `${slug}-ad-${i + 1}.png`, label: `Ad graphic ${i + 1}`, detail: '1080×1080 PNG — ready for Meta' });
+        files.push({ href: canvas.toDataURL('image/png'), name: `${slug}-ad-${i + 1}.png`, label: `Ad graphic ${i + 1}`, detail: '1080×1080 PNG, ready for Meta' });
       } catch { /* tainted canvas -- skip this ad rather than fail the batch */ }
     });
     setDeliverables(files);
@@ -1105,7 +1105,7 @@ export default function App() {
 
   function handleStep3() {
     if (!supabase) {
-      setAccountError('Account creation isn’t configured yet — check back soon.');
+      setAccountError('Account creation isn’t configured yet. Check back soon.');
       setAccountModal('auth');
       return;
     }
@@ -1268,7 +1268,7 @@ export default function App() {
           </div>
 
           <h2 style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:22,letterSpacing:'-.01em',color:'var(--text-primary)',margin:'0 0 6px'}}>
-            While we scan — what's the main service you want more calls for?
+            While we scan: what's the main service you want more calls for?
           </h2>
           <p style={{color:'var(--text-secondary)',fontSize:14,margin:'0 0 20px',lineHeight:1.55}}>
             We'll research winning ad angles for {pendingProfile?.name || 'your business'} and build the page and ads around that one service.
@@ -1310,7 +1310,7 @@ export default function App() {
             Pick the angle for your campaign
           </h2>
           <p style={{color:'var(--text-secondary)',fontSize:14,margin:'0 0 26px',lineHeight:1.55}}>
-            Researched for {business?.main_service ? `"${business.main_service}"` : 'your main service'} and customized to {business?.name || 'your business'} — your reviews, your area, your trade. The one you pick shapes the landing page and all your ads.
+            Researched for {business?.main_service ? `"${business.main_service}"` : 'your main service'} and customized to {business?.name || 'your business'}: your reviews, your area, your trade. The one you pick shapes the landing page and all your ads.
           </p>
 
           <div style={{display:'flex',flexDirection:'column',gap:12}}>
@@ -1349,7 +1349,7 @@ export default function App() {
         </div>
 
         <div style={{flex:'1 1 90%',minHeight:0,padding:'0 10px',display:'flex',justifyContent:'center'}}>
-          <iframe ref={iframeRef} style={{width:'100%',maxWidth:480,height:'100%',border:'none',display:'block',background:'#fff'}} title="Lander preview — mobile" />
+          <iframe ref={iframeRef} style={{width:'100%',maxWidth:480,height:'100%',border:'none',display:'block',background:'#fff'}} title="Lander preview (mobile)" />
         </div>
       </div>
     );
@@ -1369,7 +1369,7 @@ export default function App() {
         <div style={{padding:'40px 20px 64px',maxWidth:680,margin:'0 auto'}}>
           <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:12,letterSpacing:'.1em',textTransform:'uppercase',color:'#FF5A1F',margin:'0 0 12px'}}>You're all set</p>
           <h1 style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:'clamp(26px,5vw,36px)',letterSpacing:'-.01em',color:'var(--text-primary)',margin:'0 0 10px',lineHeight:1.15}}>Your lander and ads for {first} are ready</h1>
-          <p style={{fontSize:15,color:'var(--text-secondary)',margin:'0 0 32px',lineHeight:1.6}}>They're saved to your account, and the files are below. First — two minutes on how to get them live and making the phone ring:</p>
+          <p style={{fontSize:15,color:'var(--text-secondary)',margin:'0 0 32px',lineHeight:1.6}}>They're saved to your account, and the files are below. First, two minutes on how to get them live and making the phone ring:</p>
 
           {VSL_EMBED_URL ? (
             <div style={{position:'relative',paddingTop:'56.25%',borderRadius:12,overflow:'hidden',background:'#181D24',marginBottom:32}}>
@@ -1377,9 +1377,9 @@ export default function App() {
             </div>
           ) : (
             <div style={{background:'var(--surface-2)',border:'0.5px solid var(--border)',borderRadius:12,padding:'22px 24px',marginBottom:32}}>
-              <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,letterSpacing:'.1em',textTransform:'uppercase',color:'var(--text-muted)',margin:'0 0 14px'}}>How to launch — 3 steps</p>
+              <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,letterSpacing:'.1em',textTransform:'uppercase',color:'var(--text-muted)',margin:'0 0 14px'}}>How to launch in 3 steps</p>
               {[
-                ['1 · Put the lander on a subdomain', 'Upload the HTML file to any host and point a subdomain at it (e.g. go.yourcompany.com). It’s one self-contained file — no plugins, no builder.'],
+                ['1 · Put the lander on a subdomain', 'Upload the HTML file to any host and point a subdomain at it (e.g. go.yourcompany.com). It’s one self-contained file. No plugins, no builder.'],
                 ['2 · Load the ads into Meta', 'In Meta Ads Manager, create a campaign optimized for calls or traffic, upload the ad graphics, and set the destination to your new subdomain.'],
                 ['3 · Start small and watch the calls', 'Run $10–20/day for a week. Leads from the lander’s question form are tagged with the ad click they came from, so you’ll see what’s working.'],
               ].map(([t, b]) => (
@@ -1393,7 +1393,7 @@ export default function App() {
 
           <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,letterSpacing:'.1em',textTransform:'uppercase',color:'var(--text-muted)',margin:'0 0 12px'}}>Your files</p>
           <div style={{display:'flex',flexDirection:'column',gap:10,marginBottom:36}}>
-            {deliverables.length === 0 && <p style={{color:'var(--text-secondary)',fontSize:14}}>No files here yet — head back to the dashboard and hit Step 3 again.</p>}
+            {deliverables.length === 0 && <p style={{color:'var(--text-secondary)',fontSize:14}}>No files here yet. Head back to the dashboard and hit Step 3 again.</p>}
             {deliverables.map(f => (
               <div key={f.name} className="lb-card" style={{cursor:'default'}}>
                 <div style={{flex:1,minWidth:0}}>
@@ -1411,7 +1411,7 @@ export default function App() {
             <div style={{background:'#181D24',borderRadius:14,padding:'26px 24px'}}>
               <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,letterSpacing:'.1em',textTransform:'uppercase',color:'#8FE3B8',margin:'0 0 10px'}}>Want it live today?</p>
               <p style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:20,color:'#fff',margin:'0 0 8px',letterSpacing:'-.01em'}}>Book a $100 setup call</p>
-              <p style={{fontSize:14,color:'#C7CDD2',margin:'0 0 18px',lineHeight:1.6}}>We'll get on a call and set it all up together — lander on your subdomain, ads loaded into Meta, tracking on. You leave with a live funnel.</p>
+              <p style={{fontSize:14,color:'#C7CDD2',margin:'0 0 18px',lineHeight:1.6}}>We'll get on a call and set it all up together: lander on your subdomain, ads loaded into Meta, tracking on. You leave with a live funnel.</p>
               <a className="lb-btn-signal" href={BOOKING_URL} target="_blank" rel="noopener" style={{display:'inline-flex',alignItems:'center',gap:8,textDecoration:'none',lineHeight:'48px'}}>
                 Book my setup call <i className="ti ti-arrow-right" aria-hidden="true" />
               </a>
@@ -1455,7 +1455,7 @@ export default function App() {
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:15,color:'var(--text-primary)'}}>{l.name}</div>
                     <div style={{fontSize:12,color:'var(--text-secondary)',marginTop:2}}>
-                      {l.local ? 'Ready — download it in Step 3' : `Saved ${new Date(l.created_at).toLocaleDateString()}`}
+                      {l.local ? 'Ready. Download it in Step 3' : `Saved ${new Date(l.created_at).toLocaleDateString()}`}
                     </div>
                   </div>
                 </div>
@@ -1480,12 +1480,12 @@ export default function App() {
             <div style={{position:'relative',background:'#fff',borderRadius:14,maxWidth:380,width:'100%',padding:'28px 24px',boxShadow:'0 20px 60px rgba(0,0,0,.4)'}}>
               <button onClick={closeAccountModal} aria-label="Close" style={{position:'absolute',top:10,right:14,background:'none',border:0,fontSize:26,lineHeight:1,color:'var(--text-secondary)',cursor:'pointer'}}>&times;</button>
               <h3 style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:20,letterSpacing:'-.01em',margin:'0 0 8px',color:'var(--text-primary)'}}>Almost there</h3>
-              <p style={{fontSize:14,color:'var(--text-secondary)',margin:'0 0 20px',lineHeight:1.5}}>Sign in with Google and we'll save your lander and ads to your account — your files will be waiting on the next page.</p>
+              <p style={{fontSize:14,color:'var(--text-secondary)',margin:'0 0 20px',lineHeight:1.5}}>Sign in with Google and we'll save your lander and ads to your account. Your files will be waiting on the next page.</p>
               {accountError && <div className="lb-error" style={{marginBottom:12}}>{accountError}</div>}
               <button className="lb-btn-signal" onClick={startGoogleAuth} disabled={accountBusy || !supabase} style={{width:'100%',display:'flex',alignItems:'center',justifyContent:'center',gap:10}}>
                 <i className="ti ti-brand-google" aria-hidden="true" /> {accountBusy ? 'Working…' : 'Continue with Google'}
               </button>
-              <p style={{fontSize:12,color:'var(--text-secondary)',margin:'14px 0 0',lineHeight:1.5}}>We only use your Google name and email to create your account — no access to anything else.</p>
+              <p style={{fontSize:12,color:'var(--text-secondary)',margin:'14px 0 0',lineHeight:1.5}}>We only use your Google name and email to create your account. No access to anything else.</p>
             </div>
           </div>
         )}

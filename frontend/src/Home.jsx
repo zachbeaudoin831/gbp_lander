@@ -213,8 +213,8 @@ export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
                 </div>
                 <div className="mock-body">
                   <p className="mock-eyebrow">Nashville's highest-rated roofers</p>
-                  <p className="mock-h1">Roof repair in Nashville — fixed right, the first time</p>
-                  <p className="mock-sub">Licensed &amp; insured · Free inspections · Serving Davidson County since 2009</p>
+                  <p className="mock-h1">Did last night's storm hit your roof?</p>
+                  <p className="mock-sub">Free storm inspections this week. Photos and a written report before you call your insurance.</p>
                   <button className="mock-call" type="button" aria-label="Example call button">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.13.96.36 1.9.7 2.8a2 2 0 0 1-.45 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.45c.9.34 1.84.57 2.8.7a2 2 0 0 1 1.7 2.05Z" /></svg>
                     Call Now (615) 555-0119
@@ -245,14 +245,14 @@ export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
             <div className="section-head reveal">
               <p className="eyebrow">How it works</p>
               <h2>From listing to live page in three steps</h2>
-              <p>No page builder to learn, no blocks to drag. Your Google Business Profile already has everything a landing page needs — we just put it to work.</p>
+              <p>No page builder to learn, no blocks to drag. Your Google Business Profile already has everything a landing page needs. We just put it to work.</p>
             </div>
             <div className="steps">
               <div className="step reveal">
                 <span className="step-art" aria-hidden="true"></span>
                 <span className="step-num" aria-hidden="true"></span>
                 <h3>Find your listing</h3>
-                <p>Type your business name and city. We look up your real GBP data — name, phone, hours, photos, reviews, and services — straight from Google.</p>
+                <p>Type your business name and city. We look up your real GBP data straight from Google: name, phone, hours, photos, reviews, and services.</p>
               </div>
               <div className="step reveal">
                 <span className="step-art" aria-hidden="true"></span>
@@ -264,7 +264,7 @@ export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
                 <span className="step-art" aria-hidden="true"></span>
                 <span className="step-num" aria-hidden="true"></span>
                 <h3>Download and deploy</h3>
-                <p>Get clean, self-contained HTML you can host on any subdomain — ready to receive ad traffic the moment it's live.</p>
+                <p>Get clean, self-contained HTML you can host on any subdomain, ready to receive ad traffic the moment it's live.</p>
               </div>
             </div>
           </div>
@@ -282,17 +282,17 @@ export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
               <div className="pull reveal">
                 <span className="pull-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21" /></svg></span>
                 <h3>Your real photos</h3>
-                <p>The job-site and storefront photos already on your profile — not stock images that look like everyone else's ads.</p>
+                <p>The job-site and storefront photos already on your profile, not stock images that look like everyone else's ads.</p>
               </div>
               <div className="pull reveal">
                 <span className="pull-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1L12 2z" /></svg></span>
                 <h3>Reviews that sell</h3>
-                <p>Your rating, review count, and best quotes placed where a visitor decides whether to call — above the fold.</p>
+                <p>Your rating, review count, and best quotes placed where a visitor decides whether to call: above the fold.</p>
               </div>
               <div className="pull reveal">
                 <span className="pull-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg></span>
                 <h3>Live hours &amp; open-now</h3>
-                <p>Your real hours, with an open/closed indicator — so after-hours clicks route to a callback form instead of a missed call.</p>
+                <p>Your real hours, with an open/closed indicator, so after-hours clicks route to a callback form instead of a missed call.</p>
               </div>
               <div className="pull reveal">
                 <span className="pull-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" /></svg></span>
@@ -302,11 +302,11 @@ export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
               <div className="pull reveal">
                 <span className="pull-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.13.96.36 1.9.7 2.8a2 2 0 0 1-.45 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.45c.9.34 1.84.57 2.8.7a2 2 0 0 1 1.7 2.05Z" /></svg></span>
                 <h3>Click-to-call everywhere</h3>
-                <p>Your tracked number in the header, the hero, and a sticky mobile bar — every scroll position is one tap from a call.</p>
+                <p>Your tracked number in the header, the hero, and a sticky mobile bar. Every scroll position is one tap from a call.</p>
               </div>
               <div className="pull reveal">
                 <span className="pull-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg></span>
-                <h3>Name, address, phone — matched</h3>
+                <h3>Name, address, phone: matched</h3>
                 <p>Your NAP details mirror your listing exactly, keeping quality score happy and local SEO signals consistent.</p>
               </div>
             </div>
@@ -371,19 +371,19 @@ export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
               <div className="ads-points reveal">
                 <div className="ads-point">
                   <span className="ads-check" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg></span>
-                  <span><b>One page, one goal.</b> No nav menu leaking visitors to your blog — every element points at the call button.</span>
+                  <span><b>One page, one goal.</b> No nav menu leaking visitors to your blog. Every element points at the call button.</span>
                 </div>
                 <div className="ads-point">
                   <span className="ads-check" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg></span>
-                  <span><b>Fast by construction.</b> A single self-contained HTML file with no builder bloat — quick to load on the phones your customers search from.</span>
+                  <span><b>Fast by construction.</b> A single self-contained HTML file with no builder bloat, quick to load on the phones your customers search from.</span>
                 </div>
                 <div className="ads-point">
                   <span className="ads-check" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg></span>
-                  <span><b>Yours to host.</b> Drop it on any subdomain you control — keep your tracking, your domain authority, your data.</span>
+                  <span><b>Yours to host.</b> Drop it on any subdomain you control. Keep your tracking, your domain authority, your data.</span>
                 </div>
                 <div className="ads-point">
                   <span className="ads-check" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg></span>
-                  <span><b>Agency-friendly.</b> Build a lander per client, per campaign, per city — in the time it used to take to open the page builder.</span>
+                  <span><b>Agency-friendly.</b> Build a lander per client, per campaign, per city, in the time it used to take to open the page builder.</span>
                 </div>
               </div>
             </div>
@@ -417,23 +417,23 @@ export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
             <div className="faq-list reveal">
               <details className="faq-item">
                 <summary>Where does the data come from?</summary>
-                <p>Directly from your public Google Business Profile — the same name, phone, hours, photos, reviews, and services a customer sees when they find you on Google Maps or Search. If it's right on your listing, it's right on your page.</p>
+                <p>Directly from your public Google Business Profile: the same name, phone, hours, photos, reviews, and services a customer sees when they find you on Google Maps or Search. If it's right on your listing, it's right on your page.</p>
               </details>
               <details className="faq-item">
                 <summary>Do I need my own hosting or domain?</summary>
-                <p>You download a single, self-contained HTML file, so it works anywhere — a subdomain like <em>offers.yourbusiness.com</em>, your existing host, or a free static host. If you can upload one file, you can deploy your lander.</p>
+                <p>You download a single, self-contained HTML file, so it works anywhere: a subdomain like <em>offers.yourbusiness.com</em>, your existing host, or a free static host. If you can upload one file, you can deploy your lander.</p>
               </details>
               <details className="faq-item">
                 <summary>Can I edit the page after it's built?</summary>
-                <p>Yes. The output is clean, readable HTML — swap a headline, change the tracking number, or add your analytics snippet with any text editor. There's no proprietary builder locking you in.</p>
+                <p>Yes. The output is clean, readable HTML. Swap a headline, change the tracking number, or add your analytics snippet with any text editor. There's no proprietary builder locking you in.</p>
               </details>
               <details className="faq-item">
-                <summary>I run an agency — can I build pages for clients?</summary>
-                <p>That's one of the most common ways SendKPI is used. Search any client's listing, generate their lander, and deploy it on a subdomain you manage — one per client, campaign, or service area.</p>
+                <summary>I run an agency. Can I build pages for clients?</summary>
+                <p>That's one of the most common ways SendKPI is used. Search any client's listing, generate their lander, and deploy it on a subdomain you manage: one per client, campaign, or service area.</p>
               </details>
               <details className="faq-item">
                 <summary>What if my profile is thin or out of date?</summary>
-                <p>The page is only as good as the profile behind it — which is a feature: fixing your listing improves your Google presence <em>and</em> your lander at the same time. We flag missing pieces (photos, services, hours) before you download.</p>
+                <p>The page is only as good as the profile behind it, and that's a feature: fixing your listing improves your Google presence <em>and</em> your lander at the same time. We flag missing pieces (photos, services, hours) before you download.</p>
               </details>
             </div>
           </div>

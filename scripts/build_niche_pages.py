@@ -26,13 +26,13 @@ NICHES = [
         "problem_word": "Plumbing problems",
         "biz": {"name": "Harbor Plumbing", "city": "Santa Cruz", "state": "CA", "phone": "(831) 555-0142", "rating": "4.9", "reviews": "312", "domain": "plumbing.harborplumbingsc.com", "eyebrow": "Santa Cruz's Highest-Rated Plumbers"},
         "symptoms": [
-            "A slow drain — it's a clog in progress, then sewage backs up into the house",
-            "Gurgling drains or a sewer smell — roots in the line, then a dug-up yard",
-            "A rumbling 10-year-old water heater — it fails and floods the space it lives in",
-            "A small leak under the sink — rotted cabinets and mold behind them",
+            "A slow drain → it's a clog in progress, then sewage backs up into the house",
+            "Gurgling drains or a sewer smell → roots in the line, then a dug-up yard",
+            "A rumbling 10-year-old water heater → it fails and floods the space it lives in",
+            "A small leak under the sink → rotted cabinets and mold behind them",
         ],
         "ads": [
-            {"h": "That Slow Drain Isn't Fixing Itself", "s": "It's a clog in progress — sewage backup comes next", "c": "Fix It Today"},
+            {"h": "That Slow Drain Isn't Fixing Itself", "s": "It's a clog in progress. Sewage backup comes next", "c": "Fix It Today"},
             {"h": "Gurgling Drains Are Not Normal", "s": "Roots in the line come next, then a dug-up yard", "c": "Call Before It Spreads"},
             {"h": "Your Water Heater Is Telling You", "s": "Rumbling and rusty water end in a flooded closet", "c": "Replace It First"},
         ],
@@ -44,9 +44,9 @@ NICHES = [
         "problem_word": "AC and furnace trouble",
         "biz": {"name": "Comfort Air Heating & Cooling", "city": "Sacramento", "state": "CA", "phone": "(916) 555-0177", "rating": "4.8", "reviews": "204", "domain": "ac.comfortairsac.com", "eyebrow": "Sacramento's Highest-Rated HVAC Team"},
         "symptoms": [
-            "Weak airflow or a rattle from the unit — a dead compressor in the hottest week of the year",
-            "Short-cycling and a creeping power bill — a breakdown scheduled for peak season",
-            "A skipped tune-up — a mid-season failure when every company is booked out",
+            "Weak airflow or a rattle from the unit → a dead compressor in the hottest week of the year",
+            "Short-cycling and a creeping power bill → a breakdown scheduled for peak season",
+            "A skipped tune-up → a mid-season failure when every company is booked out",
         ],
         "ads": [
             {"h": "Your AC Has Been Warning You All Spring", "s": "Weak airflow now is a dead compressor in July", "c": "Book A Tune-Up"},
@@ -61,10 +61,10 @@ NICHES = [
         "problem_word": "Electrical problems",
         "biz": {"name": "Bright Line Electric", "city": "San Jose", "state": "CA", "phone": "(408) 555-0193", "rating": "4.9", "reviews": "187", "domain": "service.brightlineelectric.com", "eyebrow": "San Jose's Highest-Rated Electricians"},
         "symptoms": [
-            "Warm outlets or a faint burning smell — a genuine fire risk behind the wall",
-            "Flickering lights — loose or overloaded wiring asking for attention",
-            "Breakers tripping every week — an overloaded or failing panel",
-            "A decades-old panel — a fire hazard that also blocks insurance and home sales",
+            "Warm outlets or a faint burning smell → a genuine fire risk behind the wall",
+            "Flickering lights → loose or overloaded wiring asking for attention",
+            "Breakers tripping every week → an overloaded or failing panel",
+            "A decades-old panel → a fire hazard that also blocks insurance and home sales",
         ],
         "ads": [
             {"h": "Warm Outlets Are A Warning", "s": "Loose wiring behind the wall is a fire risk", "c": "Get It Checked"},
@@ -79,15 +79,15 @@ NICHES = [
         "problem_word": "Roof problems",
         "biz": {"name": "Ridgeline Roofing", "city": "Nashville", "state": "TN", "phone": "(615) 555-0119", "rating": "4.9", "reviews": "212", "domain": "roofing.ridgelinetn.com", "eyebrow": "Nashville's Highest-Rated Roofers"},
         "symptoms": [
-            "Shingle granules collecting in the gutters — a roof letting water into the decking",
-            "One lifted or missing shingle — a leak that rots the deck beneath it",
-            "A small ceiling stain — interior water damage and mold already underway",
-            "Clogged gutters — water backing under the roofline and down the walls",
+            "Shingle granules collecting in the gutters → a roof letting water into the decking",
+            "One lifted or missing shingle → a leak that rots the deck beneath it",
+            "A small ceiling stain → interior water damage and mold already underway",
+            "Clogged gutters → water backing under the roofline and down the walls",
         ],
         "ads": [
-            {"h": "Granules In The Gutter?", "s": "Your shingles are wearing out — leaks come next", "c": "Get A Roof Check"},
+            {"h": "Granules In The Gutter?", "s": "Your shingles are wearing out. Leaks come next", "c": "Get A Roof Check"},
             {"h": "One Lifted Shingle Lets Water In", "s": "A small repair now beats a rotted deck later", "c": "Fix It This Week"},
-            {"h": "That Ceiling Stain Is Growing", "s": "Water is already inside — it won't stop on its own", "c": "Call Now"},
+            {"h": "That Ceiling Stain Is Growing", "s": "Water is already inside. It won't stop on its own", "c": "Call Now"},
         ],
     },
     {
@@ -97,9 +97,9 @@ NICHES = [
         "problem_word": "Pest problems",
         "biz": {"name": "Sentinel Pest Control", "city": "Phoenix", "state": "AZ", "phone": "(602) 555-0164", "rating": "4.8", "reviews": "256", "domain": "pest.sentinelaz.com", "eyebrow": "Phoenix's Highest-Rated Pest Control"},
         "symptoms": [
-            "One discarded termite wing or a pile of sawdust — an active colony eating the structure",
-            "Droppings in the pantry — a growing nest inside the walls",
-            "A few carpenter ants — hollowed-out framing where they've settled in",
+            "One discarded termite wing or a pile of sawdust → an active colony eating the structure",
+            "Droppings in the pantry → a growing nest inside the walls",
+            "A few carpenter ants → hollowed-out framing where they've settled in",
         ],
         "ads": [
             {"h": "Saw One? There Are Never Just One", "s": "Droppings in the pantry mean a nest in the walls", "c": "Get An Inspection"},
@@ -114,9 +114,9 @@ NICHES = [
         "problem_word": "Tree problems",
         "biz": {"name": "Canopy Tree Service", "city": "Portland", "state": "OR", "phone": "(503) 555-0138", "rating": "4.9", "reviews": "164", "domain": "trees.canopypdx.com", "eyebrow": "Portland's Highest-Rated Tree Service"},
         "symptoms": [
-            "Dead limbs over the roof — the next storm drops them on the house or car",
-            "A leaning tree or mushrooms at the base — root failure and an uncontrolled fall",
-            "Limbs growing into the power lines — an outage or worse in the next wind",
+            "Dead limbs over the roof → the next storm drops them on the house or car",
+            "A leaning tree or mushrooms at the base → root failure and an uncontrolled fall",
+            "Limbs growing into the power lines → an outage or worse in the next wind",
         ],
         "ads": [
             {"h": "Dead Limbs Don't Wait", "s": "The next storm drops them on the roof", "c": "Trim Before The Storm"},
@@ -131,8 +131,8 @@ NICHES = [
         "problem_word": "Garage door trouble",
         "biz": {"name": "Overhead Door Co.", "city": "Denver", "state": "CO", "phone": "(303) 555-0186", "rating": "4.9", "reviews": "301", "domain": "repair.overheaddenver.com", "eyebrow": "Denver's Highest-Rated Garage Door Repair"},
         "symptoms": [
-            "A grinding, uneven door — a snapped spring with the car stuck inside",
-            "Frayed cables — a sudden failure of a very heavy door",
+            "A grinding, uneven door → a snapped spring with the car stuck inside",
+            "Frayed cables → a sudden failure of a very heavy door",
         ],
         "ads": [
             {"h": "A Grinding Garage Door Is A Countdown", "s": "Snapped springs strand the car inside", "c": "Fix It Today"},
@@ -147,13 +147,13 @@ NICHES = [
         "problem_word": "Car trouble",
         "biz": {"name": "Main Street Auto Repair", "city": "Boise", "state": "ID", "phone": "(208) 555-0151", "rating": "4.8", "reviews": "423", "domain": "service.mainstreetautoboise.com", "eyebrow": "Boise's Highest-Rated Auto Shop"},
         "symptoms": [
-            "Squealing brakes — worn pads scoring the rotors, a bigger repair every week it waits",
-            "An ignored check-engine light — a small fix growing into engine damage",
-            "Bald tires — a blowout at highway speed",
-            "An overdue oil change — engine wear that never reverses",
+            "Squealing brakes → worn pads scoring the rotors, a bigger repair every week it waits",
+            "An ignored check-engine light → a small fix growing into engine damage",
+            "Bald tires → a blowout at highway speed",
+            "An overdue oil change → engine wear that never reverses",
         ],
         "ads": [
-            {"h": "That Squeal Is Charging You Interest", "s": "Worn pads score rotors — the bill grows weekly", "c": "Book Brake Service"},
+            {"h": "That Squeal Is Charging You Interest", "s": "Worn pads score rotors. The bill grows weekly", "c": "Book Brake Service"},
             {"h": "Tape Over The Check-Engine Light?", "s": "Small fixes grow into engine damage", "c": "Get It Read"},
             {"h": "Bald Tires Don't Warn You Twice", "s": "A blowout picks its own timing", "c": "Replace Them Now"},
         ],
@@ -241,8 +241,8 @@ def page(n: dict) -> str:
     )
     return f"""<!DOCTYPE html><html lang="en"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>SendKPI for {esc(n["trade"])} — don't-delay ads + a landing page from your Google listing</title>
-<meta name="description" content="SendKPI turns a {esc(n["trade_singular"])}'s Google Business Profile into a call-focused landing page and matching don't-delay Meta ads — in about two minutes.">
+<title>SendKPI for {esc(n["trade"])} : don't-delay ads + a landing page from your Google listing</title>
+<meta name="description" content="SendKPI turns a {esc(n["trade_singular"])}'s Google Business Profile into a call-focused landing page and matching don't-delay Meta ads in about two minutes.">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -257,15 +257,15 @@ def page(n: dict) -> str:
 <header class="hero"><div class="wrap">
   <p class="eyebrow">SendKPI for {esc(n["trade"])}</p>
   <h1>Ads that stop the scroll. A page that makes the phone ring.</h1>
-  <p class="sub">Google catches emergencies. Meta reaches the homeowner who's been <b>ignoring the warning signs</b>. SendKPI reads your Google Business Profile — your reviews, photos, hours, phone — and builds a call-focused landing page plus matching "don't-delay" ads for it. <b>About two minutes</b>, start to download.</p>
+  <p class="sub">Google catches emergencies. Meta reaches the homeowner who's been <b>ignoring the warning signs</b>. SendKPI reads your Google Business Profile (your reviews, photos, hours, phone) and builds a call-focused landing page plus matching "don't-delay" ads for it. <b>About two minutes</b>, start to download.</p>
   <a class="cta" href="/">Find my listing →</a>
   <span class="cta-note">Free to build · No card · Your real reviews and photos, not a template</span>
 </div></header>
 
 <section><div class="wrap">
   <p class="sec-eyebrow">The angle</p>
-  <h2>{esc(n["problem_word"])} people ignore — your best ad inventory</h2>
-  <p class="lead">Every {esc(n["trade_singular"])} knows the calls that came six months too late. The don't-delay angle names the symptom, shows what it turns into, and hands them your number — with your real rating doing the trust work. SendKPI writes these for your business automatically:</p>
+  <h2>{esc(n["problem_word"])} people ignore: your best ad inventory</h2>
+  <p class="lead">Every {esc(n["trade_singular"])} knows the calls that came six months too late. The don't-delay angle names the symptom, shows what it turns into, and hands them your number, with your real rating doing the trust work. SendKPI writes these for your business automatically:</p>
   <div class="ads-grid">{ads_html}</div>
 </div></section>
 
@@ -278,11 +278,11 @@ def page(n: dict) -> str:
 <section><div class="wrap">
   <p class="sec-eyebrow">The matching lander</p>
   <h2>The click lands on proof, not a template</h2>
-  <p class="lead">The ad says "don't wait" — the page instantly answers "why you." Your Google rating, review count, real customer reviews, photos, hours, and a tap-to-call button, assembled into a page built to convert the click into a call:</p>
+  <p class="lead">The ad says "don't wait." The page instantly answers "why you." Your Google rating, review count, real customer reviews, photos, hours, and a tap-to-call button, assembled into a page built to convert the click into a call:</p>
   <div class="mock">
     <span class="mock-url">{esc(biz["domain"])}</span>
     <p class="mock-eyebrow">{esc(biz["eyebrow"])}</p>
-    <p class="mock-h">{esc(n["problem_word"])} in {esc(biz["city"])} — fixed fast, done right</p>
+    <p class="mock-h">{esc(n["problem_word"])} in {esc(biz["city"])}, fixed fast and done right</p>
     <p class="mock-proof">Open now · Serving {esc(biz["city"])}, {esc(biz["state"])}</p>
     <a class="mock-call" href="/">&#128222; Call {esc(biz["phone"])}</a>
     <div class="mock-meta">
@@ -304,9 +304,9 @@ def page(n: dict) -> str:
   <p class="sec-eyebrow">How it works</p>
   <h2>About two minutes, start to finish</h2>
   <div class="steps">
-    <div class="step"><div class="step-n">STEP 1</div><b>Find your listing</b><p>Type your business name and city. SendKPI pulls your Google Business Profile — nothing to upload, nothing to write.</p></div>
+    <div class="step"><div class="step-n">STEP 1</div><b>Find your listing</b><p>Type your business name and city. SendKPI pulls your Google Business Profile. Nothing to upload, nothing to write.</p></div>
     <div class="step"><div class="step-n">STEP 2</div><b>Build the ads</b><p>Your lander is assembled instantly. Pick up to 3 photos, choose the "don't delay" angle, and the ad copy writes itself from your real services and reviews.</p></div>
-    <div class="step"><div class="step-n">STEP 3</div><b>Download &amp; launch</b><p>Sign in with Google and your landing page plus ad graphics download on the spot — ready for Meta and ready to make the phone ring.</p></div>
+    <div class="step"><div class="step-n">STEP 3</div><b>Download &amp; launch</b><p>Sign in with Google and your landing page plus ad graphics download on the spot, ready for Meta and ready to make the phone ring.</p></div>
   </div>
 </div></section>
 
