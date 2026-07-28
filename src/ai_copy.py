@@ -200,7 +200,8 @@ years in business, or guarantees not present in the provided data.
 - Review quotes (full or partial) must come verbatim from the provided review \
 excerpts.
 - Only cite the rating/review count if genuinely strong (4.5+ with a \
-meaningful number of reviews).
+meaningful number of reviews). Cite it only as reviews or a rating -- never \
+recast the review count as a number of homes, jobs, or customers.
 - Write like a sharp direct-response copywriter: short, concrete, zero \
 corporate filler.
 - The 5-7 angles must be genuinely distinct from each other -- no rewordings \
@@ -235,6 +236,9 @@ a different angle.
 provided profile or angle.
 - Only cite the rating/review count if genuinely strong (4.5+ with a \
 meaningful number of reviews) -- and not in all four variations.
+- The review count is the number of Google reviews. Cite it only as reviews \
+or a rating (e.g. "4.8 stars from 512 reviews") -- never recast it as a \
+number of homes, jobs, customers, or years.
 - Each headline must be clearly different from the others -- different first \
 words, different structure.
 - Write like a sharp human copywriter: short sentences, concrete words."""
