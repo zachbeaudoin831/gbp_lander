@@ -261,6 +261,14 @@ async function generateAdCopy(payload) {
   return apiPost('/api/generate-ad-copy', payload);
 }
 
+async function generateAngles(payload) {
+  return apiPost('/api/generate-angles', payload);
+}
+
+async function generateAngleAds(payload) {
+  return apiPost('/api/generate-angle-ads', payload);
+}
+
 /* ─── preview-only CTA appended below the lander in the preview iframe.
    Styled as builder chrome (matches the top bar) so it reads as part of
    the tool, not the lander -- and it's never in the downloaded file,
@@ -436,20 +444,26 @@ function drawAd(canvas, img, copy, biz) {
   }
 }
 
-const MAX_ADS = 3;
+const MAX_ADS = 4;
 
 function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn }) {
   const [lander, setLander] = useState(null);
-  const [angle, setAngle] = useState('offer'); // 'offer' | 'dont_delay' ad angle for AI copy
+  const [angle, setAngle] = useState('offer'); // 'offer' | 'dont_delay' ad angle for AI copy (legacy landers without a chosen angle)
   const [photoUrls, setPhotoUrls] = useState(initialAds?.photoUrls || []); // up to MAX_ADS, in click order
   const [imgs, setImgs] = useState({});           // url -> loaded HTMLImageElement
   const [copy, setCopy] = useState(initialAds?.copy || { headline: '', subline: '', cta: '', primary_text: '' });
+  const [variations, setVariations] = useState(initialAds?.variations || []); // per-ad copy, angle mode only
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState(-1); // index of the variation whose primary text was just copied (-2 = legacy single copy)
+  const autoGenRef = useRef(false); // variations auto-generation already kicked off for this lander
 
   const profile = lander?.profile || null;
   const photos = profile?.photos || [];
+  const angleMeta = profile?.chosen_angle || null; // set by the angle-picker flow
+  // Per-ad copy: in angle mode each canvas gets its own variation (falling
+  // back to the shared prefill until the variations land).
+  const copyFor = i => (angleMeta && variations.length ? (variations[i] || variations[0]) : copy);
 
   const eyebrow = { fontFamily: "'IBM Plex Mono',monospace", fontSize: 11, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 10px' };
 
@@ -466,20 +480,61 @@ function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn }) {
 
   // Let the parent stash the current selection before the OAuth redirect.
   useEffect(() => {
-    onAdsState?.({ photoUrls, copy });
-  }, [photoUrls, copy]); // eslint-disable-line react-hooks/exhaustive-deps
+    onAdsState?.({ photoUrls, copy, variations });
+  }, [photoUrls, copy, variations]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function pickLander(l) {
-    setLander(l); setPhotoUrls([]); setError('');
+    const p = l.profile || {};
+    setLander(l); setError('');
+    setVariations([]);
+    autoGenRef.current = false; // new lander -- allow a fresh auto-generation
+    // Angle mode: the owner already picked their angle, so skip the manual
+    // steps -- auto-select the first 4 photos and let the variations effect
+    // below write one ad per photo.
+    setPhotoUrls(p.chosen_angle ? (p.photos || []).slice(0, MAX_ADS) : []);
     // Prefill from the lander's own offer so there's a usable ad before the
     // AI call -- generation then just tightens what's already here.
-    const p = l.profile || {};
     setCopy({
       headline: p.offer_headline || p.tagline || l.name || '',
       subline: p.offer_subhead || (p.rating ? `Rated ${Number(p.rating).toFixed(1)}★ by ${p.review_count || 0} customers on Google` : ''),
-      cta: 'Call Today',
+      cta: p.chosen_angle?.cta_label || 'Call Today',
       primary_text: '',
     });
+  }
+
+  // Angle mode: auto-generate the 4 ad variations as soon as the lander is
+  // picked (unless they were restored from the pre-OAuth stash).
+  useEffect(() => {
+    if (!profile || !angleMeta) return;
+    if (variations.length || autoGenRef.current) return;
+    autoGenRef.current = true;
+    handleGenerateVariations();
+  }, [profile]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function handleGenerateVariations() {
+    if (!profile?.chosen_angle) return;
+    setBusy(true); setError('');
+    try {
+      const res = await generateAngleAds({
+        name: profile.name || lander?.name || '',
+        category: profile.category || '',
+        services: profile.services || [],
+        service_areas: profile.service_areas || [],
+        rating: profile.rating,
+        review_count: profile.review_count,
+        summary: profile.site_summary || profile.about_summary || null,
+        main_service: profile.main_service || '',
+        angle: profile.chosen_angle,
+      });
+      const list = (Array.isArray(res.variations) ? res.variations : [])
+        .filter(v => v && v.headline).slice(0, MAX_ADS);
+      if (!list.length) throw new Error('Could not write the ad variations — hit Regenerate to retry.');
+      setVariations(list);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
   }
 
   function togglePhoto(url) {
@@ -512,14 +567,14 @@ function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn }) {
       photoUrls.forEach((url, i) => {
         const canvas = canvasesRef.current[i];
         const img = imgs[url];
-        if (canvas && img) drawAd(canvas, img, copy, profile);
+        if (canvas && img) drawAd(canvas, img, copyFor(i), profile);
       });
       // Every selected photo rendered -- downloads queued behind the OAuth
       // redirect can fire now.
       if (photoUrls.length && photoUrls.every(u => imgs[u])) onAllDrawn?.();
     })();
     return () => { cancelled = true; };
-  }, [photoUrls, imgs, copy, profile, canvasesRef]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [photoUrls, imgs, copy, variations, profile, canvasesRef]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleGenerate() {
     if (!profile) return;
@@ -552,12 +607,16 @@ function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn }) {
     }
   }
 
-  async function copyPrimaryText() {
+  async function copyPrimaryText(text, which) {
     try {
-      await navigator.clipboard.writeText(copy.primary_text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1600);
+      await navigator.clipboard.writeText(text);
+      setCopied(which);
+      setTimeout(() => setCopied(-1), 1600);
     } catch { /* clipboard unavailable -- the text is visible to copy by hand */ }
+  }
+
+  function editVariation(i, patch) {
+    setVariations(prev => prev.map((v, idx) => idx === i ? { ...v, ...patch } : v));
   }
 
   if (!landers.length) return (
@@ -577,7 +636,7 @@ function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn }) {
 
       {lander && (
         <div>
-          <p style={eyebrow}>2 · Photos — pick up to {MAX_ADS}</p>
+          <p style={eyebrow}>{angleMeta ? `2 · Photos — we picked ${photoUrls.length || MAX_ADS}, tap to swap` : `2 · Photos — pick up to ${MAX_ADS}`}</p>
           {photos.length === 0
             ? <p style={{ color: 'var(--text-secondary)', fontSize: 14, margin: 0 }}>This lander has no photos to build ads from.</p>
             : <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(110px,1fr))', gap: 8 }}>
@@ -604,7 +663,22 @@ function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn }) {
         </div>
       )}
 
-      {lander && photoUrls.length > 0 && (
+      {lander && photoUrls.length > 0 && angleMeta && (
+        <div>
+          <p style={eyebrow}>3 · Copy — 4 takes on your angle</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 10.5, letterSpacing: '.08em', textTransform: 'uppercase', color: '#0D57D0', fontWeight: 600, background: '#E7EEFB', borderRadius: 999, padding: '4px 10px' }}>
+              {angleMeta.label}
+            </span>
+            <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>"{angleMeta.hook}"</span>
+            <button className="lb-btn-ghost" onClick={handleGenerateVariations} disabled={busy}>
+              {busy ? 'Writing 4 variations…' : 'Regenerate variations'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {lander && photoUrls.length > 0 && !angleMeta && (
         <div>
           <p style={eyebrow}>3 · Copy</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -633,17 +707,36 @@ function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn }) {
         <div>
           <p style={eyebrow}>Your ads ({photoUrls.length})</p>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            {photoUrls.map((url, i) => (
-              <div key={url} style={{ flex: '1 1 220px', maxWidth: 340 }}>
-                {!imgs[url] && <p style={{ color: 'var(--text-secondary)', fontSize: 13, margin: '0 0 6px' }}>Loading photo…</p>}
-                <canvas ref={el => { canvasesRef.current[i] = el; }} width={AD_SIZE} height={AD_SIZE}
-                  style={{ width: '100%', borderRadius: 12, border: '0.5px solid var(--border)', display: imgs[url] ? 'block' : 'none' }} />
-              </div>
-            ))}
+            {photoUrls.map((url, i) => {
+              const v = angleMeta ? (variations[i] || null) : null;
+              return (
+                <div key={url} style={{ flex: '1 1 220px', maxWidth: 340 }}>
+                  {!imgs[url] && <p style={{ color: 'var(--text-secondary)', fontSize: 13, margin: '0 0 6px' }}>Loading photo…</p>}
+                  <canvas ref={el => { canvasesRef.current[i] = el; }} width={AD_SIZE} height={AD_SIZE}
+                    style={{ width: '100%', borderRadius: 12, border: '0.5px solid var(--border)', display: imgs[url] ? 'block' : 'none' }} />
+                  {v && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
+                      <input className="lb-input" style={{ height: 40, fontSize: 13.5 }} placeholder="Headline" value={v.headline || ''} onChange={e => editVariation(i, { headline: e.target.value })} />
+                      <input className="lb-input" style={{ height: 40, fontSize: 13.5 }} placeholder="Supporting line" value={v.subline || ''} onChange={e => editVariation(i, { subline: e.target.value })} />
+                      <input className="lb-input" style={{ height: 40, fontSize: 13.5 }} placeholder="Button label" value={v.cta || ''} onChange={e => editVariation(i, { cta: e.target.value })} />
+                      <textarea className="lb-input" placeholder="Primary text (shown next to the image in the feed)" value={v.primary_text || ''} onChange={e => editVariation(i, { primary_text: e.target.value })} style={{ height: 84, padding: '10px 12px', fontSize: 13.5, resize: 'vertical', lineHeight: 1.5 }} />
+                      {(v.primary_text || '').trim() && (
+                        <button className="lb-btn-ghost" style={{ alignSelf: 'flex-start' }} onClick={() => copyPrimaryText(v.primary_text, i)}>
+                          {copied === i ? 'Copied!' : 'Copy primary text'}
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
-          {copy.primary_text.trim() && (
+          {angleMeta && busy && !variations.length && (
+            <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 12 }}>Writing 4 takes on your "{angleMeta.label}" angle…</p>
+          )}
+          {!angleMeta && copy.primary_text.trim() && (
             <div style={{ marginTop: 12 }}>
-              <button className="lb-btn-ghost" onClick={copyPrimaryText}>{copied ? 'Copied!' : 'Copy primary text'}</button>
+              <button className="lb-btn-ghost" onClick={() => copyPrimaryText(copy.primary_text, -2)}>{copied === -2 ? 'Copied!' : 'Copy primary text'}</button>
             </div>
           )}
           <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 14 }}>
@@ -671,6 +764,11 @@ export default function App() {
   const [dashboardTab,  setDashboardTab] = useState('landers');
   const [restoredAds,   setRestoredAds]  = useState(null); // ads state rebuilt after the OAuth redirect
   const [deliverables,  setDeliverables] = useState([]);   // files listed on the thank-you page
+  const [pendingProfile, setPendingProfile] = useState(null); // profile held while we ask the main-service question
+  const [mainService,    setMainService]    = useState('');
+  const [scanDone,       setScanDone]       = useState(false); // website scan (offer generation) finished
+  const [angles,         setAngles]         = useState([]);    // researched ad angles awaiting the owner's pick
+  const offerPromiseRef = useRef(null); // in-flight website-scan/offer call, started before the service question
   const iframeRef = useRef(null);
   const blobRef   = useRef(null);
   const timerRef  = useRef(null);
@@ -799,45 +897,100 @@ export default function App() {
   async function runBuild(candidate) {
     setError('');
     setStep('loading');
-    const stop = cycleMsgs([
-      'Pulling business details…',
-      'Extracting services and hours…',
-      'Gathering reviews…',
-      'Finding photos…',
-      'Reading their website for the offer…',
-    ], 3200);
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+    setLoadMsg('Pulling profile information…');
     try {
       const profile = await getProfile(candidate.place_id);
-      let extras = {};
-      try {
-        extras = await generateOffer({
-          website: profile.website,
-          name: profile.name,
-          category: profile.category,
-          tagline: profile.tagline,
-          services: profile.services || [],
-          service_areas: profile.service_areas || [],
-        });
-      } catch {
-        // Offer generation is a nice-to-have -- if the site can't be
-        // scraped or the AI call fails, just build the page without it
-        // rather than blocking the whole flow.
-      }
-      // The AI only returns fields it's confident about (e.g. a refined
-      // category or services list); drop nulls and empty arrays so they
-      // don't blank out real profile data.
-      const cleanExtras = Object.fromEntries(
-        Object.entries(extras).filter(([, v]) =>
-          v !== null && v !== undefined && !(Array.isArray(v) && v.length === 0)
-        )
-      );
-      stop();
-      finishBuild({ ...profile, ...cleanExtras });
+      // Kick off the website scan (offer generation) now but don't block on
+      // it -- it keeps running behind the main-service question, and the
+      // angle step awaits it. Failure is fine: the flow continues without
+      // site-derived copy.
+      setLoadMsg('Scanning website from profile…');
+      setScanDone(false);
+      const scan = generateOffer({
+        website: profile.website,
+        name: profile.name,
+        category: profile.category,
+        tagline: profile.tagline,
+        services: profile.services || [],
+        service_areas: profile.service_areas || [],
+      }).catch(() => ({}));
+      offerPromiseRef.current = scan;
+      scan.then(() => setScanDone(true));
+      setPendingProfile(profile);
+      setMainService('');
+      setStep('service');
     } catch(err) {
-      stop();
       setError(err.message);
       setStep(candidates.length ? 'candidates' : 'search');
     }
+  }
+
+  // The AI only returns fields it's confident about (e.g. a refined category
+  // or services list); drop nulls and empty arrays so they don't blank out
+  // real profile data.
+  const cleanExtras = extras => Object.fromEntries(
+    Object.entries(extras || {}).filter(([, v]) =>
+      v !== null && v !== undefined && !(Array.isArray(v) && v.length === 0)
+    )
+  );
+
+  async function handleServiceSubmit(e) {
+    if (e?.preventDefault) e.preventDefault();
+    const svc = mainService.trim();
+    if (!svc) { setError('Type the service you want more calls for — e.g. "water heater replacement".'); return; }
+    setError('');
+    setStep('loading');
+    const cat = (pendingProfile?.category || 'your trade').toLowerCase();
+    const stop = cycleMsgs([
+      `Researching winning ad angles for ${cat}…`,
+      'Studying campaigns that made the phone ring…',
+      'Reading your reviews for proof points…',
+      `Matching angles to "${svc}"…`,
+      'Shortlisting the strongest angles…',
+    ], 3200);
+    try {
+      let extras = {};
+      try { extras = (await offerPromiseRef.current) || {}; } catch { /* scan failed -- continue without it */ }
+      const merged = { ...pendingProfile, ...cleanExtras(extras), main_service: svc };
+      const res = await generateAngles({
+        name: merged.name,
+        category: merged.category || '',
+        services: merged.services || [],
+        service_areas: merged.service_areas || [],
+        rating: merged.rating,
+        review_count: merged.review_count,
+        address: merged.address || '',
+        reviews: (merged.reviews || []).slice(0, 5).map(r => ({
+          author: r.author, rating: r.rating, text: (r.text || '').slice(0, 600),
+        })),
+        summary: merged.site_summary || merged.about_summary || null,
+        main_service: svc,
+      });
+      stop();
+      const list = (Array.isArray(res.angles) ? res.angles : []).filter(a => a && a.label && a.hook);
+      if (!list.length) throw new Error('Could not build angles for this business — try again.');
+      setBusiness(merged);
+      setAngles(list);
+      setStep('angles');
+      window.scrollTo(0, 0);
+    } catch(err) {
+      stop();
+      setError(err.message);
+      setStep('service');
+    }
+  }
+
+  function chooseAngle(a) {
+    // The chosen angle rewrites the lander's above-the-fold offer and rides
+    // along in the profile so the Ads step (and any later session) knows
+    // which angle this campaign runs on.
+    finishBuild({
+      ...business,
+      offer_headline: a.lander_headline || a.hook,
+      offer_subhead: a.lander_subhead || business?.offer_subhead || null,
+      chosen_angle: a,
+    });
   }
 
   function finishBuild(profile) {
@@ -848,6 +1001,8 @@ export default function App() {
 
   function reset() {
     setStep('search'); setQuery(''); setCandidates([]); setHtml(''); setBusiness(null); setError('');
+    setPendingProfile(null); setMainService(''); setAngles([]); setScanDone(false);
+    offerPromiseRef.current = null;
   }
 
   /* ── returning users: sign in from the homepage, sign out anywhere ── */
@@ -1093,6 +1248,94 @@ export default function App() {
       </div>
     </div>
   );
+
+  /* ── main-service question (website scan continues behind it) ──────── */
+  if (step === 'service') {
+    const mono = { fontFamily: "'IBM Plex Mono',monospace" };
+    return (
+      <div style={{background:'#fff',minHeight:'100dvh'}}>
+        <div style={{background:'#181D24',padding:'12px 20px',display:'flex',alignItems:'center',gap:10}}>
+          <LogoMark size={26} ring="#181D24" />
+          <span style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:14,color:'#fff',letterSpacing:'-.01em',marginLeft:-5}}>SendKPI</span>
+        </div>
+
+        <div style={{padding:'32px 20px 48px',maxWidth:600,margin:'0 auto'}}>
+          <div style={{background:'#F4F5F3',border:'1px solid #E5E7E3',borderRadius:12,padding:'16px 18px',marginBottom:28}}>
+            <p style={{...mono,fontSize:12,color:'#1F8A5F',margin:'0 0 8px'}}>✓ Pulling profile information</p>
+            <p style={{...mono,fontSize:12,color:scanDone?'#1F8A5F':'var(--text-secondary)',margin:0}}>
+              {scanDone ? '✓ Scanning website from profile' : '▸ Scanning website from profile…'}
+            </p>
+          </div>
+
+          <h2 style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:22,letterSpacing:'-.01em',color:'var(--text-primary)',margin:'0 0 6px'}}>
+            While we scan — what's the main service you want more calls for?
+          </h2>
+          <p style={{color:'var(--text-secondary)',fontSize:14,margin:'0 0 20px',lineHeight:1.55}}>
+            We'll research winning ad angles for {pendingProfile?.name || 'your business'} and build the page and ads around that one service.
+          </p>
+
+          <form onSubmit={handleServiceSubmit} style={{display:'flex',flexDirection:'column',gap:12}}>
+            <input
+              className="lb-input"
+              autoFocus
+              placeholder='e.g. "water heater replacement" or "roof repair"'
+              value={mainService}
+              onChange={e => setMainService(e.target.value)}
+            />
+            <button className="lb-btn-signal" type="submit" style={{alignSelf:'flex-start',display:'flex',alignItems:'center',gap:8}}>
+              Find my winning angles <i className="ti ti-arrow-right" aria-hidden="true" />
+            </button>
+          </form>
+
+          {error && <div className="lb-error" style={{marginTop:16}}>{error}</div>}
+        </div>
+      </div>
+    );
+  }
+
+  /* ── angle picker (research results) ───────────────────────────────── */
+  if (step === 'angles') {
+    return (
+      <div style={{background:'#fff',minHeight:'100dvh'}}>
+        <div style={{background:'#181D24',padding:'12px 20px',display:'flex',alignItems:'center',gap:10}}>
+          <LogoMark size={26} ring="#181D24" />
+          <span style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:14,color:'#fff',letterSpacing:'-.01em',marginLeft:-5}}>SendKPI</span>
+        </div>
+
+        <div style={{padding:'32px 20px 64px',maxWidth:640,margin:'0 auto'}}>
+          <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,letterSpacing:'.1em',textTransform:'uppercase',color:'#0D57D0',margin:'0 0 10px'}}>
+            {angles.length} winning angles found
+          </p>
+          <h2 style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:24,letterSpacing:'-.01em',color:'var(--text-primary)',margin:'0 0 6px'}}>
+            Pick the angle for your campaign
+          </h2>
+          <p style={{color:'var(--text-secondary)',fontSize:14,margin:'0 0 26px',lineHeight:1.55}}>
+            Researched for {business?.main_service ? `"${business.main_service}"` : 'your main service'} and customized to {business?.name || 'your business'} — your reviews, your area, your trade. The one you pick shapes the landing page and all your ads.
+          </p>
+
+          <div style={{display:'flex',flexDirection:'column',gap:12}}>
+            {angles.map(a => (
+              <div key={a.id || a.label} className="lb-card" onClick={() => chooseAngle(a)}
+                style={{background:'#F4F5F3',borderColor:'#E5E7E3',alignItems:'flex-start',flexDirection:'column',gap:8}}>
+                <div style={{display:'flex',alignItems:'center',gap:10,width:'100%'}}>
+                  <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10.5,letterSpacing:'.08em',textTransform:'uppercase',color:'#0D57D0',fontWeight:600,background:'#E7EEFB',borderRadius:999,padding:'4px 10px'}}>{a.label}</span>
+                  <span style={{marginLeft:'auto',flexShrink:0,fontFamily:"'IBM Plex Mono',monospace",fontSize:12,color:'#0D57D0',fontWeight:600,display:'flex',alignItems:'center',gap:4}}>
+                    Use this angle <i className="ti ti-arrow-right" aria-hidden="true" />
+                  </span>
+                </div>
+                <div style={{fontFamily:"'Space Grotesk',system-ui,sans-serif",fontWeight:700,fontSize:17,letterSpacing:'-.01em',color:'var(--text-primary)',lineHeight:1.25}}>
+                  "{a.hook}"
+                </div>
+                {a.why && <p style={{fontSize:13.5,color:'var(--text-secondary)',margin:0,lineHeight:1.5}}>{a.why}</p>}
+              </div>
+            ))}
+          </div>
+
+          {error && <div className="lb-error" style={{marginTop:16}}>{error}</div>}
+        </div>
+      </div>
+    );
+  }
 
   /* ── preview ───────────────────────────────────────────────────────── */
   if (step === 'preview') {
