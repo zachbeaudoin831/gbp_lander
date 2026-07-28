@@ -240,56 +240,43 @@ export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
         </div>
 
         {/* HOW IT WORKS */}
-        <section className="section" id="how">
+        <section className="section how" id="how">
           <div className="wrap">
             <div className="section-head reveal">
               <p className="eyebrow">How it works</p>
               <h2>From listing to a call-ready campaign in five steps</h2>
               <p>No page builder, no blank page, no writing. Your Google Business Profile already holds the proof; we add the research and the message, then build everything around one goal: the phone call.</p>
             </div>
-            <div className="ticket reveal" aria-label="The five steps, shown as a build job">
-              <div className="ticket-head" aria-hidden="true"><i></i><i></i><i></i><span>sendkpi · building your campaign</span></div>
-              <div className="ticket-body">
-                <div className="ticket-row">
-                  <span className="ticket-num" aria-hidden="true">01</span>
-                  <div>
-                    <h3>Find your listing</h3>
-                    <p>Type your business name and city. We pull your live Google Business Profile: reviews, photos, hours, services, and your phone number.</p>
-                  </div>
-                  <span className="ticket-tag you">← you · 10 sec</span>
-                </div>
-                <div className="ticket-row">
-                  <span className="ticket-num" aria-hidden="true">02</span>
-                  <div>
-                    <h3>Name the service you want more calls for</h3>
-                    <p>One question while we scan your website in the background. That service becomes the job of the whole campaign.</p>
-                  </div>
-                  <span className="ticket-tag you">← you · 5 sec</span>
-                </div>
-                <div className="ticket-row">
-                  <span className="ticket-num" aria-hidden="true">03</span>
-                  <div>
-                    <h3>Pick your winning angle</h3>
-                    <p>We research 5 to 7 angles that already work in your trade (storm response, don't delay, review-led proof), written with your reviews, your city, and your services.</p>
-                  </div>
-                  <span className="ticket-tag you">← you · 1 click</span>
-                </div>
-                <div className="ticket-row">
-                  <span className="ticket-num" aria-hidden="true">04</span>
-                  <div>
-                    <h3>Your Call Now page is built around it</h3>
-                    <p>The angle becomes your headline, your best reviews sit above the fold, and every scroll position is one tap from a call.</p>
-                  </div>
-                  <span className="ticket-tag">✓ automatic</span>
-                </div>
-                <div className="ticket-row">
-                  <span className="ticket-num" aria-hidden="true">05</span>
-                  <div>
-                    <h3>Four matching ads, ready for Meta</h3>
-                    <p>Four executions of your angle on your real photos: 1080×1080 graphics with the primary text already written. Download everything and launch.</p>
-                  </div>
-                  <span className="ticket-tag">✓ automatic</span>
-                </div>
+            <div className="stepsA">
+              <div className="stepA reveal">
+                <div className="mv" aria-hidden="true"><div className="mv-search"><span className="field"></span><span className="go"></span></div></div>
+                <span className="stepA-n" aria-hidden="true">1</span>
+                <h3>Find your listing</h3>
+                <p>We pull your live profile: reviews, photos, hours, services, phone.</p>
+              </div>
+              <div className="stepA reveal">
+                <div className="mv" aria-hidden="true"><div className="mv-q"><span className="chip">One question</span><div className="field"></div></div></div>
+                <span className="stepA-n" aria-hidden="true">2</span>
+                <h3>Name the service you want calls for</h3>
+                <p>We scan your website in the background while you type.</p>
+              </div>
+              <div className="stepA reveal">
+                <div className="mv" aria-hidden="true"><div className="mv-angles"><i></i><i className="sel"></i><i></i></div></div>
+                <span className="stepA-n" aria-hidden="true">3</span>
+                <h3>Pick your winning angle</h3>
+                <p>5 to 7 researched angles, customized with your reviews and city.</p>
+              </div>
+              <div className="stepA reveal">
+                <div className="mv" aria-hidden="true"><div className="mv-page"><div className="eb"></div><div className="h"></div><div className="h2"></div><div className="call"></div></div></div>
+                <span className="stepA-n" aria-hidden="true">4</span>
+                <h3>Your Call Now page is built</h3>
+                <p>The angle becomes the headline. Every scroll is one tap from a call.</p>
+              </div>
+              <div className="stepA reveal">
+                <div className="mv" aria-hidden="true"><div className="mv-ads"><i></i><i></i><i></i><i></i></div></div>
+                <span className="stepA-n" aria-hidden="true">5</span>
+                <h3>Four matching ads for Meta</h3>
+                <p>Four takes on your angle, primary text written. Download and launch.</p>
               </div>
             </div>
           </div>
