@@ -32,7 +32,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from src.ai_copy import generate_ad_copy, generate_extras
+from src.ai_copy import (
+    generate_ad_angles,
+    generate_ad_copy,
+    generate_angle_ad_variations,
+    generate_extras,
+)
 from src.brand_color import fetch_brand_color
 from src.lander_builder import build_profile
 from src.lead_store import LeadStoreError, insert_lead
@@ -287,6 +292,100 @@ def generate_offer(req: OfferRequest):
         raise HTTPException(status_code=502, detail=f"Offer generation failed: {e}")
 
     return extras
+
+
+class ReviewExcerpt(BaseModel):
+    author: Optional[str] = None
+    rating: Optional[float] = None
+    text: str = Field(default="", max_length=600)
+
+
+class AnglesRequest(BaseModel):
+    """Profile data the frontend already holds after /api/profile +
+    /api/generate-offer, plus the one thing only the owner knows: the main
+    service they want more calls for.
+    """
+    name: str
+    category: str = ""
+    services: list[str] = []
+    service_areas: list[str] = []
+    rating: Optional[float] = None
+    review_count: Optional[int] = None
+    address: str = ""
+    reviews: list[ReviewExcerpt] = []
+    summary: Optional[str] = None
+    main_service: str = Field(min_length=1, max_length=200)
+
+
+@app.post("/api/generate-angles")
+def generate_angles_route(req: AnglesRequest):
+    """One Claude call returning 5-7 winning ad angles customized to this
+    business (its reviews, location, services) and the owner's stated main
+    service. Shown as a picker before the lander is built -- the chosen angle
+    drives both the lander's above-the-fold copy and the ad variations.
+    """
+    try:
+        return generate_ad_angles(
+            name=req.name,
+            category=req.category,
+            services=req.services,
+            service_areas=req.service_areas,
+            rating=req.rating,
+            review_count=req.review_count,
+            address=req.address,
+            reviews=[r.model_dump() for r in req.reviews],
+            summary=req.summary,
+            main_service=req.main_service,
+        )
+    except RuntimeError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Angle research failed: {e}")
+
+
+class ChosenAngle(BaseModel):
+    id: str = ""
+    label: str = ""
+    hook: str = ""
+    why: str = ""
+    lander_headline: str = ""
+    lander_subhead: str = ""
+    cta_label: str = ""
+
+
+class AngleAdsRequest(BaseModel):
+    name: str
+    category: str = ""
+    services: list[str] = []
+    service_areas: list[str] = []
+    rating: Optional[float] = None
+    review_count: Optional[int] = None
+    summary: Optional[str] = None
+    main_service: str = ""
+    angle: ChosenAngle
+
+
+@app.post("/api/generate-angle-ads")
+def generate_angle_ads_route(req: AngleAdsRequest):
+    """One Claude call turning the chosen angle into 4 distinct ad copy
+    variations -- one per auto-selected photo in the Ads step.
+    """
+    try:
+        return generate_angle_ad_variations(
+            name=req.name,
+            category=req.category,
+            services=req.services,
+            service_areas=req.service_areas,
+            rating=req.rating,
+            review_count=req.review_count,
+            summary=req.summary,
+            main_service=req.main_service,
+            angle=req.angle.model_dump(),
+        )
+    except RuntimeError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Ad variation generation failed: {e}")
 
 
 class AdCopyRequest(BaseModel):

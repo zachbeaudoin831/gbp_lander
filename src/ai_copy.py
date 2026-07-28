@@ -144,6 +144,102 @@ meaningful number of reviews).
 - headline and subline must read well as large text on a photo -- no \
 placeholders, no brackets."""
 
+_ANGLES_SYSTEM = """You are an ad strategist for local service businesses. You \
+know the ad angles that consistently win for local trades on Meta/Facebook, and \
+your job is to customize them to one specific business.
+
+You'll get the business's profile (name, category, services, service areas, \
+city, Google rating and review count, real review excerpts, a summary of their \
+website) and the MAIN SERVICE the owner says they want more phone calls for.
+
+Draw from these proven local-service angle archetypes -- keep only the ones \
+that genuinely fit this business and trade, and customize every word to their \
+actual data:
+
+1. URGENT TRIGGER -- a time-bound external event creates the need now (storm \
+damage, heat wave, cold snap, inspection season). Only for trades with real \
+event triggers.
+2. DON'T DELAY -- name a symptom people ignore, show what it becomes if they \
+wait, position this business as the fast fix.
+3. FREE DIAGNOSTIC -- a zero-risk first step (free inspection, free estimate, \
+free second opinion) framed around the main service.
+4. OBJECTION FIRST -- lead with the thing that makes people hesitate (price \
+uncertainty, mess, pushy sales) and defuse it. Never invent financing, \
+discounts, or dollar amounts -- if the profile doesn't state them, use \
+"straight answers / upfront pricing / no-pressure" framing instead.
+5. REVIEW-LED SOCIAL PROOF -- lead with the rating, review count, or a short \
+quote from a real provided review. Only quote text actually present in the \
+provided reviews.
+6. PROOF OF WORK -- before/after or completed-job framing built around their \
+real photos and services.
+7. LOCAL AUTHORITY -- neighborhood trust: years serving the area, local \
+ownership -- only if the profile/summary actually supports it.
+8. SPEED -- same-day / fast-response framing, only if plausible for the trade.
+
+Return 5 to 7 angles, best fits first. Return ONLY raw JSON, no markdown, \
+matching exactly:
+{
+  "angles": [
+    {
+      "id": "short-kebab-slug",
+      "label": "2-4 word angle name, plain (e.g. 'Storm Response', 'Don't Delay')",
+      "hook": "the ad hook headline for this angle -- under 10 words, second person where natural, no trailing period",
+      "why": "one sentence selling the owner on why this angle fits THEIR business -- cite their real rating, review text, service area, or trade dynamics",
+      "lander_headline": "above-the-fold landing page headline for this angle -- under 12 words, main service front and center",
+      "lander_subhead": "supporting line under 24 words -- concrete, uses real profile facts (rating, area, guarantee) where they exist",
+      "cta_label": "2-4 word call button label"
+    }
+  ]
+}
+
+Rules:
+- Every angle must be about the MAIN SERVICE the owner named (or its closest \
+match among their real services).
+- Never invent statistics, dollar amounts, discounts, financing, credentials, \
+years in business, or guarantees not present in the provided data.
+- Review quotes (full or partial) must come verbatim from the provided review \
+excerpts.
+- Only cite the rating/review count if genuinely strong (4.5+ with a \
+meaningful number of reviews).
+- Write like a sharp direct-response copywriter: short, concrete, zero \
+corporate filler.
+- The 5-7 angles must be genuinely distinct from each other -- no rewordings \
+of the same idea."""
+
+
+_ANGLE_ADS_SYSTEM = """You write paid social ad copy (Facebook/Instagram) for \
+local service businesses. You'll get one business profile plus ONE chosen ad \
+angle (its label, hook, and the landing page copy it produced). Write 4 \
+distinct executions of that SAME angle -- same promise and positioning, four \
+different ways in: e.g. a question, a warning, a proof line, a straight offer.
+
+Each execution is a photo ad: big overlaid headline, supporting subline, a \
+button label, and feed primary text.
+
+Return ONLY raw JSON, no markdown, matching exactly:
+{
+  "variations": [
+    {
+      "headline": "big text on the photo -- under 7 words, no trailing period",
+      "subline": "supporting line -- under 12 words, concrete",
+      "cta": "button label, 2-4 words",
+      "primary_text": "1-3 short sentences for the feed -- plain, direct, no hashtags or emojis, ends telling the reader what to do"
+    }
+  ]
+}
+
+Rules:
+- Exactly 4 variations, all faithful to the chosen angle -- do not drift into \
+a different angle.
+- Never invent facts, numbers, discounts, or claims not present in the \
+provided profile or angle.
+- Only cite the rating/review count if genuinely strong (4.5+ with a \
+meaningful number of reviews) -- and not in all four variations.
+- Each headline must be clearly different from the others -- different first \
+words, different structure.
+- Write like a sharp human copywriter: short sentences, concrete words."""
+
+
 # Known "ignored symptom -> what it becomes" arcs per trade. Matched against
 # the business's category + services text; the model picks the best fit.
 _DELAY_ARCS: list[tuple[tuple[str, ...], list[str]]] = [
@@ -313,6 +409,127 @@ WHAT THE BUSINESS DOES
         # runs longer -- a truncated reply fails JSON parsing outright.
         max_tokens=800,
         system=system,
+        messages=[{"role": "user", "content": user_content}],
+    )
+    return _reply_json(resp)
+
+
+def _profile_block(
+    *,
+    name: str,
+    category: str,
+    services: list[str],
+    service_areas: Optional[list[str]],
+    rating: Optional[float],
+    review_count: Optional[int],
+    address: str = "",
+    summary: Optional[str] = None,
+) -> str:
+    return f"""BUSINESS PROFILE
+Name: {name}
+Category: {category or "(unknown)"}
+Address: {address or "(unknown)"}
+Services: {", ".join(services) if services else "(none listed)"}
+Service areas: {", ".join(service_areas) if service_areas else "(none listed)"}
+Google rating: {f"{rating} stars ({review_count or 0} reviews)" if rating else "(none)"}
+
+WHAT THE BUSINESS DOES (from their website)
+{summary or "(no website summary available)"}"""
+
+
+def generate_ad_angles(
+    *,
+    name: str,
+    category: str,
+    services: list[str],
+    service_areas: Optional[list[str]],
+    rating: Optional[float],
+    review_count: Optional[int],
+    address: str,
+    reviews: list[dict],
+    summary: Optional[str],
+    main_service: str,
+) -> dict:
+    """One Claude call producing 5-7 winning ad angles customized to this
+    business and the main service the owner wants more calls for. The angle
+    archetype library lives in the system prompt; the business data (including
+    real review excerpts, so social-proof angles can quote them) goes in the
+    user turn.
+    """
+    review_lines = "\n".join(
+        f'- {r.get("author") or "Customer"} ({r.get("rating") or "?"}★): "{(r.get("text") or "").strip()}"'
+        for r in reviews[:5]
+        if (r.get("text") or "").strip()
+    )
+    user_content = _profile_block(
+        name=name, category=category, services=services,
+        service_areas=service_areas, rating=rating, review_count=review_count,
+        address=address, summary=summary,
+    )
+    user_content += f"""
+
+REAL REVIEW EXCERPTS (quote only from these)
+{review_lines or "(none available)"}
+
+MAIN SERVICE THE OWNER WANTS MORE CALLS FOR
+{main_service}"""
+
+    arcs = _delay_arcs_for(category, services)
+    if arcs:
+        user_content += "\n\nKNOWN DELAY-PRONE PROBLEM ARCS FOR THIS TRADE (for the don't-delay angle)\n" + "\n".join(
+            f"- {a}" for a in arcs
+        )
+
+    client = _client()
+    resp = client.messages.create(
+        model=MODEL,
+        # 7 angles x ~7 short fields runs long -- a truncated reply fails JSON
+        # parsing outright, so leave real headroom.
+        max_tokens=2500,
+        system=_ANGLES_SYSTEM,
+        messages=[{"role": "user", "content": user_content}],
+    )
+    return _reply_json(resp)
+
+
+def generate_angle_ad_variations(
+    *,
+    name: str,
+    category: str,
+    services: list[str],
+    service_areas: Optional[list[str]],
+    rating: Optional[float],
+    review_count: Optional[int],
+    summary: Optional[str],
+    main_service: str,
+    angle: dict,
+) -> dict:
+    """One Claude call turning the chosen angle into 4 distinct ad executions
+    (one per auto-selected photo)."""
+    user_content = _profile_block(
+        name=name, category=category, services=services,
+        service_areas=service_areas, rating=rating, review_count=review_count,
+        summary=summary,
+    )
+    user_content += f"""
+
+MAIN SERVICE THE ADS ARE FOR
+{main_service or "(not specified)"}
+
+CHOSEN ANGLE
+Label: {angle.get("label") or "(unnamed)"}
+Hook: {angle.get("hook") or "(none)"}
+Why it fits: {angle.get("why") or "(none)"}
+Landing page headline it produced: {angle.get("lander_headline") or "(none)"}
+Landing page subhead: {angle.get("lander_subhead") or "(none)"}
+Call button: {angle.get("cta_label") or "(none)"}"""
+
+    client = _client()
+    resp = client.messages.create(
+        model=MODEL,
+        # 4 variations x 4 fields, primary_text runs longest.
+        max_tokens=1600,
+        system=_ANGLE_ADS_SYSTEM,
         messages=[{"role": "user", "content": user_content}],
     )
     return _reply_json(resp)
