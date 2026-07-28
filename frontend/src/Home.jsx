@@ -232,10 +232,10 @@ export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
         {/* STRIP */}
         <div className="strip">
           <div className="wrap">
-            <div className="strip-item"><b>One search</b><span>is all it takes to build your page</span></div>
-            <div className="strip-item"><b>100% your data</b><span>real photos, hours, reviews, services</span></div>
-            <div className="strip-item"><b>Single HTML file</b><span>clean output, no dependencies</span></div>
-            <div className="strip-item"><b>Any subdomain</b><span>host it wherever your ads point</span></div>
+            <div className="strip-item"><b>One search</b><span>builds your page from your listing</span></div>
+            <div className="strip-item"><b>5 to 7 angles</b><span>researched and written for your trade</span></div>
+            <div className="strip-item"><b>4 matching ads</b><span>same message from feed to phone</span></div>
+            <div className="strip-item"><b>One HTML file</b><span>host it wherever your ads point</span></div>
           </div>
         </div>
 
@@ -244,28 +244,98 @@ export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
           <div className="wrap">
             <div className="section-head reveal">
               <p className="eyebrow">How it works</p>
-              <h2>From listing to live page in three steps</h2>
-              <p>No page builder to learn, no blocks to drag. Your Google Business Profile already has everything a landing page needs. We just put it to work.</p>
+              <h2>From listing to a call-ready campaign in five steps</h2>
+              <p>No page builder, no blank page, no writing. Your Google Business Profile already holds the proof; we add the research and the message, then build everything around one goal: the phone call.</p>
             </div>
-            <div className="steps">
-              <div className="step reveal">
-                <span className="step-art" aria-hidden="true"></span>
-                <span className="step-num" aria-hidden="true"></span>
-                <h3>Find your listing</h3>
-                <p>Type your business name and city. We look up your real GBP data straight from Google: name, phone, hours, photos, reviews, and services.</p>
+            <div className="flow">
+              <div className="flow-item reveal">
+                <span className="flow-num" aria-hidden="true">1</span>
+                <div>
+                  <h3>Find your listing</h3>
+                  <p>Type your business name and city. We pull your live Google Business Profile: reviews, photos, hours, services, and your phone number.</p>
+                </div>
               </div>
-              <div className="step reveal">
-                <span className="step-art" aria-hidden="true"></span>
-                <span className="step-num" aria-hidden="true"></span>
-                <h3>Your page is built for you</h3>
-                <p>A call-conversion lander assembled from your actual profile: your best reviews up front, click-to-call everywhere, open-now status live on the page.</p>
+              <div className="flow-item reveal">
+                <span className="flow-num" aria-hidden="true">2</span>
+                <div>
+                  <h3>Tell us the service you want more calls for</h3>
+                  <p>One question while we scan your website in the background. That service becomes the job of the whole campaign.</p>
+                </div>
               </div>
-              <div className="step reveal">
-                <span className="step-art" aria-hidden="true"></span>
-                <span className="step-num" aria-hidden="true"></span>
-                <h3>Download and deploy</h3>
-                <p>Get clean, self-contained HTML you can host on any subdomain, ready to receive ad traffic the moment it's live.</p>
+              <div className="flow-item reveal">
+                <span className="flow-num" aria-hidden="true">3</span>
+                <div>
+                  <h3>Pick your winning angle</h3>
+                  <p>We research 5 to 7 ad angles that already work in your trade (storm response, don't delay, review-led proof) and customize each with your reviews, your city, and your services. You pick the message.</p>
+                </div>
               </div>
+              <div className="flow-item reveal">
+                <span className="flow-num" aria-hidden="true">4</span>
+                <div>
+                  <h3>Your Call Now page is built around it</h3>
+                  <p>The angle becomes your headline. Your best reviews sit above the fold, open-now status is live, and every scroll position is one tap from a call.</p>
+                </div>
+              </div>
+              <div className="flow-item reveal">
+                <span className="flow-num" aria-hidden="true">5</span>
+                <div>
+                  <h3>Four matching ads, ready for Meta</h3>
+                  <p>Four executions of your angle on your real photos: 1080×1080 graphics with the primary text already written. Download everything and launch.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ANGLE RESEARCH */}
+        <section className="section angle-sec" id="angles">
+          <div className="wrap">
+            <div>
+              <div className="section-head reveal">
+                <p className="eyebrow">The message</p>
+                <h2>Researched, not guessed</h2>
+                <p>Most local ads fail before design ever matters: they say "quality service since 1998" to someone scrolling past. Winning ads name the moment: the storm that just hit, the stain that's growing, the 4.9 stars your neighbors already left.</p>
+              </div>
+              <div className="ads-points reveal">
+                <div className="ads-point">
+                  <span className="ads-check" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg></span>
+                  <span><b>Angles proven by your trade.</b> Built from what already converts for plumbers, roofers, HVAC, and the other emergency trades.</span>
+                </div>
+                <div className="ads-point">
+                  <span className="ads-check" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg></span>
+                  <span><b>Customized with your proof.</b> Your real rating, your review quotes, your service area. Never invented claims.</span>
+                </div>
+                <div className="ads-point">
+                  <span className="ads-check" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg></span>
+                  <span><b>You stay in charge.</b> We shortlist and write; you pick the angle that sounds like your business. One click, no writing.</span>
+                </div>
+              </div>
+            </div>
+            <div className="angle-mock reveal" aria-label="Example of the angle picker">
+              <p className="angle-mock-head">6 winning angles found · Mike's Roofing</p>
+              <div className="angle-row selected">
+                <div className="angle-row-top">
+                  <span className="angle-pill">Storm response</span>
+                  <span className="angle-sel"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg> Selected</span>
+                </div>
+                <p className="angle-hook">"Did last night's storm hit your roof?"</p>
+                <p className="angle-why">Nashville gets hail. Free inspection before the insurance call.</p>
+              </div>
+              <div className="angle-row">
+                <div className="angle-row-top">
+                  <span className="angle-pill">Don't delay</span>
+                </div>
+                <p className="angle-hook">"That ceiling stain is growing"</p>
+                <p className="angle-why">Names the symptom people ignore, shows what it becomes.</p>
+              </div>
+              <div className="angle-row">
+                <div className="angle-row-top">
+                  <span className="angle-pill">Review-led</span>
+                </div>
+                <p className="angle-hook">"4.9 stars across 212 Nashville roofs"</p>
+                <p className="angle-why">Your real rating doing the trust work.</p>
+              </div>
+              <p className="angle-mock-note">→ your pick drives the page and all 4 ads</p>
             </div>
           </div>
         </section>
@@ -313,13 +383,62 @@ export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
           </div>
         </section>
 
+        {/* FROM SCROLL TO CALL */}
+        <section className="section path-sec" id="path">
+          <div className="wrap">
+            <div className="section-head reveal">
+              <p className="eyebrow">From scroll to call</p>
+              <h2>The same promise at every step</h2>
+              <p>The hook in the ad is the headline on the page, and the only button on the page is your phone number. No form maze, no "learn more." Each step exists to move a stranger one step closer to calling.</p>
+            </div>
+            <div className="path-grid">
+              <div className="path-panel reveal">
+                <div className="path-ad">
+                  <div className="path-ad-head"><span className="path-ad-avatar" aria-hidden="true">M</span><span><b>Mike's Roofing</b><em>Sponsored</em></span></div>
+                  <div className="path-ad-img">
+                    <p>Did last night's storm hit your roof?</p>
+                  </div>
+                  <div className="path-ad-cta">Get Your Free Inspection</div>
+                </div>
+                <p className="path-cap"><b>1 · The ad stops the scroll.</b> Your angle on your real photo, in the feeds of homeowners nearby.</p>
+              </div>
+              <span className="path-arrow" aria-hidden="true">→</span>
+              <div className="path-panel reveal">
+                <div className="path-lander">
+                  <p className="path-eyebrow">Nashville's highest-rated roofers</p>
+                  <p className="path-h1">Did last night's storm hit your roof?</p>
+                  <p className="path-stars"><span className="stars" aria-hidden="true">★★★★★</span> 4.9 · 212 reviews</p>
+                  <div className="path-call">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.13.96.36 1.9.7 2.8a2 2 0 0 1-.45 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.45c.9.34 1.84.57 2.8.7a2 2 0 0 1 1.7 2.05Z" /></svg>
+                    Call Now (615) 555-0119
+                  </div>
+                </div>
+                <p className="path-cap"><b>2 · The page keeps the promise.</b> Same headline, your reviews above the fold, one thing to do.</p>
+              </div>
+              <span className="path-arrow" aria-hidden="true">→</span>
+              <div className="path-panel reveal">
+                <div className="path-phone">
+                  <p className="path-phone-label">Incoming call</p>
+                  <p className="path-phone-num">(615) 555-0119</p>
+                  <p className="path-phone-src">via storm inspection page</p>
+                  <div className="path-phone-btns">
+                    <span className="decline" aria-hidden="true"></span>
+                    <span className="accept" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.13.96.36 1.9.7 2.8a2 2 0 0 1-.45 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.45c.9.34 1.84.57 2.8.7a2 2 0 0 1 1.7 2.05Z" /></svg></span>
+                  </div>
+                </div>
+                <p className="path-cap"><b>3 · The phone rings.</b> Inbound calls, the one metric that pays for everything else.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* EXAMPLES */}
         <section className="section examples" id="examples">
           <div className="wrap">
             <div className="section-head reveal">
               <p className="eyebrow">Examples</p>
               <h2>Pages that look like the business, not the builder</h2>
-              <p>Because every page is assembled from a real profile, no two landers look alike. Here's what comes out for three very different trades.</p>
+              <p>Because every campaign starts from a real profile and a chosen angle, no two come out alike. Here's the angle three very different trades would run.</p>
             </div>
             <div className="ex-grid">
               <article className="ex-card reveal">
@@ -329,7 +448,7 @@ export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
                 </div>
                 <div className="ex-body">
                   <div className="ex-stats"><span><span className="stars" aria-hidden="true">★</span> 4.9 · 212 reviews</span><span>42 photos</span></div>
-                  <p>Storm-damage focus, insurance-claim FAQ pulled from services, before/after photo strip from the profile gallery.</p>
+                  <p>Angle: storm response. Free-inspection offer up top, insurance-ready photo report, before/after strip from the profile gallery.</p>
                   <button className="ex-link" type="button" onClick={() => setQuery("Mike's Roofing, Nashville TN")}>Build one like this →</button>
                 </div>
               </article>
@@ -340,7 +459,7 @@ export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
                 </div>
                 <div className="ex-body">
                   <div className="ex-stats"><span><span className="stars" aria-hidden="true">★</span> 4.8 · 347 reviews</span><span>28 photos</span></div>
-                  <p>New-patient offer up top, same-day appointment CTA, patient reviews grouped by treatment type.</p>
+                  <p>Angle: review-led trust. New-patient offer up top, 347 reviews doing the convincing, same-day appointment CTA.</p>
                   <button className="ex-link" type="button" onClick={() => setQuery("Sunrise Dental, Phoenix AZ")}>Build one like this →</button>
                 </div>
               </article>
@@ -351,7 +470,7 @@ export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
                 </div>
                 <div className="ex-body">
                   <div className="ex-stats"><span><span className="stars" aria-hidden="true">★</span> 5.0 · 129 reviews</span><span>35 photos</span></div>
-                  <p>Emergency-service banner tied to open-now status, service-area map, financing details from the profile.</p>
+                  <p>Angle: don't delay. Short-cycling warning up top, emergency banner tied to open-now status, service-area map.</p>
                   <button className="ex-link" type="button" onClick={() => setQuery("Pacific HVAC, Seattle WA")}>Build one like this →</button>
                 </div>
               </article>
@@ -364,9 +483,9 @@ export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
           <div className="wrap">
             <div>
               <div className="section-head reveal">
-                <p className="eyebrow">Made for ad traffic</p>
-                <h2>The page your ad spend deserves</h2>
-                <p>Sending Google Ads or Local Services traffic to a slow homepage burns budget. SendKPI pages are built to do one job: convert the click into a call.</p>
+                <p className="eyebrow">Why it converts</p>
+                <h2>Built to make the phone ring, not to win design awards</h2>
+                <p>Sending paid traffic to your homepage burns budget: visitors wander, bounce, and never call. Every choice on a SendKPI page exists to turn the click into a call.</p>
               </div>
               <div className="ads-points reveal">
                 <div className="ads-point">
@@ -375,15 +494,15 @@ export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
                 </div>
                 <div className="ads-point">
                   <span className="ads-check" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg></span>
-                  <span><b>Fast by construction.</b> A single self-contained HTML file with no builder bloat, quick to load on the phones your customers search from.</span>
+                  <span><b>Message match, ad to page.</b> The promise in your ad is the headline the click lands on, so the visitor knows they're in the right place.</span>
                 </div>
                 <div className="ads-point">
                   <span className="ads-check" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg></span>
-                  <span><b>Yours to host.</b> Drop it on any subdomain you control. Keep your tracking, your domain authority, your data.</span>
+                  <span><b>Proof where the decision happens.</b> Your rating, review count, and a real customer quote sit above the fold, right where a stranger decides you're safe to call.</span>
                 </div>
                 <div className="ads-point">
                   <span className="ads-check" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg></span>
-                  <span><b>Agency-friendly.</b> Build a lander per client, per campaign, per city, in the time it used to take to open the page builder.</span>
+                  <span><b>Call-first, and fast.</b> Tap-to-call in the header, the hero, and a sticky mobile bar, in one lightweight HTML file that loads instantly on the phones your customers hold.</span>
                 </div>
               </div>
             </div>
@@ -416,6 +535,14 @@ export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
             </div>
             <div className="faq-list reveal">
               <details className="faq-item">
+                <summary>What's an ad angle, and why do I pick one?</summary>
+                <p>The angle is the message your whole campaign runs on: the hook in the ad and the headline on the page. We research the angles that already win in your trade, customize them with your reviews, city, and services, and you pick the one that sounds like your business. One voice from feed to phone call.</p>
+              </details>
+              <details className="faq-item">
+                <summary>Do I have to write the ads?</summary>
+                <p>No. You get four 1080×1080 ad graphics built on your real photos, each a different take on your chosen angle, with the feed's primary text already written. Download them and load them into Meta Ads Manager.</p>
+              </details>
+              <details className="faq-item">
                 <summary>Where does the data come from?</summary>
                 <p>Directly from your public Google Business Profile: the same name, phone, hours, photos, reviews, and services a customer sees when they find you on Google Maps or Search. If it's right on your listing, it's right on your page.</p>
               </details>
@@ -445,7 +572,7 @@ export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
             <div className="cta-card reveal">
               <p className="eyebrow" style={{ color: "var(--orange)" }}>Ready when you are</p>
               <h2>Your next customer is searching right now</h2>
-              <p>Find your listing, and have a call-conversion page ready to deploy before your coffee goes cold.</p>
+              <p>Find your listing, pick your winning angle, and walk away with a Call Now page and four matching ads before your coffee goes cold.</p>
               <a className="btn btn-primary" href="#top">Find my listing →</a>
               <p className="cta-note">No signup required to search · your data stays yours</p>
             </div>
