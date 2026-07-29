@@ -357,57 +357,117 @@ def call_toast(d: ImageDraw.ImageDraw, x: int, y: int, w: int, label: str = "Inc
     d.text((x + 84, y + 48), "(615) 555-0119", font=mono(19), fill=DARK_MUTED)
 
 
-def concept_d() -> Image.Image:
-    """The transformation, three trades deep: listing -> matching call page,
-    stacked for roofing, tree service, and auto repair. No CTA chrome; the
-    stack is the whole story."""
+# Fictional example businesses for the transformation stacks (555 numbers,
+# same convention as the homepage and niche-page mocks).
+BIZ = {
+    "roofing": {
+        "name": "Mike's Roofing", "cat": "Roofing contractor · Nashville",
+        "initial": "M", "tile": "#3D5468", "rating": "4.9 · 212 reviews",
+        "service": "ROOF REPAIR", "phone": "(615) 555-0119",
+        "headline": "Storm damage? Fixed this week",
+        "sub": "Free inspections, insurance-ready reports",
+    },
+    "tree": {
+        "name": "Canopy Tree Service", "cat": "Tree service · Portland",
+        "initial": "C", "tile": "#527568", "rating": "4.9 · 164 reviews",
+        "service": "TREE REMOVAL", "phone": "(503) 555-0138",
+        "headline": "That leaning tree won't wait",
+        "sub": "Same-week removals across Portland",
+    },
+    "auto": {
+        "name": "Summit Auto Repair", "cat": "Auto repair · Boise",
+        "initial": "S", "tile": "#7A5A3D", "rating": "4.8 · 187 reviews",
+        "service": "BRAKE SERVICE", "phone": "(208) 555-0154",
+        "headline": "Squealing brakes? Stop safely",
+        "sub": "Same-day brake service in Boise",
+    },
+    "plumbing": {
+        "name": "Harbor Plumbing", "cat": "Plumber · Santa Cruz",
+        "initial": "H", "tile": "#3E5E70", "rating": "4.9 · 312 reviews",
+        "service": "WATER HEATERS", "phone": "(831) 555-0142",
+        "headline": "No hot water? Fixed today",
+        "sub": "Water heater replacement, same day",
+    },
+    "hvac": {
+        "name": "Comfort Air", "cat": "HVAC · Sacramento",
+        "initial": "C", "tile": "#8A5A3C", "rating": "4.8 · 204 reviews",
+        "service": "AC REPAIR", "phone": "(916) 555-0177",
+        "headline": "AC out? Cool again today",
+        "sub": "Emergency repairs across Sacramento",
+    },
+    "electric": {
+        "name": "Bright Line Electric", "cat": "Electrician · San Jose",
+        "initial": "B", "tile": "#4A4E63", "rating": "4.9 · 187 reviews",
+        "service": "PANEL UPGRADES", "phone": "(408) 555-0193",
+        "headline": "Breakers tripping every week?",
+        "sub": "Panel inspections booked this week",
+    },
+    "pest": {
+        "name": "Sentinel Pest Control", "cat": "Pest control · Phoenix",
+        "initial": "S", "tile": "#7A6A4A", "rating": "4.8 · 256 reviews",
+        "service": "TERMITE CONTROL", "phone": "(602) 555-0164",
+        "headline": "Termite wings by the window?",
+        "sub": "Free inspections across Phoenix",
+    },
+    "garage": {
+        "name": "Liftright Garage Door", "cat": "Garage doors · Denver",
+        "initial": "L", "tile": "#5A5E71", "rating": "4.9 · 143 reviews",
+        "service": "SPRING REPAIR", "phone": "(720) 555-0186",
+        "headline": "Door stuck halfway down?",
+        "sub": "Same-day spring replacement",
+    },
+}
+
+D_COMBOS = [
+    ("1", ["roofing", "tree", "auto"]),
+    ("2", ["plumbing", "hvac", "electric"]),
+    ("3", ["roofing", "plumbing", "pest"]),
+    ("4", ["electric", "auto", "garage"]),
+]
+
+
+def concept_d(trades: list[str]) -> Image.Image:
+    """The transformation, three trades deep: listing -> matching call page
+    with real example copy, reviews, and open-now on the page side."""
     im = Image.new("RGB", (S, S), PAPER)
     d = ImageDraw.Draw(im)
-    y = head_block(d, "THE 30-SECOND UPGRADE",
-                   "Turn your Google listing into inbound calls",
-                   "We build the page and the ads. Your phone does the rest.")
 
-    rows = [
-        {
-            "name": "Mike's Roofing", "cat": "Roofing contractor · Nashville",
-            "initial": "M", "tile": "#3D5468", "rating": "4.9 · 212 reviews",
-            "service": "ROOF REPAIR", "phone": "(615) 555-0119",
-        },
-        {
-            "name": "Canopy Tree Service", "cat": "Tree service · Portland",
-            "initial": "C", "tile": "#527568", "rating": "4.9 · 164 reviews",
-            "service": "TREE REMOVAL", "phone": "(503) 555-0138",
-        },
-        {
-            "name": "Summit Auto Repair", "cat": "Auto repair · Boise",
-            "initial": "S", "tile": "#7A5A3D", "rating": "4.8 · 187 reviews",
-            "service": "BRAKE SERVICE", "phone": "(208) 555-0154",
-        },
-    ]
+    # compact head (smaller than the shared head_block so three taller rows fit)
+    logo(d, M, M)
+    spaced(d, (0, M + 10), "OPTIMIZE FOR CALLS", mono(24), BLUE, anchor_right=S - M)
+    y = 190
+    h_font = jakarta(68, 800)
+    for ln in wrap(d, "Turn your Google listing into inbound calls", h_font, S - 2 * M):
+        d.text((M, y), ln, font=h_font, fill=INK)
+        y += 78
+    y += 8
+    d.text((M, y), "We build the page and the ads. Your phone does the rest.", font=instrument(30), fill=INK2)
+    y += 40
 
-    row_h = 150
-    row_gap = 26
-    top = y + 12
+    row_h = 176
+    row_gap = 22
+    top = y + 24
     lw_card = 384
     rw_card = 448
     rx = S - M - rw_card
 
-    for i, biz in enumerate(rows):
+    for i, key in enumerate(trades):
+        biz = BIZ[key]
         ry = top + i * (row_h + row_gap)
 
         # left: mini listing card
         d.rounded_rectangle([M, ry, M + lw_card, ry + row_h], radius=14, fill=CARD, outline=LINE, width=2)
-        d.rounded_rectangle([M + 18, ry + 18, M + 62, ry + 62], radius=10, fill=biz["tile"])
+        d.rounded_rectangle([M + 18, ry + 20, M + 62, ry + 64], radius=10, fill=biz["tile"])
         af = jakarta(26, 700)
         aw = d.textlength(biz["initial"], font=af)
-        d.text((M + 40 - aw / 2, ry + 27), biz["initial"], font=af, fill="#fff")
-        d.text((M + 76, ry + 18), biz["name"], font=jakarta(24, 700), fill=INK)
-        d.text((M + 76, ry + 50), biz["cat"], font=instrument(17, 500), fill=INK2)
+        d.text((M + 40 - aw / 2, ry + 29), biz["initial"], font=af, fill="#fff")
+        d.text((M + 76, ry + 20), biz["name"], font=jakarta(23, 700), fill=INK)
+        d.text((M + 76, ry + 52), biz["cat"], font=instrument(17, 500), fill=INK2)
         sx = stars(d, M + 18, ry + 92, size=15)
         d.text((sx + 8, ry + 89), biz["rating"], font=instrument(18, 500), fill=INK2)
-        d.text((M + 18, ry + 118), "Open", font=mono(16), fill=GREEN)
-        ow = d.textlength("Open", font=mono(16))
-        d.text((M + 18 + ow + 8, ry + 118), "· photos · hours", font=mono(16), fill=INK3)
+        d.text((M + 18, ry + 126), "Open", font=mono(17), fill=GREEN)
+        ow = d.textlength("Open", font=mono(17))
+        d.text((M + 18 + ow + 8, ry + 126), "· Closes 6 PM", font=mono(17), fill=INK3)
 
         # arrow
         ax0, ax1 = M + lw_card + 14, rx - 14
@@ -418,20 +478,26 @@ def concept_d() -> Image.Image:
             xx += 16
         d.polygon([(ax1 - 12, ay - 9), (ax1, ay), (ax1 - 12, ay + 9)], fill=BLUE)
 
-        # right: matching call page mini
+        # right: matching call page mini with real copy
         d.rounded_rectangle([rx, ry, rx + rw_card, ry + row_h], radius=14, fill=CARD, outline=BLUE, width=3)
-        pill_f = mono(14)
+        pill_f = mono(13)
         pill_w = sum(d.textlength(ch, font=pill_f) for ch in biz["service"]) + 2 * (len(biz["service"]) - 1)
-        d.rounded_rectangle([rx + 20, ry + 16, rx + 20 + pill_w + 26, ry + 40], radius=12, fill=BLUE_SOFT)
-        spaced(d, (rx + 33, ry + 21), biz["service"], pill_f, BLUE, tracking=2)
-        d.rounded_rectangle([rx + 20, ry + 52, rx + rw_card - 44, ry + 70], radius=7, fill=INK)
-        d.rounded_rectangle([rx + 20, ry + 78, rx + int(rw_card * 0.55), ry + 92], radius=7, fill=INK)
-        d.rounded_rectangle([rx + 20, ry + 102, rx + rw_card - 20, ry + row_h - 14], radius=10, fill=GREEN)
+        d.rounded_rectangle([rx + 20, ry + 14, rx + 20 + pill_w + 24, ry + 37], radius=11, fill=BLUE_SOFT)
+        spaced(d, (rx + 32, ry + 19), biz["service"], pill_f, BLUE, tracking=2)
+        d.text((rx + 20, ry + 46), biz["headline"], font=jakarta(22, 800), fill=INK)
+        d.text((rx + 20, ry + 76), biz["sub"], font=instrument(16.5, 500), fill=INK2)
+        sx2 = stars(d, rx + 20, ry + 103, size=13)
+        d.text((sx2 + 7, ry + 100), biz["rating"], font=instrument(15, 500), fill=INK2)
+        onf = mono(13)
+        on_w = sum(d.textlength(ch, font=onf) for ch in "OPEN NOW") + 2 * 7
+        d.ellipse([rx + rw_card - 20 - on_w - 16, ry + 104, rx + rw_card - 20 - on_w - 6, ry + 114], fill=GREEN)
+        spaced(d, (rx + rw_card - 20 - on_w, ry + 101), "OPEN NOW", onf, GREEN, tracking=2)
+        d.rounded_rectangle([rx + 20, ry + 126, rx + rw_card - 20, ry + row_h - 12], radius=10, fill=GREEN)
         ct = f"Call Now {biz['phone']}"
-        cf = instrument(20, 600)
+        cf = instrument(19, 600)
         ctw = d.textlength(ct, font=cf)
-        btn_mid = ry + 102 + (row_h - 14 - 102) / 2
-        d.text((rx + (rw_card - ctw) / 2, btn_mid - 12), ct, font=cf, fill="#fff")
+        btn_mid = ry + 126 + (row_h - 12 - 126) / 2
+        d.text((rx + (rw_card - ctw) / 2, btn_mid - 11), ct, font=cf, fill="#fff")
 
     return im
 
@@ -530,11 +596,15 @@ def main() -> None:
         ("concept-a-homepage-vs-callpage.png", concept_a),
         ("concept-b-built-in-30-seconds.png", concept_b),
         ("concept-c-the-phone-rings.png", concept_c),
-        ("concept-d-listing-to-calls.png", concept_d),
         ("concept-e-call-log.png", concept_e),
         ("concept-f-reviews-to-rings.png", concept_f),
     ]:
         im = fn()
+        im.save(OUT_DIR / name)
+        print("wrote", (OUT_DIR / name).relative_to(REPO))
+    for suffix, trades in D_COMBOS:
+        im = concept_d(trades)
+        name = f"concept-d{suffix}-listing-to-calls.png"
         im.save(OUT_DIR / name)
         print("wrote", (OUT_DIR / name).relative_to(REPO))
 
