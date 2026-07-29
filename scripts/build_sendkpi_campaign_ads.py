@@ -306,12 +306,202 @@ def concept_c() -> Image.Image:
     return im
 
 
+def gbp_mini(d: ImageDraw.ImageDraw, x: int, y: int, w: int) -> int:
+    """Mini Google-listing card (the fictional Mike's Roofing example used
+    across the site). Returns the card's bottom y."""
+    h = 250
+    d.rounded_rectangle([x, y, x + w, y + h], radius=16, fill=CARD, outline=LINE, width=2)
+    # avatar + name
+    d.rounded_rectangle([x + 22, y + 22, x + 74, y + 74], radius=12, fill="#3D5468")
+    af = jakarta(30, 700)
+    aw = d.textlength("M", font=af)
+    d.text((x + 48 - aw / 2, y + 33), "M", font=af, fill="#fff")
+    d.text((x + 90, y + 24), "Mike's Roofing", font=jakarta(28, 700), fill=INK)
+    d.text((x + 90, y + 60), "Roofing contractor · Nashville", font=instrument(20, 500), fill=INK2)
+    # stars + reviews
+    sx = stars(d, x + 22, y + 100, size=18)
+    d.text((sx + 10, y + 98), "4.9 · 212 reviews", font=instrument(22, 500), fill=INK2)
+    # open line
+    d.text((x + 22, y + 134), "Open", font=mono(20), fill=GREEN)
+    ow = d.textlength("Open", font=mono(20))
+    d.text((x + 22 + ow + 10, y + 134), "· Closes 6 PM", font=mono(20), fill=INK3)
+    # photo squares
+    py = y + 172
+    ps = 56
+    grads = ["#7D97AC", "#C0A184", "#9DBFB4"]
+    for i, g in enumerate(grads):
+        px = x + 22 + i * (ps + 10)
+        d.rounded_rectangle([px, py, px + ps, py + ps], radius=8, fill=g)
+    px = x + 22 + 3 * (ps + 10)
+    d.rounded_rectangle([px, py, px + ps, py + ps], radius=8, fill=PAPER2)
+    pf = instrument(18, 600)
+    pw = d.textlength("+38", font=pf)
+    d.text((px + (ps - pw) / 2, py + 18), "+38", font=pf, fill=INK3)
+    return y + h
+
+
+def handset_icon(d: ImageDraw.ImageDraw, cx: int, cy: int, scale: float = 1.0, fill: str = "#fff") -> None:
+    r = int(9 * scale)
+    off = int(11 * scale)
+    d.line([cx - off, cy + off, cx + off, cy - off], fill=fill, width=int(9 * scale))
+    d.ellipse([cx - off - r, cy + off - r, cx - off + r, cy + off + r], fill=fill)
+    d.ellipse([cx + off - r, cy - off - r, cx + off + r, cy - off + r], fill=fill)
+
+
+def call_toast(d: ImageDraw.ImageDraw, x: int, y: int, w: int, label: str = "Incoming call") -> None:
+    h = 84
+    d.rounded_rectangle([x, y, x + w, y + h], radius=16, fill=DARK)
+    d.ellipse([x + 16, y + 16, x + 68, y + 68], fill=GREEN)
+    handset_icon(d, x + 42, y + 42, scale=0.75)
+    d.text((x + 84, y + 16), label, font=jakarta(24, 700), fill=DARK_INK)
+    d.text((x + 84, y + 48), "(615) 555-0119", font=mono(19), fill=DARK_MUTED)
+
+
+def concept_d() -> Image.Image:
+    """The transformation: listing card -> build pill -> call page + toast."""
+    im = Image.new("RGB", (S, S), PAPER)
+    d = ImageDraw.Draw(im)
+    y = head_block(d, "THE 30-SECOND UPGRADE",
+                   "Turn your Google listing into inbound calls",
+                   "We build the page and the ads. Your phone does the rest.")
+
+    top = y + 24
+    lw_card = 386
+    rw_card = 386
+    rx = S - M - rw_card
+
+    gbp_bottom = gbp_mini(d, M, top, lw_card)
+    spaced(d, (M + 8, gbp_bottom + 16), "WHAT YOU HAVE", mono(19), INK3, tracking=2)
+
+    # arrow between cards: dashed line + chevron
+    ax0, ax1 = M + lw_card + 18, rx - 18
+    ay = top + 125
+    xx = ax0
+    while xx < ax1 - 14:
+        d.line([xx, ay, min(xx + 10, ax1 - 14), ay], fill=BLUE, width=4)
+        xx += 18
+    d.polygon([(ax1 - 14, ay - 10), (ax1, ay), (ax1 - 14, ay + 10)], fill=BLUE)
+
+    # right: call page mini
+    ch = 250
+    d.rounded_rectangle([rx, top, rx + rw_card, top + ch], radius=16, fill=CARD, outline=BLUE, width=3)
+    d.rounded_rectangle([rx + 22, top + 22, rx + 168, top + 44], radius=11, fill=BLUE_SOFT)
+    spaced(d, (rx + 34, top + 26), "ROOF REPAIR", mono(15), BLUE, tracking=2)
+    d.rounded_rectangle([rx + 22, top + 60, rx + rw_card - 50, top + 82], radius=8, fill=INK)
+    d.rounded_rectangle([rx + 22, top + 92, rx + int(rw_card * 0.6), top + 112], radius=8, fill=INK)
+    sx = stars(d, rx + 22, top + 130, size=16)
+    d.text((sx + 8, top + 127), "4.9 · 212 reviews", font=instrument(20, 500), fill=INK2)
+    d.rounded_rectangle([rx + 22, top + 166, rx + rw_card - 22, top + 224], radius=12, fill=GREEN)
+    ct = "Call Now (615) 555-0119"
+    cf = instrument(24, 600)
+    ctw = d.textlength(ct, font=cf)
+    d.text((rx + (rw_card - ctw) / 2, top + 182), ct, font=cf, fill="#fff")
+    spaced(d, (rx + 8, top + ch + 16), "WHAT IT BECOMES", mono(19), BLUE, tracking=2)
+
+    # toast bridging the bottom
+    call_toast(d, (S - 520) // 2, top + ch + 62, 520)
+
+    cta_row(d)
+    return im
+
+
+def concept_e() -> Image.Image:
+    """The call log: what the listing could be doing all day."""
+    im = Image.new("RGB", (S, S), PAPER)
+    d = ImageDraw.Draw(im)
+    y = head_block(d, "MORE INBOUND CALLS",
+                   "What your listing could be doing all day",
+                   "Your reviews and photos, rebuilt into a page that rings.")
+
+    top = y + 6
+    card_h = 430
+    d.rounded_rectangle([M, top, S - M, top + card_h], radius=18, fill=CARD, outline=LINE, width=2)
+    spaced(d, (M + 30, top + 26), "TODAY · VIA YOUR CALL PAGE", mono(22), BLUE)
+
+    rows = [
+        ("Roof inspection request", "8:41 AM", "answered"),
+        ("Storm damage, insurance quote", "10:07 AM", "answered"),
+        ("Leak repair, Davidson County", "1:52 PM", "answered"),
+    ]
+    ry = top + 74
+    for title, time_s, tag in rows:
+        d.ellipse([M + 30, ry + 6, M + 74, ry + 50], fill=GREEN)
+        handset_icon(d, M + 52, ry + 28, scale=0.62)
+        d.text((M + 92, ry + 2), title, font=jakarta(26, 700), fill=INK)
+        d.text((M + 92, ry + 36), time_s, font=mono(19), fill=INK3)
+        tf = mono(19)
+        tw = d.textlength(tag, font=tf)
+        d.text((S - M - 30 - tw, ry + 18), tag, font=tf, fill=GREEN)
+        ry += 78
+    # highlighted incoming row
+    d.rounded_rectangle([M + 18, ry, S - M - 18, ry + 88], radius=14, fill=BLUE_SOFT)
+    d.ellipse([M + 34, ry + 20, M + 82, ry + 68], fill=BLUE)
+    handset_icon(d, M + 58, ry + 44, scale=0.68)
+    d.text((M + 100, ry + 16), "Incoming call…", font=jakarta(28, 800), fill=BLUE_DEEP)
+    d.text((M + 100, ry + 52), "(615) 555-0119 · via your storm inspection page", font=mono(18), fill=INK2)
+
+    cta_row(d)
+    return im
+
+
+def concept_f() -> Image.Image:
+    """Reviews earned the trust; the page cashes it in."""
+    im = Image.new("RGB", (S, S), PAPER)
+    d = ImageDraw.Draw(im)
+    y = head_block(d, "PROOF → PHONE",
+                   "Your reviews earned the trust. Cash it in.",
+                   "Your 5-star proof, on a page with one job: the call.")
+
+    top = y + 6
+    card_h = 430
+    gap = 28
+    cw = (S - 2 * M - gap) // 2
+
+    # left: review stack
+    lx = M
+    d.rounded_rectangle([lx, top, lx + cw, top + card_h], radius=18, fill=CARD, outline=LINE, width=2)
+    spaced(d, (lx + 26, top + 24), "WHAT YOU'VE EARNED", mono(22), INK3)
+    ry = top + 66
+    for i in range(3):
+        d.rounded_rectangle([lx + 26, ry, lx + cw - 26, ry + 96], radius=12, fill=PAPER2)
+        stars(d, lx + 44, ry + 16, size=15)
+        d.rounded_rectangle([lx + 44, ry + 46, lx + cw - 60, ry + 58], radius=6, fill="#D9D3C7")
+        d.rounded_rectangle([lx + 44, ry + 66, lx + int(cw * 0.62), ry + 78], radius=6, fill="#E2DDD2")
+        ry += 112
+    d.text((lx + 26, top + card_h - 26 - 12), "", font=instrument(20), fill=INK3)
+
+    # right: dark call card
+    rx = M + cw + gap
+    d.rounded_rectangle([rx, top, rx + cw, top + card_h], radius=18, fill=DARK)
+    spaced(d, (rx + 26, top + 24), "WHAT IT EARNS YOU", mono(22), "#7FD4AC")
+    # ring pulses
+    ccx, ccy = rx + cw // 2, top + 190
+    for rr, wd in [(120, 3), (90, 4)]:
+        d.ellipse([ccx - rr, ccy - rr, ccx + rr, ccy + rr], outline="#2A3340", width=wd)
+    d.ellipse([ccx - 56, ccy - 56, ccx + 56, ccy + 56], fill=GREEN)
+    handset_icon(d, ccx, ccy, scale=1.5)
+    label = "Incoming call"
+    lf2 = jakarta(30, 800)
+    lw2 = d.textlength(label, font=lf2)
+    d.text((rx + (cw - lw2) / 2, top + 316), label, font=lf2, fill=DARK_INK)
+    src = "via your call page"
+    sf2 = mono(20)
+    sw2 = d.textlength(src, font=sf2)
+    d.text((rx + (cw - sw2) / 2, top + 360), src, font=sf2, fill=DARK_MUTED)
+
+    cta_row(d)
+    return im
+
+
 def main() -> None:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     for name, fn in [
         ("concept-a-homepage-vs-callpage.png", concept_a),
         ("concept-b-built-in-30-seconds.png", concept_b),
         ("concept-c-the-phone-rings.png", concept_c),
+        ("concept-d-listing-to-calls.png", concept_d),
+        ("concept-e-call-log.png", concept_e),
+        ("concept-f-reviews-to-rings.png", concept_f),
     ]:
         im = fn()
         im.save(OUT_DIR / name)

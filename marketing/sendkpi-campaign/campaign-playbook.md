@@ -98,7 +98,7 @@ You already have the assets: marketing/meta-test/ creatives + /for-* pages.
 
 ## 4 · Creatives to test (built: see PNGs in this folder)
 
-All three are 1080×1080 statics in the current brand (cream, ink, CTA blue, the # logo). Concept D is a video you record once.
+The statics are 1080×1080 in the current brand (cream, ink, CTA blue, the # logo). Concepts D to F visualize the listing-to-calls transformation; Concept G is a video you record once.
 
 ### Concept A · "Stop sending ads to your homepage"
 The pain, framed as a before/after split: generic homepage vs a Call Now page.
@@ -115,7 +115,37 @@ The outcome. Incoming-call UI with the weekly KPI receipt underneath.
 - On-image headline: "This is what your ad spend should sound like"
 - Support: "Calls tracked, counted, and emailed to you weekly."
 
-### Concept D · Founder video (record once, 45 to 60 seconds)
+### Concept D · "Listing → calls" transformation
+The core promise as a picture: their Google listing card, an arrow, the call page it becomes, and the incoming-call toast underneath. "What you have → what it becomes."
+- On-image headline: "Turn your Google listing into inbound calls"
+- Primary text:
+> Your Google listing already has the reviews, the photos, and the phone number. It's just not built to make anyone call.
+>
+> SendKPI rebuilds it into a Call Now page with 4 matching ads, free, in about 30 seconds. Same proof, new job.
+>
+> See what your listing becomes.
+
+### Concept E · The call log
+The outcome as a day of inbound calls, each tagged with the page it came from, with one still ringing.
+- On-image headline: "What your listing could be doing all day"
+- Primary text:
+> Roof inspection at 8:41. Insurance quote at 10:07. Leak repair at 1:52.
+>
+> That's the job of a call page: your reviews and photos from Google, rebuilt into one page that makes the phone ring, with ads to match. We build it free from your listing in about 30 seconds.
+>
+> Find your listing below.
+
+### Concept F · Reviews → rings
+Their earned proof on the left, the ringing phone it should produce on the right.
+- On-image headline: "Your reviews earned the trust. Cash it in."
+- Primary text:
+> Every 5-star review you've earned is sitting on your Google listing doing quiet work. Put it somewhere louder.
+>
+> SendKPI builds a call-first landing page around your real reviews, plus 4 matching ads, free from your listing. When a stranger needs your trade, your proof does the convincing and the only button is your number.
+>
+> Build yours free.
+
+### Concept G · Founder video (record once, 45 to 60 seconds)
 Script skeleton:
 1. Hook (3 s): "If you own a roofing company, your Google listing is sitting on free money."
 2. Problem (10 s): ads sent to homepages, visitors wander, nobody calls.
@@ -253,4 +283,4 @@ Churn is the real business risk. The weekly KPI email and the monthly angle refr
 - [ ] CallRail/Twilio account ready for client tracking numbers
 - [ ] Saved Meta campaign template for client fulfillment
 - [ ] Phase 1 niche test live (assets: marketing/meta-test/)
-- [ ] Record Concept D founder video
+- [ ] Record Concept G founder video
