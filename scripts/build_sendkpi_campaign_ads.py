@@ -358,50 +358,81 @@ def call_toast(d: ImageDraw.ImageDraw, x: int, y: int, w: int, label: str = "Inc
 
 
 def concept_d() -> Image.Image:
-    """The transformation: listing card -> build pill -> call page + toast."""
+    """The transformation, three trades deep: listing -> matching call page,
+    stacked for roofing, tree service, and auto repair. No CTA chrome; the
+    stack is the whole story."""
     im = Image.new("RGB", (S, S), PAPER)
     d = ImageDraw.Draw(im)
     y = head_block(d, "THE 30-SECOND UPGRADE",
                    "Turn your Google listing into inbound calls",
                    "We build the page and the ads. Your phone does the rest.")
 
-    top = y + 24
-    lw_card = 386
-    rw_card = 386
+    rows = [
+        {
+            "name": "Mike's Roofing", "cat": "Roofing contractor · Nashville",
+            "initial": "M", "tile": "#3D5468", "rating": "4.9 · 212 reviews",
+            "service": "ROOF REPAIR", "phone": "(615) 555-0119",
+        },
+        {
+            "name": "Canopy Tree Service", "cat": "Tree service · Portland",
+            "initial": "C", "tile": "#527568", "rating": "4.9 · 164 reviews",
+            "service": "TREE REMOVAL", "phone": "(503) 555-0138",
+        },
+        {
+            "name": "Summit Auto Repair", "cat": "Auto repair · Boise",
+            "initial": "S", "tile": "#7A5A3D", "rating": "4.8 · 187 reviews",
+            "service": "BRAKE SERVICE", "phone": "(208) 555-0154",
+        },
+    ]
+
+    row_h = 150
+    row_gap = 26
+    top = y + 12
+    lw_card = 384
+    rw_card = 448
     rx = S - M - rw_card
 
-    gbp_bottom = gbp_mini(d, M, top, lw_card)
-    spaced(d, (M + 8, gbp_bottom + 16), "WHAT YOU HAVE", mono(19), INK3, tracking=2)
+    for i, biz in enumerate(rows):
+        ry = top + i * (row_h + row_gap)
 
-    # arrow between cards: dashed line + chevron
-    ax0, ax1 = M + lw_card + 18, rx - 18
-    ay = top + 125
-    xx = ax0
-    while xx < ax1 - 14:
-        d.line([xx, ay, min(xx + 10, ax1 - 14), ay], fill=BLUE, width=4)
-        xx += 18
-    d.polygon([(ax1 - 14, ay - 10), (ax1, ay), (ax1 - 14, ay + 10)], fill=BLUE)
+        # left: mini listing card
+        d.rounded_rectangle([M, ry, M + lw_card, ry + row_h], radius=14, fill=CARD, outline=LINE, width=2)
+        d.rounded_rectangle([M + 18, ry + 18, M + 62, ry + 62], radius=10, fill=biz["tile"])
+        af = jakarta(26, 700)
+        aw = d.textlength(biz["initial"], font=af)
+        d.text((M + 40 - aw / 2, ry + 27), biz["initial"], font=af, fill="#fff")
+        d.text((M + 76, ry + 18), biz["name"], font=jakarta(24, 700), fill=INK)
+        d.text((M + 76, ry + 50), biz["cat"], font=instrument(17, 500), fill=INK2)
+        sx = stars(d, M + 18, ry + 92, size=15)
+        d.text((sx + 8, ry + 89), biz["rating"], font=instrument(18, 500), fill=INK2)
+        d.text((M + 18, ry + 118), "Open", font=mono(16), fill=GREEN)
+        ow = d.textlength("Open", font=mono(16))
+        d.text((M + 18 + ow + 8, ry + 118), "· photos · hours", font=mono(16), fill=INK3)
 
-    # right: call page mini
-    ch = 250
-    d.rounded_rectangle([rx, top, rx + rw_card, top + ch], radius=16, fill=CARD, outline=BLUE, width=3)
-    d.rounded_rectangle([rx + 22, top + 22, rx + 168, top + 44], radius=11, fill=BLUE_SOFT)
-    spaced(d, (rx + 34, top + 26), "ROOF REPAIR", mono(15), BLUE, tracking=2)
-    d.rounded_rectangle([rx + 22, top + 60, rx + rw_card - 50, top + 82], radius=8, fill=INK)
-    d.rounded_rectangle([rx + 22, top + 92, rx + int(rw_card * 0.6), top + 112], radius=8, fill=INK)
-    sx = stars(d, rx + 22, top + 130, size=16)
-    d.text((sx + 8, top + 127), "4.9 · 212 reviews", font=instrument(20, 500), fill=INK2)
-    d.rounded_rectangle([rx + 22, top + 166, rx + rw_card - 22, top + 224], radius=12, fill=GREEN)
-    ct = "Call Now (615) 555-0119"
-    cf = instrument(24, 600)
-    ctw = d.textlength(ct, font=cf)
-    d.text((rx + (rw_card - ctw) / 2, top + 182), ct, font=cf, fill="#fff")
-    spaced(d, (rx + 8, top + ch + 16), "WHAT IT BECOMES", mono(19), BLUE, tracking=2)
+        # arrow
+        ax0, ax1 = M + lw_card + 14, rx - 14
+        ay = ry + row_h // 2
+        xx = ax0
+        while xx < ax1 - 12:
+            d.line([xx, ay, min(xx + 9, ax1 - 12), ay], fill=BLUE, width=4)
+            xx += 16
+        d.polygon([(ax1 - 12, ay - 9), (ax1, ay), (ax1 - 12, ay + 9)], fill=BLUE)
 
-    # toast bridging the bottom
-    call_toast(d, (S - 520) // 2, top + ch + 62, 520)
+        # right: matching call page mini
+        d.rounded_rectangle([rx, ry, rx + rw_card, ry + row_h], radius=14, fill=CARD, outline=BLUE, width=3)
+        pill_f = mono(14)
+        pill_w = sum(d.textlength(ch, font=pill_f) for ch in biz["service"]) + 2 * (len(biz["service"]) - 1)
+        d.rounded_rectangle([rx + 20, ry + 16, rx + 20 + pill_w + 26, ry + 40], radius=12, fill=BLUE_SOFT)
+        spaced(d, (rx + 33, ry + 21), biz["service"], pill_f, BLUE, tracking=2)
+        d.rounded_rectangle([rx + 20, ry + 52, rx + rw_card - 44, ry + 70], radius=7, fill=INK)
+        d.rounded_rectangle([rx + 20, ry + 78, rx + int(rw_card * 0.55), ry + 92], radius=7, fill=INK)
+        d.rounded_rectangle([rx + 20, ry + 102, rx + rw_card - 20, ry + row_h - 14], radius=10, fill=GREEN)
+        ct = f"Call Now {biz['phone']}"
+        cf = instrument(20, 600)
+        ctw = d.textlength(ct, font=cf)
+        btn_mid = ry + 102 + (row_h - 14 - 102) / 2
+        d.text((rx + (rw_card - ctw) / 2, btn_mid - 12), ct, font=cf, fill="#fff")
 
-    cta_row(d)
     return im
 
 
