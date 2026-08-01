@@ -575,7 +575,9 @@ export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
             <a href="#how">How it works</a>
             <a href="#examples">Examples</a>
             <a href="#faq">FAQ</a>
-            <a href="#">Contact</a>
+            <a href="/privacy">Privacy</a>
+            <a href="/terms">Terms</a>
+            <a href="mailto:zkbmarketing@gmail.com">Contact</a>
           </nav>
           <p className="foot-note">© 2026 SendKPI. Not affiliated with Google.</p>
         </div>

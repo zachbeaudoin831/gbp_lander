@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "./supabaseClient";
 import Home, { LogoMark } from "./Home";
+import { initPixel, trackSignup } from "./metaPixel";
 
 /* ─── html helpers ─────────────────────────────────────────────────── */
 const esc = s => s == null ? '' : String(s)
@@ -817,6 +818,7 @@ export default function App() {
       s.textContent = GLOBAL_CSS;
       document.head.appendChild(s);
     }
+    initPixel();
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, []);
 
@@ -1197,6 +1199,9 @@ export default function App() {
         });
         if (landerError) throw landerError;
         savedOnceRef.current = true;
+        // The real "this ad worked" moment: a new business owner just
+        // finished Google sign-in and their first lander saved.
+        trackSignup({ email: user.email, phone: biz?.phone_national || biz?.phone_international });
 
         const { data: allLanders } = await supabase
           .from('landers')

@@ -27,7 +27,7 @@ import os
 from typing import Optional
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
@@ -41,6 +41,7 @@ from src.ai_copy import (
 from src.brand_color import fetch_brand_color
 from src.lander_builder import build_profile
 from src.lead_store import LeadStoreError, insert_lead
+from src.meta_capi import MetaCapiError, send_event
 from src.places_client import GooglePlacesClient, PlacesApiError
 from src.website_scraper import (
     ScrapeBlocked,
@@ -191,7 +192,48 @@ def health():
         "api_key_configured": has_places_key,
         "anthropic_key_configured": has_anthropic_key,
         "lead_store_configured": bool(os.environ.get("DATABASE_URL")),
+        "meta_capi_configured": bool(os.environ.get("META_PIXEL_ID") and os.environ.get("META_CAPI_ACCESS_TOKEN")),
     }
+
+
+class MetaEventRequest(BaseModel):
+    """One conversion event for sendkpi.com's own Meta ad tracking (a
+    business owner signing up), sent alongside the matching browser-side
+    fbq() call. event_id must match that call exactly so Meta dedupes the
+    browser and server copies of the same event instead of double counting.
+    """
+    event_name: str = Field(min_length=1, max_length=100)
+    event_id: str = Field(min_length=1, max_length=200)
+    event_source_url: str = Field(min_length=1, max_length=2000)
+    email: Optional[str] = Field(default=None, max_length=320)
+    phone: Optional[str] = Field(default=None, max_length=50)
+    fbc: Optional[str] = Field(default=None, max_length=500)
+    fbp: Optional[str] = Field(default=None, max_length=500)
+
+
+@app.post("/api/meta-event")
+def meta_event(req: MetaEventRequest, request: Request):
+    """Server-side half of Meta Conversions API tracking for sendkpi.com's
+    own ad campaigns. Never allowed to fail the caller's actual action (e.g.
+    account signup) -- if Meta isn't configured yet or the request to Meta
+    fails, this just reports ok:false rather than raising.
+    """
+    try:
+        send_event(
+            event_name=req.event_name,
+            event_id=req.event_id,
+            event_source_url=req.event_source_url,
+            client_ip=request.client.host if request.client else None,
+            client_user_agent=request.headers.get("user-agent"),
+            email=req.email,
+            phone=req.phone,
+            fbc=req.fbc,
+            fbp=req.fbp,
+            test_event_code=os.environ.get("META_TEST_EVENT_CODE") or None,
+        )
+        return {"ok": True}
+    except MetaCapiError:
+        return {"ok": False}
 
 
 class LeadRequest(BaseModel):

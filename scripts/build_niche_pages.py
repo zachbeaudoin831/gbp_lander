@@ -16,6 +16,19 @@ OUT_DIR = pathlib.Path(__file__).resolve().parent.parent / "frontend" / "public"
 
 esc = html.escape
 
+# Paste the Pixel ID from Meta Events Manager once it exists (same value as
+# PIXEL_ID in frontend/src/metaPixel.js) -- these pages are exactly where ad
+# traffic lands, so PageView here matters. Empty string omits the snippet.
+META_PIXEL_ID = ""
+PIXEL_SNIPPET = (f"""
+<script>!function(f,b,e,v,n,t,s){{if(f.fbq)return;n=f.fbq=function(){{n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)}};if(!f._fbq)f._fbq=n;
+n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}}(window,
+document,'script','https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '{META_PIXEL_ID}');fbq('track', 'PageView');</script>
+""" if META_PIXEL_ID else "")
+
 # Fictional example businesses (555 numbers, same convention as the homepage
 # mock) -- clearly illustrative, never real listings.
 NICHES = [
@@ -247,7 +260,7 @@ def page(n: dict) -> str:
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&family=Plus+Jakarta+Sans:wght@700&display=swap" rel="stylesheet">
-<style>{CSS}</style></head><body>
+<style>{CSS}</style>{PIXEL_SNIPPET}</head><body>
 
 <div class="topbar"><div class="topbar-inner">
   <a class="logo" href="/"><span class="logo-mark"><svg width="28" height="28" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="skpiG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0D57D0"/><stop offset="1" stop-color="#0A46A8"/></linearGradient></defs><rect x="6" y="8" width="48" height="48" rx="9" fill="url(#skpiG)"/><g transform="translate(17.09 47.00) scale(0.02013 -0.02013)"><path d="M674.6 0 919.7 1490H1131.1L886.2 0ZM4.8 380.3 40.6 591.7H1191.8L1156.0 380.3ZM151.7 0 395.7 1490H607.1L363.1 0ZM91.0 897.2 126.8 1109.7H1276.9L1242.2 897.2Z" fill="#fff"/></g><circle cx="53" cy="12" r="9.5" fill="#0E8A5F" stroke="#171310" stroke-width="3"/></svg></span>SendKPI</a>
