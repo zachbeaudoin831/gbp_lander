@@ -510,9 +510,11 @@ MAIN SERVICE THE OWNER WANTS MORE CALLS FOR
     client = _client()
     resp = client.messages.create(
         model=MODEL,
-        # 7 angles x ~7 short fields runs long -- a truncated reply fails JSON
-        # parsing outright, so leave real headroom.
-        max_tokens=2500,
+        # 7 angles x ~7 fields runs long, and real businesses with rich
+        # reviews/site text push the model to write longer "why" fields than
+        # test cases showed -- 2500 truncated mid-string on a live business.
+        # Leave real headroom.
+        max_tokens=4096,
         system=_ANGLES_SYSTEM + _STYLE_RULES,
         messages=[{"role": "user", "content": user_content}],
     )
@@ -554,8 +556,9 @@ Call button: {angle.get("cta_label") or "(none)"}"""
     client = _client()
     resp = client.messages.create(
         model=MODEL,
-        # 4 variations x 4 fields, primary_text runs longest.
-        max_tokens=1600,
+        # 4 variations x 4 fields, primary_text runs longest -- same
+        # truncation risk as the angles call, so matching headroom here.
+        max_tokens=2400,
         system=_ANGLE_ADS_SYSTEM + _STYLE_RULES,
         messages=[{"role": "user", "content": user_content}],
     )
