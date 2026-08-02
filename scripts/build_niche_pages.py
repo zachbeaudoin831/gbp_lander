@@ -19,7 +19,7 @@ esc = html.escape
 # Paste the Pixel ID from Meta Events Manager once it exists (same value as
 # PIXEL_ID in frontend/src/metaPixel.js) -- these pages are exactly where ad
 # traffic lands, so PageView here matters. Empty string omits the snippet.
-META_PIXEL_ID = ""
+META_PIXEL_ID = "2456464214838090"
 PIXEL_SNIPPET = (f"""
 <script>!function(f,b,e,v,n,t,s){{if(f.fbq)return;n=f.fbq=function(){{n.callMethod?
 n.callMethod.apply(n,arguments):n.queue.push(arguments)}};if(!f._fbq)f._fbq=n;

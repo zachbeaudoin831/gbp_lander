@@ -6,7 +6,7 @@
    PIXEL_ID: paste the Pixel ID from Meta Events Manager once it exists.
    Until then initPixel()/trackSignup() are no-ops, same pattern as
    VSL_EMBED_URL/BOOKING_URL in App.jsx. */
-const PIXEL_ID = "";
+const PIXEL_ID = "2456464214838090";
 
 // Same backend the rest of the app talks to (API_BASE in App.jsx).
 const API_BASE = "https://gbp-lander.vercel.app";
