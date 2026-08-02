@@ -16,6 +16,19 @@ OUT_DIR = pathlib.Path(__file__).resolve().parent.parent / "frontend" / "public"
 
 esc = html.escape
 
+# Same Measurement ID as the <head> snippet in frontend/index.html -- these
+# pages are exactly where ad traffic lands, so pageviews here matter too.
+GA_MEASUREMENT_ID = "G-6VTNB4JG6E"
+GA_SNIPPET = (f"""
+<script async src="https://www.googletagmanager.com/gtag/js?id={GA_MEASUREMENT_ID}"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){{dataLayer.push(arguments);}}
+gtag('js', new Date());
+gtag('config', '{GA_MEASUREMENT_ID}');
+</script>
+""" if GA_MEASUREMENT_ID else "")
+
 # Paste the Pixel ID from Meta Events Manager once it exists (same value as
 # PIXEL_ID in frontend/src/metaPixel.js) -- these pages are exactly where ad
 # traffic lands, so PageView here matters. Empty string omits the snippet.
@@ -260,7 +273,7 @@ def page(n: dict) -> str:
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&family=Plus+Jakarta+Sans:wght@700&display=swap" rel="stylesheet">
-<style>{CSS}</style>{PIXEL_SNIPPET}</head><body>
+<style>{CSS}</style>{GA_SNIPPET}{PIXEL_SNIPPET}</head><body>
 
 <div class="topbar"><div class="topbar-inner">
   <a class="logo" href="/"><span class="logo-mark"><svg width="28" height="28" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="skpiG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0D57D0"/><stop offset="1" stop-color="#0A46A8"/></linearGradient></defs><rect x="6" y="8" width="48" height="48" rx="9" fill="url(#skpiG)"/><g transform="translate(17.09 47.00) scale(0.02013 -0.02013)"><path d="M674.6 0 919.7 1490H1131.1L886.2 0ZM4.8 380.3 40.6 591.7H1191.8L1156.0 380.3ZM151.7 0 395.7 1490H607.1L363.1 0ZM91.0 897.2 126.8 1109.7H1276.9L1242.2 897.2Z" fill="#fff"/></g><circle cx="53" cy="12" r="9.5" fill="#0E8A5F" stroke="#171310" stroke-width="3"/></svg></span>SendKPI</a>
