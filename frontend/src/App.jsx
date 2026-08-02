@@ -307,6 +307,17 @@ body{margin:0;padding:0;font-family:'Instrument Sans',system-ui,sans-serif}
 @keyframes lb-spin{to{transform:rotate(360deg)}}
 .lb-spinner{width:44px;height:44px;border-radius:50%;border:4px solid #E7EEFB;border-top-color:#0D57D0;animation:lb-spin .8s linear infinite}
 @media (prefers-reduced-motion:reduce){.lb-spinner{animation-duration:1.6s}}
+@keyframes lb-trace-in{to{opacity:1;transform:none}}
+.lb-trace{display:flex;flex-direction:column;gap:4px;width:100%;max-width:380px}
+.lb-trace-row{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:10px;opacity:0;transform:translateY(6px);animation:lb-trace-in .35s ease forwards}
+.lb-trace-row.active{background:#E7EEFB}
+.lb-trace-icon{width:20px;height:20px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff}
+.lb-trace-icon.spin{border:2.5px solid #E7EEFB;border-top-color:#0D57D0;animation:lb-spin .7s linear infinite}
+.lb-trace-icon.done{background:#0E8A5F}
+.lb-trace-text{font-size:14px;color:#5C544C}
+.lb-trace-row.active .lb-trace-text{color:#181310;font-weight:600}
+.lb-trace-row.done .lb-trace-text{color:#8A8178}
+@media (prefers-reduced-motion:reduce){.lb-trace-row{animation:none;opacity:1;transform:none}}
 `;
 
 /* ─── main-service placeholder examples ─────────────────────────────
@@ -784,7 +795,8 @@ function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn }) {
 export default function App() {
   const [step,       setStep]       = useState('search');
   const [query,      setQuery]      = useState('');
-  const [loadMsg,    setLoadMsg]    = useState('');
+  const [loadSteps,  setLoadSteps]  = useState([]); // labels for the current loading trace
+  const [loadIndex,  setLoadIndex]  = useState(0);  // steps before this index are "done", this one is "active"
   const [candidates, setCandidates] = useState([]);
   const [html,       setHtml]       = useState('');
   const [business,   setBusiness]   = useState(null);
@@ -905,11 +917,20 @@ export default function App() {
     return () => window.removeEventListener('message', onMsg);
   }, [step]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  function cycleMsgs(msgs, interval=2800) {
+  // Advances loadIndex through `steps` on a timer, one at a time, holding on
+  // the last step (still spinning, never looping back) if the real work
+  // outruns the scripted list -- a finished row should never "un-complete".
+  function cycleSteps(steps, interval=1600) {
     if (timerRef.current) clearInterval(timerRef.current);
-    let i = 0; setLoadMsg(msgs[0]);
-    timerRef.current = setInterval(() => { i=(i+1)%msgs.length; setLoadMsg(msgs[i]); }, interval);
-    return () => { clearInterval(timerRef.current); timerRef.current = null; };
+    setLoadSteps(steps);
+    setLoadIndex(0);
+    let i = 0;
+    timerRef.current = setInterval(() => {
+      i++;
+      if (i >= steps.length) { clearInterval(timerRef.current); timerRef.current = null; return; }
+      setLoadIndex(i);
+    }, interval);
+    return () => { if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; } };
   }
 
   async function handleSearch(e) {
@@ -917,7 +938,7 @@ export default function App() {
     if (!query.trim()) { setError('Type a business name first, e.g. "Joe\'s Plumbing, Austin TX".'); return; }
     setError('');
     setStep('loading');
-    const stop = cycleMsgs(['Searching Google Business listings…', 'Looking up matching businesses…', 'Finding the right profile…']);
+    const stop = cycleSteps(['Searching Google Business listings', 'Looking up matching businesses', 'Finding the right profile']);
     try {
       const results = await findCandidates(query.trim());
       stop();
@@ -930,15 +951,14 @@ export default function App() {
   async function runBuild(candidate) {
     setError('');
     setStep('loading');
-    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
-    setLoadMsg('Pulling profile information…');
+    const stop = cycleSteps(['Reading their Google Business Profile', 'Pulling photos, reviews & hours', 'Scanning their brand colors'], 1300);
     try {
       const profile = await getProfile(candidate.place_id);
+      stop();
       // Kick off the website scan (offer generation) now but don't block on
       // it -- it keeps running behind the main-service question, and the
       // angle step awaits it. Failure is fine: the flow continues without
       // site-derived copy.
-      setLoadMsg('Scanning website from profile…');
       setScanDone(false);
       const scan = generateOffer({
         website: profile.website,
@@ -954,6 +974,7 @@ export default function App() {
       setMainService('');
       setStep('service');
     } catch(err) {
+      stop();
       setError(err.message);
       setStep(candidates.length ? 'candidates' : 'search');
     }
@@ -975,13 +996,13 @@ export default function App() {
     setError('');
     setStep('loading');
     const cat = (pendingProfile?.category || 'your trade').toLowerCase();
-    const stop = cycleMsgs([
-      `Researching winning ad angles for ${cat}…`,
-      'Studying campaigns that made the phone ring…',
-      'Reading your reviews for proof points…',
-      `Matching angles to "${svc}"…`,
-      'Shortlisting the strongest angles…',
-    ], 3200);
+    const stop = cycleSteps([
+      `Researching winning ad angles for ${cat}`,
+      'Studying campaigns that made the phone ring',
+      'Reading your reviews for proof points',
+      `Matching angles to "${svc}"`,
+      'Shortlisting the strongest angles',
+    ], 1700);
     try {
       let extras = {};
       try { extras = (await offerPromiseRef.current) || {}; } catch { /* scan failed -- continue without it */ }
@@ -1232,9 +1253,21 @@ export default function App() {
 
   /* ── loading ───────────────────────────────────────────────────────── */
   if (step === 'loading') return (
-    <div style={{minHeight:'100dvh',background:'#fff',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:22,padding:32}}>
-      <div className="lb-spinner" aria-hidden="true" />
-      <p style={{fontSize:14.5,color:'#5C544C',margin:0,textAlign:'center',minHeight:22}}>{loadMsg}</p>
+    <div style={{minHeight:'100dvh',background:'#fff',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:34,padding:32}}>
+      <div style={{display:'flex',alignItems:'center',gap:8}}>
+        <LogoMark size={26} />
+        <span style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:15,color:'#181310',letterSpacing:'-.01em'}}>SendKPI</span>
+      </div>
+      <div className="lb-trace">
+        {loadSteps.map((s, i) => i > loadIndex ? null : (
+          <div key={s} className={`lb-trace-row${i === loadIndex ? ' active' : ' done'}`}>
+            <span className={`lb-trace-icon ${i === loadIndex ? 'spin' : 'done'}`} aria-hidden="true">
+              {i < loadIndex && <i className="ti ti-check" style={{fontSize:12}} />}
+            </span>
+            <span className="lb-trace-text">{s}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 
