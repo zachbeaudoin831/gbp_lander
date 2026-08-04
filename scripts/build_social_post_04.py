@@ -12,8 +12,7 @@ import sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from build_sendkpi_campaign_ads import (  # noqa: E402
     BIZ, BLUE, CARD, DARK, DARK_INK, DARK_MUTED, GREEN, INK, INK2, INK3,
-    LINE, M, PAPER, S, cta_row, head_block, instrument, jakarta, mono,
-    spaced, stars,
+    LINE, M, PAPER, S, instrument, jakarta, mono, spaced, stars, wrap,
 )
 from PIL import Image, ImageDraw  # noqa: E402
 
@@ -39,15 +38,24 @@ def stage_label(d: ImageDraw.ImageDraw, cx: int, y: int, text: str, color: str) 
 def compose() -> Image.Image:
     im = Image.new("RGB", (S, S), PAPER)
     d = ImageDraw.Draw(im)
-    y = head_block(
-        d, "HOW IT WORKS",
-        "Your Google listing becomes Meta ads",
-        "We research the winning angle first, so every ad matches your real reviews.",
-    )
+
+    # No logo/tag row on this version -- headline starts straight from the
+    # top margin so it (and everything below it) can run bigger.
+    y = 96
+    h_font = jakarta(72, 800)
+    for ln in wrap(d, "Turn Your Google Business Profile Into Custom Meta Ads", h_font, S - 2 * M):
+        d.text((M, y), ln, font=h_font, fill=INK)
+        y += 80
+    y += 16
+    s_font = instrument(31)
+    for ln in wrap(d, "Search for your Google Listing, we'll automatically research winning angles and pull your reviews to create custom Meta ads. Free.", s_font, S - 2 * M):
+        d.text((M, y), ln, font=s_font, fill=INK2)
+        y += 42
+    y += 34
 
     biz = BIZ["roofing"]
-    top = y + 14
-    card_h = 336
+    top = y
+    card_h = 372
     gap = 44
     cw = (S - 2 * M - 2 * gap) // 3
 
@@ -119,7 +127,7 @@ def compose() -> Image.Image:
         d.rounded_rectangle([gx + 8, gy + gs - 16, gx + 8 + bar_w, gy + gs - 10], radius=3, fill="#ffffffE0")
     stage_label(d, x3 + cw // 2, top + card_h + 22, "YOUR ADS", BLUE)
 
-    cta_row(d)
+    spaced(d, (0, S - M - 6), "SENDKPI.COM", mono(26), INK3, anchor_right=S - M)
     return im
 
 
