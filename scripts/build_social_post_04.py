@@ -12,7 +12,7 @@ import sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from build_sendkpi_campaign_ads import (  # noqa: E402
     BIZ, BLUE, CARD, DARK, DARK_INK, DARK_MUTED, GREEN, INK, INK2, INK3,
-    LINE, M, PAPER, S, instrument, jakarta, mono, spaced, stars, wrap,
+    LINE, M, PAPER, S, instrument, jakarta, logo, mono, spaced, stars, wrap,
 )
 from PIL import Image, ImageDraw  # noqa: E402
 
@@ -41,14 +41,22 @@ def compose() -> Image.Image:
 
     # No logo/tag row on this version -- headline starts straight from the
     # top margin so it (and everything below it) can run bigger.
+    headline = "Turn Your Google Business Profile Into Custom Meta Ads"
+    h_size = 72
+    while h_size > 44:
+        h_font = jakarta(h_size, 800)
+        h_lines = wrap(d, headline, h_font, S - 2 * M)
+        if len(h_lines) <= 2:
+            break
+        h_size -= 2
     y = 96
-    h_font = jakarta(72, 800)
-    for ln in wrap(d, "Turn Your Google Business Profile Into Custom Meta Ads", h_font, S - 2 * M):
+    h_lh = round(h_size * 1.1)
+    for ln in h_lines:
         d.text((M, y), ln, font=h_font, fill=INK)
-        y += 80
+        y += h_lh
     y += 16
     s_font = instrument(31)
-    for ln in wrap(d, "Search for your Google Listing, we'll automatically research winning angles and pull your reviews to create custom Meta ads. Free.", s_font, S - 2 * M):
+    for ln in wrap(d, "Search for your Google Listing, we'll automatically research winning angles and pull your reviews to create custom Meta ads. First batch of ads are free.", s_font, S - 2 * M):
         d.text((M, y), ln, font=s_font, fill=INK2)
         y += 42
     y += 34
@@ -127,7 +135,7 @@ def compose() -> Image.Image:
         d.rounded_rectangle([gx + 8, gy + gs - 16, gx + 8 + bar_w, gy + gs - 10], radius=3, fill="#ffffffE0")
     stage_label(d, x3 + cw // 2, top + card_h + 22, "YOUR ADS", BLUE)
 
-    spaced(d, (0, S - M - 6), "SENDKPI.COM", mono(26), INK3, anchor_right=S - M)
+    logo(d, M, S - M - 34, ring=PAPER)
     return im
 
 
