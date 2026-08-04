@@ -1,216 +1,173 @@
-"""Organic Facebook/Instagram post #4: the whole product in one picture --
-Google listing in, a research step in the middle, four Meta ads out.
+"""Organic Facebook/Instagram post #4: modern flat SaaS-social treatment --
+a color-blocked panel, crisp solid "sticker" shadows, numbered steps. No
+blur anywhere (the previous Gaussian-blurred shadow/glow read as grainy at
+PNG export) -- every edge here is hard and flat by design.
 
 Run from the repo root (needs Pillow and the brand TTFs):
     SENDKPI_FONT_DIR=/path/to/fonts python3 scripts/build_social_post_04.py
 """
 from __future__ import annotations
 
-import math
 import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from build_sendkpi_campaign_ads import (  # noqa: E402
-    BIZ, BLUE, BLUE_SOFT, CARD, DARK, DARK_INK, DARK_MUTED, GREEN, INK,
-    INK2, INK3, LINE, M, PAPER, S, instrument, jakarta, logo, mono, spaced,
-    stars, wrap,
+    BIZ, BLUE, GREEN, INK, INK2, INK3, M, PAPER, S, instrument, jakarta,
+    logo, mono, spaced, stars, wrap,
 )
-from PIL import Image, ImageDraw, ImageFilter  # noqa: E402
+from PIL import Image, ImageDraw  # noqa: E402
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
 OUT_DIR = REPO / "marketing" / "social"
 
+WHITE = "#FFFFFF"
+BLUE_DEEP = "#0A2D6B"  # flat sticker-shadow offset colour (deeper than brand blue, no blur)
 
-def soft_shadow(im: Image.Image, box: tuple[int, int, int, int], radius: int = 18, blur: int = 16, dy: int = 14, opacity: int = 95) -> None:
-    """Homepage cards all sit on a soft drop shadow (--shadow-lg); fake the
-    same thing here with a blurred rounded-rect layer pasted behind the card
-    before it's drawn."""
+
+def flat_shadow(d: ImageDraw.ImageDraw, box: tuple[int, int, int, int], radius: int = 16, offset: tuple[int, int] = (7, 7), color: str = BLUE_DEEP) -> None:
+    """A crisp, un-blurred offset rectangle behind a card -- the flat
+    'sticker shadow' look common to current SaaS marketing sites."""
     x0, y0, x1, y1 = box
-    pad = blur * 3
-    layer = Image.new("RGBA", (x1 - x0 + pad * 2, y1 - y0 + pad * 2), (0, 0, 0, 0))
-    ld = ImageDraw.Draw(layer)
-    ld.rounded_rectangle([pad, pad, pad + (x1 - x0), pad + (y1 - y0)], radius=radius, fill=(20, 24, 30, opacity))
-    layer = layer.filter(ImageFilter.GaussianBlur(blur))
-    im.paste(layer, (x0 - pad, y0 - pad + dy), layer)
+    d.rounded_rectangle([x0 + offset[0], y0 + offset[1], x1 + offset[0], y1 + offset[1]], radius=radius, fill=color)
 
 
-def radial_glow(im: Image.Image, center: tuple[int, int], r: int, color: tuple[int, int, int], peak_alpha: int = 70) -> None:
-    """The homepage's cta-card and hero both sit on a soft radial blue glow.
-    Approximate one with concentric rings faded out, then blur."""
-    layer = Image.new("RGBA", im.size, (0, 0, 0, 0))
-    ld = ImageDraw.Draw(layer)
-    steps = 40
-    for i in range(steps, 0, -1):
-        t = i / steps
-        rr = int(r * t)
-        a = int(peak_alpha * (1 - t) ** 1.6)
-        ld.ellipse([center[0] - rr, center[1] - rr, center[0] + rr, center[1] + rr], fill=(*color, a))
-    layer = layer.filter(ImageFilter.GaussianBlur(30))
-    im.paste(layer, (0, 0), layer)
+def step_badge(d: ImageDraw.ImageDraw, cx: int, cy: int, n: int, bg: str = BLUE, fg: str = WHITE) -> None:
+    r = 20
+    d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=bg, outline=WHITE, width=3)
+    f = jakarta(19, 800)
+    tw = d.textlength(str(n), font=f)
+    d.text((cx - tw / 2, cy - 12), str(n), font=f, fill=fg)
 
 
-def wavy_underline(d: ImageDraw.ImageDraw, x: int, y: int, w: int, color: str = BLUE, amp: float = 3.5, width: int = 5) -> None:
-    """The homepage's signature hand-drawn underline under the highlighted
-    hero phrase, redrawn as a sampled sine curve."""
-    pts = []
-    n = max(16, int(w) // 8)
-    for i in range(n + 1):
-        t = i / n
-        px = x + w * t
-        py = y + amp * math.sin(t * math.pi * 1.6) - amp * 0.4
-        pts.append((px, py))
-    d.line(pts, fill=color, width=width, joint="curve")
-
-
-def flow_dot(d: ImageDraw.ImageDraw, cx: int, cy: int, color: str = BLUE, ring: str = BLUE_SOFT) -> None:
-    """The soft pulsing dot riding the hero's dashed route line, as a static
-    two-layer glow + core dot."""
-    d.ellipse([cx - 9, cy - 9, cx + 9, cy + 9], fill=ring)
-    d.ellipse([cx - 4, cy - 4, cx + 4, cy + 4], fill=color)
-
-
-def dashed_arrow(d: ImageDraw.ImageDraw, x0: int, x1: int, y: int, color: str = BLUE, dash: int = 8, gap: int = 7, width: int = 4) -> None:
-    xx = x0
-    while xx < x1 - 12:
-        d.line([xx, y, min(xx + dash, x1 - 12), y], fill=color, width=width)
-        xx += dash + gap
-    d.polygon([(x1 - 12, y - 9), (x1, y), (x1 - 12, y + 9)], fill=color)
-    flow_dot(d, (x0 + x1) // 2, y, color=color)
-
-
-def stage_label(d: ImageDraw.ImageDraw, cx: int, y: int, text: str, color: str) -> None:
-    f = mono(16)
-    tracking = 2
-    w = sum(d.textlength(ch, font=f) for ch in text) + tracking * (len(text) - 1)
-    spaced(d, (int(cx - w / 2), y), text, f, color, tracking=tracking)
+def solid_arrow(d: ImageDraw.ImageDraw, x0: int, x1: int, y: int, color: str = WHITE) -> None:
+    d.line([x0, y, x1 - 14, y], fill=color, width=3)
+    d.polygon([(x1 - 14, y - 7), (x1, y), (x1 - 14, y + 7)], fill=color)
 
 
 def compose() -> Image.Image:
     im = Image.new("RGB", (S, S), PAPER)
-
-    # Ambient warmth behind the sign-off, echoing the hero/cta-card's soft
-    # radial blue glow rather than a flat empty corner.
-    radial_glow(im, (S - 220, S - 90), 460, (13, 87, 208), peak_alpha=40)
-
     d = ImageDraw.Draw(im)
 
-    # No logo/tag row up top on this version -- headline starts straight
-    # from the top margin so it (and everything below it) can run bigger.
+    # ---- header (cream) ----
+    logo(d, M, 54, ring=PAPER)
+
     headline = "Turn Your Google Business Profile Into Custom Meta Ads"
-    accent_phrase = "Custom Meta Ads"
-    h_size = 72
-    while h_size > 44:
+    accent = "Custom Meta Ads"
+    h_size = 64
+    while h_size > 42:
         h_font = jakarta(h_size, 800)
         h_lines = wrap(d, headline, h_font, S - 2 * M)
         if len(h_lines) <= 2:
             break
         h_size -= 2
-    y = 88
-    h_lh = round(h_size * 1.1)
-    accent_box = None
+    y = 160
+    h_lh = round(h_size * 1.14)
     for ln in h_lines:
-        d.text((M, y), ln, font=h_font, fill=INK)
-        if ln.endswith(accent_phrase):
-            prefix = ln[: -len(accent_phrase)]
-            ax = M + d.textlength(prefix, font=h_font)
-            aw = d.textlength(accent_phrase, font=h_font)
-            _, _, _, line_bottom = d.textbbox((M, y), ln, font=h_font)
-            accent_box = (ax, line_bottom + 8, aw)
+        if ln.endswith(accent):
+            prefix = ln[: -len(accent)]
+            d.text((M, y), prefix, font=h_font, fill=INK)
+            px = M + d.textlength(prefix, font=h_font)
+            d.text((px, y), accent, font=h_font, fill=BLUE)
+        else:
+            d.text((M, y), ln, font=h_font, fill=INK)
         y += h_lh
-    if accent_box:
-        ax, ay, aw = accent_box
-        wavy_underline(d, ax, ay, aw)
     y += 22
-    s_font = instrument(31)
+    s_font = instrument(28)
     for ln in wrap(d, "Search for your Google Listing, we'll automatically research winning angles and pull your reviews to create custom Meta ads. First batch of ads are free.", s_font, S - 2 * M):
         d.text((M, y), ln, font=s_font, fill=INK2)
-        y += 40
-    y += 40
+        y += 37
+
+    # ---- panel: full-bleed flat blue section, square-cut top edge dropped
+    # straight down from the copy above (a hallmark of current SaaS social
+    # posts -- one hard color block, no gradient, no blur) ----
+    panel_top = 508
+    d.rectangle([0, panel_top, S, S], fill=BLUE)
 
     biz = BIZ["roofing"]
-    top = y
-    card_h = 360
-    gap = 44
+    gap = 40
     cw = (S - 2 * M - 2 * gap) // 3
+    top = panel_top + 76
+    card_h = 320
 
     x1 = M
     x2 = x1 + cw + gap
     x3 = x2 + cw + gap
 
-    for bx in (x1, x2, x3):
-        soft_shadow(im, (bx, top, bx + cw, top + card_h))
-    d = ImageDraw.Draw(im)  # redraw handle -- soft_shadow pastes onto im directly
-
-    # ---- stage 1: the listing ----
-    d.rounded_rectangle([x1, top, x1 + cw, top + card_h], radius=18, fill=CARD, outline=LINE, width=2)
-    d.rounded_rectangle([x1 + 20, top + 22, x1 + 66, top + 68], radius=11, fill=biz["tile"])
-    af = jakarta(24, 700)
+    # ---- card 1: the listing ----
+    flat_shadow(d, (x1, top, x1 + cw, top + card_h))
+    d.rounded_rectangle([x1, top, x1 + cw, top + card_h], radius=16, fill=WHITE)
+    d.rounded_rectangle([x1 + 18, top + 20, x1 + 60, top + 62], radius=10, fill=biz["tile"])
+    af = jakarta(21, 700)
     aw = d.textlength(biz["initial"], font=af)
-    d.text((x1 + 43 - aw / 2, top + 31), biz["initial"], font=af, fill="#fff")
-    d.text((x1 + 78, top + 24), biz["name"], font=jakarta(19, 700), fill=INK)
-    d.text((x1 + 78, top + 50), biz["cat"].split(" · ")[0], font=instrument(14.5, 500), fill=INK2)
-    sx = stars(d, x1 + 20, top + 90, size=13)
-    d.text((sx + 7, top + 88), biz["rating"], font=instrument(15, 500), fill=INK2)
-    py = top + 128
+    d.text((x1 + 39 - aw / 2, top + 27), biz["initial"], font=af, fill=WHITE)
+    d.text((x1 + 70, top + 21), biz["name"], font=jakarta(17, 700), fill=INK)
+    d.text((x1 + 70, top + 44), biz["cat"].split(" · ")[0], font=instrument(13.5, 500), fill=INK2)
+    sx = stars(d, x1 + 18, top + 78, size=12)
+    d.text((sx + 6, top + 76), biz["rating"], font=instrument(13.5, 500), fill=INK2)
+    py = top + 112
+    pw = (cw - 36 - 2 * 8) // 3
     for i, g in enumerate(["#7D97AC", "#C0A184", "#9DBFB4"]):
-        pw = (cw - 40 - 2 * 10) // 3
-        px = x1 + 20 + i * (pw + 10)
-        d.rounded_rectangle([px, py, px + pw, py + pw], radius=9, fill=g)
-    d.text((x1 + 20, top + card_h - 42), "Open", font=mono(15), fill=GREEN)
-    ow = d.textlength("Open", font=mono(15))
-    d.text((x1 + 20 + ow + 8, top + card_h - 42), "· Closes 6 PM", font=mono(15), fill=INK3)
-    stage_label(d, x1 + cw // 2, top + card_h + 22, "YOUR LISTING", BLUE)
+        px = x1 + 18 + i * (pw + 8)
+        d.rounded_rectangle([px, py, px + pw, py + pw], radius=8, fill=g)
+    d.text((x1 + 18, top + card_h - 36), "Open", font=mono(13.5), fill=GREEN)
+    ow = d.textlength("Open", font=mono(13.5))
+    d.text((x1 + 18 + ow + 7, top + card_h - 36), "· Closes 6 PM", font=mono(13.5), fill=INK3)
+    step_badge(d, x1 + 30, top, 1)
 
-    # ---- arrow 1 ----
-    dashed_arrow(d, x1 + cw + 14, x2 - 14, top + card_h // 2)
+    solid_arrow(d, x1 + cw + 12, x2 - 12, top + card_h // 2)
 
-    # ---- stage 2: the research (dark, mid-thought) ----
-    d.rounded_rectangle([x2, top, x2 + cw, top + card_h], radius=18, fill=DARK)
-    spaced(d, (x2 + 20, top + 22), "RESEARCHING", mono(15), DARK_MUTED, tracking=2)
+    # ---- card 2: the research (angle candidates, flat white) ----
+    flat_shadow(d, (x2, top, x2 + cw, top + card_h))
+    d.rounded_rectangle([x2, top, x2 + cw, top + card_h], radius=16, fill=WHITE)
+    spaced(d, (x2 + 18, top + 20), "RESEARCHING", mono(13), INK3, tracking=2)
     rows = [("Storm response", False), ("Don't delay", False), ("Review-led", True)]
-    ry = top + 62
+    ry = top + 54
     for label, chosen in rows:
-        rh = 52
+        rh = 48
         if chosen:
-            d.rounded_rectangle([x2 + 16, ry, x2 + cw - 16, ry + rh], radius=11, fill="#232B36")
-        lf = jakarta(15.5, 700 if chosen else 600)
-        col = DARK_INK if chosen else DARK_MUTED
-        d.text((x2 + 30, ry + rh / 2 - 10), label, font=lf, fill=col)
+            d.rounded_rectangle([x2 + 14, ry, x2 + cw - 14, ry + rh], radius=10, fill=BLUE)
+        lf = jakarta(14.5, 700 if chosen else 600)
+        col = WHITE if chosen else INK2
+        d.text((x2 + 27, ry + rh / 2 - 9), label, font=lf, fill=col)
         if chosen:
-            cx, cy = x2 + cw - 40, ry + rh / 2
-            d.ellipse([cx - 11, cy - 11, cx + 11, cy + 11], fill=GREEN)
-            d.line([cx - 5, cy, cx - 1, cy + 4], fill="#fff", width=3)
-            d.line([cx - 1, cy + 4, cx + 6, cy - 5], fill="#fff", width=3)
-        ry += rh + 9
-    d.text((x2 + 20, top + card_h - 42), "matched to your reviews", font=instrument(13.5, 500), fill=DARK_MUTED)
-    stage_label(d, x2 + cw // 2, top + card_h + 22, "WE RESEARCH", BLUE)
+            cx, cy = x2 + cw - 36, ry + rh / 2
+            d.ellipse([cx - 10, cy - 10, cx + 10, cy + 10], fill=WHITE)
+            d.line([cx - 4, cy, cx - 1, cy + 3], fill=BLUE, width=3)
+            d.line([cx - 1, cy + 3, cx + 5, cy - 4], fill=BLUE, width=3)
+        ry += rh + 8
+    d.text((x2 + 18, top + card_h - 36), "matched to your reviews", font=instrument(12.5, 500), fill=INK3)
+    step_badge(d, x2 + 30, top, 2)
 
-    # ---- arrow 2 ----
-    dashed_arrow(d, x2 + cw + 14, x3 - 14, top + card_h // 2)
+    solid_arrow(d, x2 + cw + 12, x3 - 12, top + card_h // 2)
 
-    # ---- stage 3: the ads ----
-    d.rounded_rectangle([x3, top, x3 + cw, top + card_h], radius=18, fill=CARD, outline=BLUE, width=3)
-    spaced(d, (x3 + 20, top + 22), "4 ADS READY", mono(15), BLUE, tracking=2)
-    grid_top = top + 56
-    gs = (cw - 40 - 14) // 2
+    # ---- card 3: the ads ----
+    flat_shadow(d, (x3, top, x3 + cw, top + card_h))
+    d.rounded_rectangle([x3, top, x3 + cw, top + card_h], radius=16, fill=WHITE)
+    spaced(d, (x3 + 18, top + 20), "4 ADS READY", mono(13), BLUE, tracking=2)
+    grid_top = top + 52
+    gs = (cw - 36 - 12) // 2
     grads = [("#3D5468", "#7D97AC"), ("#7A5A3D", "#C0A184"), ("#527568", "#9DBFB4"), ("#4A4E63", "#8B8FA3")]
     for i, (c1, c2) in enumerate(grads):
-        gx = x3 + 20 + (i % 2) * (gs + 14)
-        gy = grid_top + (i // 2) * (gs + 14)
+        gx = x3 + 18 + (i % 2) * (gs + 12)
+        gy = grid_top + (i // 2) * (gs + 12)
         for row in range(gs):
             t = row / gs
             col = tuple(int(int(c1[j:j+2], 16) * (1 - t) + int(c2[j:j+2], 16) * t) for j in (1, 3, 5))
             d.line([gx, gy + row, gx + gs, gy + row], fill=col)
         bar_w = int(gs * 0.55)
-        d.rounded_rectangle([gx + 8, gy + gs - 16, gx + 8 + bar_w, gy + gs - 10], radius=3, fill="#ffffffE0")
-    stage_label(d, x3 + cw // 2, top + card_h + 22, "YOUR ADS", BLUE)
+        d.rounded_rectangle([gx + 7, gy + gs - 14, gx + 7 + bar_w, gy + gs - 9], radius=3, fill="#ffffffE0")
+    step_badge(d, x3 + 30, top, 3)
 
-    # A thin top-border rule, same treatment as the homepage's own footer,
-    # gives the sign-off real structure instead of leaving a blank gap.
-    rule_y = top + card_h + 22 + 50
-    d.line([M, rule_y, S - M, rule_y], fill=LINE, width=2)
-    logo(d, M, rule_y + 38, ring=PAPER)
+    # ---- sign-off, centered under the row, flat and quiet -- the logo tile
+    # is brand-blue so it disappears on this panel; the wordmark alone in
+    # white reads cleanly instead ----
+    foot_y = top + card_h + 50
+    wm_f = jakarta(22, 700)
+    wm = "SendKPI"
+    wm_w = d.textlength(wm, font=wm_f)
+    d.text(((S - wm_w) / 2, foot_y), wm, font=wm_f, fill=WHITE)
+
     return im
 
 
