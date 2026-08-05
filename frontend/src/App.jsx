@@ -35,8 +35,15 @@ const contrastInk = hex => {
   return luminance > 0.6 ? '#181D24' : '#fff';
 };
 
-/* ─── lander HTML generator (mirrors lander.html template exactly) ─── */
+/* ─── lander HTML generator ("Soft Light" template) ─────────────────── */
 function buildLanderHTML(d) {
+  // Em dashes never reach the end user: spaced ones read as a comma pause,
+  // anything left becomes a plain hyphen.
+  const noDash = s => s == null ? '' : String(s).replace(/\s*—\s*/g, ', ').replace(/—/g, '-');
+  const clean = s => esc(noDash(s));
+  const titleCaseWords = s => String(s || '')
+    .replace(/([^\s-]+)/g, w => w.charAt(0).toUpperCase() + w.slice(1));
+
   const phone = d.phone_national || d.phone_international || '';
   const href  = d.phone_international
     ? `tel:${d.phone_international.replace(/[^\d+]/g,'')}`
@@ -44,35 +51,30 @@ function buildLanderHTML(d) {
   const city  = (d.address||'').split(',')[1]?.trim()||'';
   const first = (d.name||'Us').split(' ')[0];
   const today = todayName();
+  const initial = (d.name||'?').trim().charAt(0).toUpperCase();
   // Trailing country makes the maps embed treat the query as an address
   // search; without it Google resolves the business entity and shows the
   // place card with the rating + review count on the map.
   const mapAddr = (d.address||'').replace(/,\s*(USA|United States|Canada)\s*$/i,'');
 
-  // Hero review snippet: the first substantial 5-star review, trimmed to a
-  // line or two -- real customer words right above the call button.
-  const heroReview = (() => {
-    const revs = (d.reviews||[]).filter(r => r && r.text);
-    if (!revs.length) return '';
-    const best = revs.find(r => (r.rating||0) >= 5 && r.text.trim().length >= 60) || revs[0];
-    let t = best.text.trim().replace(/\s+/g,' ');
-    if (t.length > 130) {
-      // Prefer ending on a full sentence; fall back to a word-boundary cut.
-      const sentence = t.slice(0, 145).match(/^[\s\S]*[.!?]/);
-      t = sentence && sentence[0].length >= 60
-        ? sentence[0]
-        : t.slice(0, 130).replace(/\s+\S*$/, '') + '…';
-    }
-    return `<div class="hero-review"><p class="hero-review-text">"${esc(t)}"</p><p class="hero-review-meta"><span class="review-stars">${starsStr(best.rating)}</span> ${esc(best.author||'')} · Google review</p></div>`;
-  })();
+  const headline = esc(titleCaseWords(noDash(d.offer_headline || d.name || '')));
+  const sub = clean(d.offer_subhead || d.tagline);
 
-  const ticket = () => href ? `
-<div class="ticket">
-  <div class="ticket-row"><span class="ticket-label">Tap to call</span>${d.open_now!=null?`<span class="status-line"><span class="status-dot${d.open_now?'':' closed'}"></span>${d.open_now?'Open now':'Closed now'}</span>`:''}</div>
-  <a class="ticket-cta" href="${href}">${esc(phone)}</a>
-  <div class="ticket-row ticket-row-ask"><span class="ticket-label">Tap to ask question</span></div>
-  <button type="button" class="ticket-cta ticket-cta-secondary js-ask-open">Send question</button>
-</div>` : '';
+  const phoneSvg = w => `<svg width="${w}" height="${w}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>`;
+
+  // Stat tiles under the photo collage; each renders only when its data exists.
+  const alwaysOpen = (d.hours||[]).length === 7 && !(d.hours||[]).some(l => /closed/i.test(l));
+  const todayLine = (d.hours||[]).find(l => l.startsWith(today));
+  const todayTime = todayLine && todayLine.indexOf(':') > -1 ? todayLine.slice(todayLine.indexOf(':')+1).trim() : '';
+  const stats = [];
+  if (d.rating) stats.push({ n: `${Number(d.rating).toFixed(1)} ★`, l: `${d.review_count||0} Google reviews` });
+  if (alwaysOpen) stats.push({ n: '7 days', l: 'Open every week' });
+  else if (d.open_now != null) stats.push({ n: d.open_now ? 'Open now' : 'Closed now', l: todayTime ? `Today: ${esc(todayTime)}` : '' });
+  if (city) stats.push({ n: esc(city), l: clean(d.category) || 'Local service' });
+
+  const photos = (d.photos||[]).slice(0,5);
+
+  const revs = (d.reviews||[]).filter(r => r && r.text).slice(0,4);
 
   // Multi-step "ask a question" modal, embedded as self-contained markup +
   // vanilla JS so it works in the standalone downloaded lander too. On
@@ -140,7 +142,7 @@ function buildLanderHTML(d) {
 })();
 </script>`;
 
-  const CSS = `:root{--ink:#181D24;--paper:#EFF2EE;--signal:${d.brand_color||'#FF5A1F'};--signal-ink:${contrastInk(d.brand_color)};--slate:#5B6B79;--success:#1F8A5F;--line:#D8DCD9;--card:#fff;--radius:14px;--display:'Space Grotesk',system-ui,sans-serif;--body:'Inter',system-ui,sans-serif;--mono:'IBM Plex Mono',ui-monospace,monospace}*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}body{margin:0;font-family:var(--body);color:var(--ink);background:var(--paper);line-height:1.5}a{color:inherit}img{max-width:100%;display:block}.wrap{max-width:720px;margin:0 auto;padding:0 20px}.topbar{position:sticky;top:0;z-index:30;background:var(--ink);color:#fff;border-bottom:1px solid rgba(255,255,255,.08)}.topbar-inner{max-width:720px;margin:0 auto;padding:10px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px}.topbar-name{font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.topbar-rating{font-family:var(--mono);font-size:12px;color:#C7CDD2;white-space:nowrap}.topbar-call{flex-shrink:0;background:var(--signal);color:var(--signal-ink);font-family:var(--mono);font-weight:600;font-size:12px;padding:8px 14px;border-radius:999px;text-decoration:none;white-space:nowrap}.hero{position:relative;min-height:420px;display:flex;align-items:flex-end;color:#fff;background:var(--ink)}.hero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.45}.hero-scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(24,29,36,.35) 0%,rgba(24,29,36,.65) 55%,rgba(24,29,36,.95) 100%)}.hero-content{position:relative;width:100%;padding:48px 20px;max-width:720px;margin:0 auto}.hero-eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#C7CDD2;margin:0 0 10px}.hero-name{font-family:var(--display);font-weight:700;font-size:clamp(28px,7vw,42px);line-height:1.05;letter-spacing:-.01em;margin:0 0 6px}.hero-tagline{font-size:15px;color:#DCE0E2;max-width:46ch;margin:0 0 22px}.offer-block{margin:4px 0 22px}.offer-headline{font-family:var(--display);font-weight:700;font-size:clamp(20px,4.5vw,26px);color:#fff;margin:0 0 6px;line-height:1.2}.offer-subhead{font-size:14px;color:#DCE0E2;margin:0 0 8px;max-width:46ch}.offer-guarantee{font-family:var(--mono);font-size:12px;color:#8FE3B8;margin:0}.about-text{font-size:15px;line-height:1.65;color:var(--ink);margin:0}.hero-review{margin:4px 0 22px;padding-left:14px;border-left:3px solid var(--signal)}.hero-review-text{font-size:14.5px;font-style:italic;color:#DCE0E2;line-height:1.55;max-width:48ch;margin:0 0 6px}.hero-review-meta{font-family:var(--mono);font-size:11.5px;color:#9AA3A8;margin:0}.hero-review-meta .review-stars{letter-spacing:1px;color:var(--signal);font-size:11.5px}.ticket{background:var(--card);color:var(--ink);border:2px dashed rgba(24,29,36,.35);border-radius:var(--radius);padding:18px 20px;margin-top:48px}.ticket-row{display:flex;align-items:center;justify-content:space-between;gap:10px}.ticket-label{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--slate)}.ticket-cta{display:inline-flex;align-items:center;gap:8px;margin-top:10px;width:100%;justify-content:center;background:var(--signal);color:var(--signal-ink);font-family:var(--mono);font-weight:700;font-size:clamp(20px,5.5vw,26px);letter-spacing:-.01em;padding:14px 16px;border-radius:8px;text-decoration:none}.ticket-row-ask{margin-top:16px}.ticket-cta.ticket-cta-secondary{background:transparent;color:var(--ink);border:2px solid var(--signal);font-size:15px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;margin-top:8px}.status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--success);margin-right:6px}.status-dot.closed{background:#9AA3A8}.status-line{font-family:var(--mono);font-size:12px;color:var(--slate);white-space:nowrap}section{padding:32px 0;border-bottom:1px solid var(--line)}.wrap>section:last-of-type{border-bottom:none}.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--slate);margin:0 0 14px}.chips{display:flex;flex-wrap:wrap;gap:8px}.chip{font-family:var(--body);font-weight:500;font-size:13px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:8px 14px}.filmstrip{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:4px;margin:0 -20px;padding-left:20px;padding-right:20px}.filmstrip img{flex:0 0 auto;width:78vw;max-width:540px;height:320px;object-fit:cover;border-radius:12px;scroll-snap-align:start;background:var(--card)}.review-summary{font-family:var(--mono);font-size:14px;margin:0 0 16px}.review-summary b{font-size:16px}.review-summary .muted{color:var(--slate);font-weight:400}.review-list{display:flex;flex-direction:column;gap:12px;margin-bottom:14px}.review-card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px}.review-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}.review-author{font-weight:600;font-size:13px}.review-stars{font-family:var(--mono);font-size:12px;color:var(--signal);letter-spacing:1px}.review-text{font-size:14px;color:var(--ink);margin:0 0 6px;line-height:1.5}.review-time{font-family:var(--mono);font-size:11px;color:var(--slate);margin:0}.review-google-link{display:inline-block;font-family:var(--mono);font-size:12px;color:var(--slate);text-decoration:underline;text-decoration-color:var(--line)}.hours-table{width:100%;border-collapse:collapse;font-size:14px}.hours-table td{padding:8px 0;border-bottom:1px solid var(--line)}.hours-table td:last-child{text-align:right;font-family:var(--mono);font-size:13px;color:var(--slate)}.hours-table tr.today td{color:var(--ink);font-weight:600}.hours-table tr.today td:first-child::after{content:" · today";font-weight:400;font-family:var(--mono);font-size:11px;color:var(--signal)}.map-embed{display:block;width:100%;height:280px;border:0;border-radius:10px;margin-bottom:12px;background:var(--card)}.addr{font-size:14px;color:var(--slate)}.addr a{color:var(--ink);text-decoration:underline;text-decoration-color:var(--line)}footer{padding:32px 0 32px}footer .fine{font-size:12px;color:var(--slate)}.cta-band{background:var(--ink);color:#fff;padding:40px 0 44px;text-align:center}.cta-band-heading{font-family:var(--display);font-weight:700;font-size:clamp(22px,5.5vw,30px);letter-spacing:-.01em;margin:0 0 20px}.cta-band .ticket{margin:0 auto;text-align:left}.callbar{position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--ink);border-top:2px dashed rgba(255,255,255,.25);padding:12px 16px calc(12px + env(safe-area-inset-bottom))}.callbar a{display:flex;align-items:center;justify-content:center;gap:10px;background:var(--signal);color:var(--signal-ink);font-family:var(--mono);font-weight:600;font-size:15px;padding:14px;border-radius:10px;text-decoration:none}@media(min-width:760px){.hero{min-height:480px}.offer-headline{max-width:20ch}}.askm{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}.askm[hidden]{display:none}.askm-backdrop{position:absolute;inset:0;background:rgba(24,29,36,.6)}.askm-card{position:relative;background:var(--card);color:var(--ink);border-radius:var(--radius);max-width:380px;width:100%;padding:28px 24px;box-shadow:0 20px 60px rgba(0,0,0,.35)}.askm-x{position:absolute;top:10px;right:14px;background:none;border:0;font-size:26px;line-height:1;color:var(--slate);cursor:pointer}.askm-title{font-family:var(--display);font-weight:700;font-size:20px;letter-spacing:-.01em;margin:0 0 8px}.askm-sub{font-size:14px;color:var(--slate);margin:0 0 20px}.askm-btn{display:inline-flex;align-items:center;justify-content:center;width:100%;font-family:var(--mono);font-weight:600;font-size:15px;letter-spacing:.03em;text-transform:uppercase;padding:14px 16px;border-radius:8px;border:0;cursor:pointer}.askm-btn-primary{background:var(--signal);color:var(--signal-ink)}.askm-choices{display:flex;flex-direction:column;gap:10px}.askm-choice{background:transparent;color:var(--ink);border:2px solid var(--signal)}.askm-form{display:flex;flex-direction:column;gap:12px}.askm-input{width:100%;font-family:var(--body);font-size:16px;padding:12px 14px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}.askm-input:focus{outline:2px solid var(--signal);outline-offset:1px;border-color:var(--signal)}.askm-consent{font-size:11px;color:var(--slate);line-height:1.4;margin:0}`;
+  const CSS = `:root{--bg:#FFFFFF;--bg2:#F7F8FA;--card:#FFFFFF;--line:#ECEDF0;--ink:#0B0C0E;--muted:#5C616B;--faint:#9AA0AA;--go:#16A34A;--go-soft:#EAF7EF;--gold:#F5A623;--display:'Sora',system-ui,sans-serif;--body:'Inter',system-ui,sans-serif;--r:18px;--r-lg:24px;--shadow:0 1px 2px rgba(11,12,14,.04),0 8px 24px rgba(11,12,14,.06)}*{box-sizing:border-box}html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}body{margin:0;font-family:var(--body);background:var(--bg);color:var(--ink);line-height:1.55;font-size:16px}img{max-width:100%;display:block}a{color:inherit}.wrap{max-width:1060px;margin:0 auto;padding:0 24px}.topbar{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}.topbar-inner{max-width:1060px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px}.brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:700;font-size:16px;letter-spacing:-.01em;min-width:0}.brand-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.brand-mark{flex-shrink:0;width:34px;height:34px;border-radius:10px;background:var(--ink);color:#fff;display:grid;place-items:center;font-size:15px;font-weight:800}.topbar-actions{display:flex;align-items:center;gap:10px;flex-shrink:0}.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;font-weight:600;text-decoration:none;border-radius:12px;transition:transform .15s ease,box-shadow .15s ease;cursor:pointer;font-family:var(--body)}.btn:hover{transform:translateY(-1px)}.btn-primary{background:var(--ink);color:#fff;font-size:14px;padding:11px 18px;box-shadow:var(--shadow);white-space:nowrap}.btn-ghost{background:transparent;color:var(--muted);font-size:14px;padding:11px 14px;border:1px solid var(--line);white-space:nowrap}.hero{padding:64px 0 40px;text-align:center}.rating-pill{display:inline-flex;align-items:center;gap:9px;background:var(--bg2);border:1px solid var(--line);border-radius:999px;padding:8px 16px;font-size:13.5px;font-weight:500;color:var(--muted);margin-bottom:26px;flex-wrap:wrap;justify-content:center}.rating-pill .stars{color:var(--gold);letter-spacing:1px;font-size:13px}.rating-pill b{color:var(--ink);font-weight:700}.rating-pill .sep{width:1px;height:14px;background:var(--line)}.rating-pill .open{color:var(--go);font-weight:600}.rating-pill .open.closed{color:var(--faint)}.rating-pill .open::before{content:"●";margin-right:6px;font-size:9px;vertical-align:1px}h1{font-family:var(--display);font-weight:800;font-size:clamp(34px,6vw,58px);line-height:1.06;letter-spacing:-.03em;margin:0 auto 20px;max-width:20ch}.sub{font-size:clamp(16px,2.2vw,19px);color:var(--muted);margin:0 auto 34px;max-width:52ch}.cta-row{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap}.cta-main{background:var(--ink);color:#fff;font-family:var(--display);font-weight:700;font-size:17px;padding:17px 30px;border-radius:14px;box-shadow:0 12px 32px rgba(11,12,14,.18)}.cta-sec{background:#fff;border:1px solid var(--line);color:var(--ink);font-weight:600;font-size:15px;padding:16px 24px;border-radius:14px;box-shadow:var(--shadow)}.cta-note{margin:18px 0 0;font-size:13px;color:var(--faint)}.collage{padding:34px 0 10px}.collage-grid{display:grid;gap:12px}.collage-grid img{width:100%;height:100%;object-fit:cover;border-radius:var(--r);background:var(--bg2)}.cg-5{grid-template-columns:1.6fr 1fr 1fr;grid-template-rows:190px 190px}.cg-5 img:first-child{grid-row:span 2}.cg-4{grid-template-columns:1fr 1fr;grid-template-rows:180px 180px}.cg-3{grid-template-columns:1.6fr 1fr;grid-template-rows:150px 150px}.cg-3 img:first-child{grid-row:span 2}.cg-2{grid-template-columns:1fr 1fr;grid-template-rows:240px}.cg-1{grid-template-columns:1fr;grid-template-rows:300px}.stats{padding:26px 0 8px}.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.stats-row.n2{grid-template-columns:repeat(2,1fr)}.stats-row.n1{grid-template-columns:1fr}.stat{background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);padding:22px 24px;text-align:center}.stat .n{font-family:var(--display);font-weight:800;font-size:26px;letter-spacing:-.02em}.stat .l{font-size:13px;color:var(--muted);margin-top:4px}section{padding:52px 0}.sec-head{text-align:center;margin-bottom:34px}.sec-eyebrow{display:inline-block;font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin:0 0 10px}.sec-title{font-family:var(--display);font-weight:700;font-size:clamp(24px,3.6vw,34px);letter-spacing:-.02em;margin:0}.about-text{font-size:15.5px;line-height:1.7;color:var(--muted);max-width:68ch;margin:0 auto;text-align:center}.chips{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}.chips span{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:10px 20px;font-size:14px;font-weight:500;color:var(--muted);box-shadow:var(--shadow)}.rev-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}.rev{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:24px;box-shadow:var(--shadow)}.rev-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}.avatar{width:40px;height:40px;border-radius:999px;background:var(--go-soft);color:var(--go);display:grid;place-items:center;font-weight:700;font-size:15px;flex-shrink:0}.rev-author{font-weight:600;font-size:14.5px}.rev-time{font-size:12.5px;color:var(--faint)}.rev-stars{margin-left:auto;color:var(--gold);font-size:12px;letter-spacing:2px}.rev-text{font-size:14.5px;color:var(--muted);margin:0;line-height:1.65}.rev-cta{text-align:center;margin-top:26px}.rev-more{font-size:14px;font-weight:600;color:var(--ink);text-decoration:none;border-bottom:1.5px solid var(--line);padding-bottom:2px}.info-grid{display:grid;grid-template-columns:1fr 1.2fr;gap:14px;align-items:stretch}.info-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:28px;box-shadow:var(--shadow)}.info-card h3{font-family:var(--display);font-weight:700;font-size:18px;margin:0 0 18px}.hours{width:100%;border-collapse:collapse;font-size:14.5px}.hours td{padding:9px 0;border-bottom:1px solid var(--line)}.hours tr:last-child td{border-bottom:0}.hours td:last-child{text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}.hours .today td{font-weight:600}.hours .today td:last-child{color:var(--go)}.map-card{padding:0;overflow:hidden;display:flex;flex-direction:column}.map-embed{width:100%;flex:1;min-height:260px;border:0;background:var(--bg2)}.addr{padding:18px 24px;font-size:14px;color:var(--muted);display:flex;align-items:center;justify-content:space-between;gap:12px}.addr a{font-weight:600;color:var(--ink);text-decoration:none;white-space:nowrap}.band{background:var(--ink);border-radius:var(--r-lg);padding:56px 32px;text-align:center;color:#fff;margin:20px 0 56px}.band h2{font-family:var(--display);font-weight:800;font-size:clamp(26px,4vw,38px);letter-spacing:-.02em;margin:0 0 12px}.band p{color:rgba(255,255,255,.65);margin:0 0 28px;font-size:16px}.band .cta-main{background:#fff;color:var(--ink);box-shadow:none}footer{padding:0 0 55px}.fine{font-size:12.5px;color:var(--faint);text-align:center}.callbar{position:fixed;left:0;right:0;bottom:0;z-index:40;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:12px 18px calc(12px + env(safe-area-inset-bottom));display:none}.callbar a{display:flex;align-items:center;justify-content:center;gap:10px;background:var(--ink);color:#fff;font-family:var(--display);font-weight:700;font-size:16px;padding:15px;border-radius:14px;text-decoration:none}.askm{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}.askm[hidden]{display:none}.askm-backdrop{position:absolute;inset:0;background:rgba(11,12,14,.5)}.askm-card{position:relative;background:var(--card);color:var(--ink);border-radius:var(--r);max-width:380px;width:100%;padding:28px 24px;box-shadow:0 20px 60px rgba(11,12,14,.3)}.askm-x{position:absolute;top:10px;right:14px;background:none;border:0;font-size:26px;line-height:1;color:var(--faint);cursor:pointer}.askm-title{font-family:var(--display);font-weight:700;font-size:20px;letter-spacing:-.01em;margin:0 0 8px}.askm-sub{font-size:14px;color:var(--muted);margin:0 0 20px}.askm-btn{display:inline-flex;align-items:center;justify-content:center;width:100%;font-family:var(--body);font-weight:600;font-size:15px;padding:14px 16px;border-radius:12px;border:0;cursor:pointer}.askm-btn-primary{background:var(--ink);color:#fff}.askm-choices{display:flex;flex-direction:column;gap:10px}.askm-choice{background:#fff;color:var(--ink);border:1px solid var(--line);box-shadow:var(--shadow)}.askm-form{display:flex;flex-direction:column;gap:12px}.askm-input{width:100%;font-family:var(--body);font-size:16px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}.askm-input:focus{outline:2px solid var(--ink);outline-offset:1px}.askm-consent{font-size:11px;color:var(--faint);line-height:1.4;margin:0}@media(max-width:760px){.cg-5{grid-template-columns:1.4fr 1fr;grid-template-rows:150px 150px}.cg-5 img:nth-child(n+4){display:none}.stats-row,.stats-row.n2{grid-template-columns:1fr;gap:10px}.stat{display:flex;align-items:baseline;justify-content:space-between;text-align:left;padding:16px 20px}.stat .n{font-size:22px}.rev-grid,.info-grid{grid-template-columns:1fr}.callbar{display:block}.topbar .btn-primary{display:none}footer{padding-bottom:110px}section{padding:42px 0}}`;
 
   const hoursRows = (d.hours||[]).map(line => {
     const ci = line.indexOf(':');
@@ -151,54 +153,78 @@ function buildLanderHTML(d) {
 
   return `<!DOCTYPE html><html lang="en"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>${esc(d.name)}${d.category?` · ${esc(d.category)}`:''}</title>
-${d.tagline?`<meta name="description" content="${esc(d.tagline)}">`:``}
+<title>${esc(d.name)}${d.category?` · ${clean(d.category)}`:''}</title>
+${d.tagline?`<meta name="description" content="${clean(d.tagline)}">`:``}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>${CSS}</style></head><body>
 
 <div class="topbar"><div class="topbar-inner">
-  <span class="topbar-name">${esc(d.name)}</span>
-  ${d.rating?`<span class="topbar-rating">★ ${Number(d.rating).toFixed(1)} (${d.review_count||0})</span>`:''}
-  ${href?`<a class="topbar-call" href="${href}">Call now</a>`:''}
+  <span class="brand"><span class="brand-mark">${esc(initial)}</span><span class="brand-name">${esc(d.name)}</span></span>
+  <div class="topbar-actions">
+    ${d.maps_url?`<a class="btn btn-ghost" href="#location">Directions</a>`:''}
+    ${href?`<a class="btn btn-primary" href="${href}">Call ${esc(phone)}</a>`:''}
+  </div>
 </div></div>
 
-<header class="hero">
-  ${(d.photos||[])[0]?`<img class="hero-img" src="${esc(d.photos[0])}" alt="${esc(d.name)}" onerror="this.style.display='none'">`:''}
-  <div class="hero-scrim"></div>
-  <div class="hero-content">
-    ${d.category?`<p class="hero-eyebrow">${esc(d.category)}${city?` · ${esc(city)}`:''}</p>`:''}
-    <h1 class="hero-name">${esc(d.name)}</h1>
-    ${d.tagline?`<p class="hero-tagline">${esc(d.tagline)}</p>`:''}
-    ${d.offer_headline?`<div class="offer-block"><p class="offer-headline">${esc(d.offer_headline)}</p>${d.offer_subhead?`<p class="offer-subhead">${esc(d.offer_subhead)}</p>`:''}${d.offer_guarantee?`<p class="offer-guarantee">✓ ${esc(d.offer_guarantee)}</p>`:''}</div>`:''}
-    ${heroReview}
-    ${phone?ticket():''}
+<header class="hero"><div class="wrap">
+  ${(d.rating||d.open_now!=null)?`<div class="rating-pill">
+    ${d.rating?`<span class="stars">${starsStr(d.rating)}</span><span><b>${Number(d.rating).toFixed(1)}</b> · ${d.review_count||0} Google reviews</span>`:''}
+    ${(d.rating&&d.open_now!=null)?`<span class="sep"></span>`:''}
+    ${d.open_now!=null?`<span class="open${d.open_now?'':' closed'}">${d.open_now?'Open now':'Closed now'}</span>`:''}
+  </div>`:''}
+  <h1>${headline}</h1>
+  ${sub?`<p class="sub">${sub}</p>`:''}
+  <div class="cta-row">
+    ${href?`<a class="btn cta-main" href="${href}">${phoneSvg(19)} Call ${esc(phone)}</a>`:''}
+    ${href?`<button type="button" class="btn cta-sec js-ask-open">Send a question</button>`:d.maps_url?`<a class="btn cta-sec" href="#location">Get directions</a>`:''}
   </div>
-</header>
+  ${d.offer_guarantee?`<p class="cta-note">✓ ${clean(d.offer_guarantee)}</p>`:''}
+</div></header>
 
-<div class="wrap">
+${photos.length?`<div class="collage"><div class="wrap"><div class="collage-grid cg-${photos.length}">${photos.map((p,i)=>`<img src="${esc(p)}" alt="${esc(d.name)} photo ${i+1}" loading="lazy" onerror="this.style.display='none'">`).join('')}</div></div></div>`:''}
 
-${(d.photos||[]).length>1?`<section><p class="eyebrow">Photos</p><div class="filmstrip">${(d.photos||[]).map((p,i)=>`<img src="${esc(p)}" alt="${esc(d.name)} photo ${i+1}" loading="lazy" onerror="this.style.display='none'">`).join('')}</div></section>`:''}
+${stats.length?`<div class="stats"><div class="wrap"><div class="stats-row n${stats.length}">${stats.map(s=>`<div class="stat"><div class="n">${s.n}</div><div class="l">${s.l}</div></div>`).join('')}</div></div></div>`:''}
 
-${((d.reviews||[]).length||d.rating)?`<section><p class="eyebrow">Reviews</p>${d.rating?`<p class="review-summary"><b>★ ${Number(d.rating).toFixed(1)}</b> <span class="muted">(${d.review_count||0} reviews on Google)</span></p>`:''}<div class="review-list">${(d.reviews||[]).map(r=>`<div class="review-card"><div class="review-card-head"><span class="review-author">${esc(r.author)}</span>${r.rating!=null?`<span class="review-stars">${starsStr(r.rating)}</span>`:''}</div><p class="review-text">"${esc(r.text)}"</p>${r.relative_time?`<p class="review-time">${esc(r.relative_time)}</p>`:''}</div>`).join('')}</div>${d.maps_url?`<a class="review-google-link" href="${esc(d.maps_url)}" target="_blank" rel="noopener">See all reviews on Google →</a>`:''}</section>`:'' }
+${(revs.length||d.rating)?`<section><div class="wrap">
+  <div class="sec-head"><p class="sec-eyebrow">Reviews</p><h2 class="sec-title">What neighbors say</h2></div>
+  ${revs.length?`<div class="rev-grid">${revs.map(r=>`<div class="rev"><div class="rev-head"><span class="avatar">${esc((r.author||'G').trim().charAt(0).toUpperCase())}</span><div><div class="rev-author">${esc(r.author||'Google user')}</div>${r.relative_time?`<div class="rev-time">${esc(r.relative_time)}</div>`:''}</div>${r.rating!=null?`<span class="rev-stars">${starsStr(r.rating)}</span>`:''}</div><p class="rev-text">"${clean(r.text)}"</p></div>`).join('')}</div>`:''}
+  ${d.maps_url?`<div class="rev-cta"><a class="rev-more" href="${esc(d.maps_url)}" target="_blank" rel="noopener">See all ${d.review_count||''} reviews on Google →</a></div>`:''}
+</div></section>`:''}
 
-${(d.about_summary||d.site_summary)?`<section><p class="eyebrow">About ${esc(first)}</p><p class="about-text">${esc(d.about_summary||d.site_summary)}</p></section>`:''}
+${(d.about_summary||d.site_summary)?`<section style="padding-top:0"><div class="wrap">
+  <div class="sec-head"><p class="sec-eyebrow">About</p><h2 class="sec-title">Get to know ${esc(first)}</h2></div>
+  <p class="about-text">${clean(d.about_summary||d.site_summary)}</p>
+</div></section>`:''}
 
-${(d.services||[]).length?`<section><p class="eyebrow">Services</p><div class="chips">${(d.services||[]).map(s=>`<span class="chip">${esc(s)}</span>`).join('')}</div></section>`:''}
+${(d.services||[]).length?`<section style="padding-top:0"><div class="wrap">
+  <div class="sec-head"><p class="sec-eyebrow">Services</p><h2 class="sec-title">What we do</h2></div>
+  <div class="chips">${(d.services||[]).map(s=>`<span>${clean(s)}</span>`).join('')}</div>
+</div></section>`:''}
 
-${hoursRows?`<section><p class="eyebrow">Hours</p><table class="hours-table">${hoursRows}</table></section>`:''}
+${(hoursRows||d.address)?`<section id="location" style="padding-top:0"><div class="wrap">
+  <div class="sec-head"><p class="sec-eyebrow">Visit</p><h2 class="sec-title">Hours &amp; location</h2></div>
+  <div class="info-grid"${!(hoursRows&&d.address)?' style="grid-template-columns:1fr"':''}>
+    ${hoursRows?`<div class="info-card"><h3>Hours</h3><table class="hours">${hoursRows}</table></div>`:''}
+    ${d.address?`<div class="info-card map-card"><iframe class="map-embed" src="https://maps.google.com/maps?q=${encodeURIComponent(`${d.name||''}, ${mapAddr}`)}&z=14&output=embed" loading="lazy" title="Map to ${esc(d.name)}" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe><div class="addr"><span>${esc(mapAddr)}</span>${d.maps_url?`<a href="${esc(d.maps_url)}" target="_blank" rel="noopener">Directions →</a>`:''}</div></div>`:''}
+  </div>
+</div></section>`:''}
 
-${(d.service_areas||[]).length?`<section><p class="eyebrow">Areas we service</p><div class="chips">${(d.service_areas||[]).map(a=>`<span class="chip">${esc(a)}</span>`).join('')}</div></section>`:''}
+${(d.service_areas||[]).length?`<section style="padding-top:0"><div class="wrap">
+  <div class="sec-head"><p class="sec-eyebrow">Coverage</p><h2 class="sec-title">Areas we service</h2></div>
+  <div class="chips">${(d.service_areas||[]).map(a=>`<span>${clean(a)}</span>`).join('')}</div>
+</div></section>`:''}
 
-</div>
+${href?`<div class="wrap"><div class="band">
+  <h2>Call for quick assistance</h2>
+  <p>${esc(d.name)} is ready to help.</p>
+  <a class="btn cta-main" href="${href}">${phoneSvg(19)} Call ${esc(phone)}</a>
+</div></div>`:''}
 
-${phone?`<section class="cta-band"><div class="wrap"><h2 class="cta-band-heading">${esc(d.name)} is ready to help</h2>${ticket()}</div></section>`:''}
+<footer><div class="wrap"><p class="fine">${esc(d.name)}</p></div></footer>
 
-<div class="wrap">
-  ${d.address?`<section><p class="eyebrow">Location</p><iframe class="map-embed" src="https://maps.google.com/maps?q=${encodeURIComponent(`${d.name||''}, ${mapAddr}`)}&z=14&output=embed" loading="lazy" title="Map to ${esc(d.name)}" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe><p class="addr">${esc(d.address)}${d.maps_url?` · <a href="${esc(d.maps_url)}" target="_blank" rel="noopener">Get directions</a>`:''}</p></section>`:''}
-  <footer><p class="fine">${esc(d.name)}</p></footer>
-</div>
+${href?`<div class="callbar"><a href="${href}">${phoneSvg(16)} Call ${esc(phone)}</a></div>`:''}
 
 ${phone?askModal:''}
 
