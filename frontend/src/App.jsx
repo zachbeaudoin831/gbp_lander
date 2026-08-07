@@ -296,16 +296,15 @@ async function generateAngleAds(payload) {
   return apiPost('/api/generate-angle-ads', payload);
 }
 
-/* ─── preview-only CTA appended below the lander in the preview iframe.
-   Styled as builder chrome (matches the top bar) so it reads as part of
-   the tool, not the lander -- and it's never in the downloaded file,
-   which regenerates clean from the profile. Extra bottom padding clears
-   the lander's fixed call bar. ─────────────────────────────────────── */
-const PREVIEW_CTA_HTML = `
-<div style="background:#181D24;padding:40px 20px 130px;text-align:center;border-top:2px dashed rgba(255,255,255,.25)">
-  <p style="font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#9AA3A8;margin:0 0 16px">Happy with your page?</p>
-  <button onclick="parent.postMessage('sendkpi-create-ads','*')" style="background:#0D57D0;color:#fff;border:none;border-radius:10px;padding:16px 30px;font-family:'IBM Plex Mono',ui-monospace,monospace;font-weight:600;font-size:15px;letter-spacing:.02em;cursor:pointer">Step 2: Create Ads →</button>
-</div>`;
+/* ─── built-step trace rows shown while the lander is assembled. Row 0
+   mirrors the angle-research trace's first line and starts pre-completed,
+   so the two loading screens read as one continuous checklist. ───────── */
+const BUILD_ROWS = [
+  'Finding best ad angles',
+  'Writing your headline from the chosen angle',
+  'Assembling photos, reviews & hours',
+  'Polishing the design',
+];
 
 /* ─── app styles (injected once) ────────────────────────────────────── */
 const GLOBAL_CSS = `
@@ -515,7 +514,7 @@ function drawAd(canvas, img, copy, biz) {
 
 const MAX_ADS = 4;
 
-function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn }) {
+function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn, onDownload }) {
   const [lander, setLander] = useState(null);
   const [angle, setAngle] = useState('offer'); // 'offer' | 'dont_delay' ad angle for AI copy (legacy landers without a chosen angle)
   const [photoUrls, setPhotoUrls] = useState(initialAds?.photoUrls || []); // up to MAX_ADS, in click order
@@ -525,14 +524,17 @@ function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(-1); // index of the variation whose primary text was just copied (-2 = legacy single copy)
+  // Angle-mode wizard: photos → copy → ads. A post-OAuth restore with a full
+  // photo selection drops straight back onto the finished-ads screen.
+  const [stage, setStage] = useState((initialAds?.photoUrls?.length || 0) >= MAX_ADS ? 'ads' : 'photos');
+  const [selHead, setSelHead] = useState(-1); // chosen headline option (index into variations)
+  const [selSub,  setSelSub]  = useState(-1); // chosen supporting-line option
   const autoGenRef = useRef(false); // variations auto-generation already kicked off for this lander
 
   const profile = lander?.profile || null;
   const photos = profile?.photos || [];
   const angleMeta = profile?.chosen_angle || null; // set by the angle-picker flow
-  // Per-ad copy: in angle mode each canvas gets its own variation (falling
-  // back to the shared prefill until the variations land).
-  const copyFor = i => (angleMeta && variations.length ? (variations[i] || variations[0]) : copy);
+  const allLoaded = photoUrls.length > 0 && photoUrls.every(u => imgs[u]);
 
   const eyebrow = { fontFamily: "'IBM Plex Mono',monospace", fontSize: 11, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 10px' };
 
@@ -557,10 +559,11 @@ function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn }) {
     setLander(l); setError('');
     setVariations([]);
     autoGenRef.current = false; // new lander -- allow a fresh auto-generation
-    // Angle mode: the owner already picked their angle, so skip the manual
-    // steps -- auto-select the first 4 photos and let the variations effect
-    // below write one ad per photo.
-    setPhotoUrls(p.chosen_angle ? (p.photos || []).slice(0, MAX_ADS) : []);
+    // Angle mode runs the picker wizard -- the owner chooses the photos
+    // themselves, so always start with none selected.
+    setPhotoUrls([]);
+    setStage('photos');
+    setSelHead(-1); setSelSub(-1);
     // Prefill from the lander's own offer so there's a usable ad before the
     // AI call -- generation then just tightens what's already here.
     setCopy({
@@ -583,6 +586,7 @@ function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn }) {
   async function handleGenerateVariations() {
     if (!profile?.chosen_angle) return;
     setBusy(true); setError('');
+    setSelHead(-1); setSelSub(-1); // fresh options -- clear any prior picks
     try {
       const res = await generateAngleAds({
         name: profile.name || lander?.name || '',
@@ -608,9 +612,27 @@ function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn }) {
 
   function togglePhoto(url) {
     setError('');
-    setPhotoUrls(prev => prev.includes(url)
-      ? prev.filter(u => u !== url)
-      : prev.length >= MAX_ADS ? prev : [...prev, url]);
+    const next = photoUrls.includes(url)
+      ? photoUrls.filter(u => u !== url)
+      : photoUrls.length >= MAX_ADS ? photoUrls : [...photoUrls, url];
+    setPhotoUrls(next);
+    // Wizard: the 4th pick advances straight to the copy screen.
+    if (angleMeta && next.length === MAX_ADS) setStage('copy');
+  }
+
+  function chooseHeadline(i) {
+    const v = variations[i] || {};
+    setSelHead(i);
+    // The headline's variation also carries the CTA + feed primary text that
+    // were written for it -- they ride along with the choice.
+    setCopy(c => ({ ...c, headline: v.headline || c.headline, cta: v.cta || c.cta, primary_text: v.primary_text || c.primary_text }));
+  }
+
+  function chooseSubline(i) {
+    const v = variations[i] || {};
+    setSelSub(i);
+    setCopy(c => ({ ...c, subline: v.subline ?? c.subline }));
+    setStage('ads'); // both chosen -- the ads generate on the next screen
   }
 
   useEffect(() => {
@@ -636,7 +658,7 @@ function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn }) {
       photoUrls.forEach((url, i) => {
         const canvas = canvasesRef.current[i];
         const img = imgs[url];
-        if (canvas && img) drawAd(canvas, img, copyFor(i), profile);
+        if (canvas && img) drawAd(canvas, img, copy, profile);
       });
       // Every selected photo rendered -- downloads queued behind the OAuth
       // redirect can fire now.
@@ -684,10 +706,6 @@ function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn }) {
     } catch { /* clipboard unavailable -- the text is visible to copy by hand */ }
   }
 
-  function editVariation(i, patch) {
-    setVariations(prev => prev.map((v, idx) => idx === i ? { ...v, ...patch } : v));
-  }
-
   if (!landers.length) return (
     <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Save a lander first. Ads are built from a lander's photos and offer.</p>
   );
@@ -695,7 +713,7 @@ function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
       <div>
-        <p style={eyebrow}>1 · Lander</p>
+        <p style={eyebrow}>Lander</p>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
           {landers.map(l => (
             <button key={l.id} className={`lb-btn-ghost${lander?.id === l.id ? ' active' : ''}`} onClick={() => pickLander(l)}>{l.name}</button>
@@ -703,9 +721,27 @@ function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn }) {
         </div>
       </div>
 
-      {lander && (
+      {lander && angleMeta && (
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {['Photos', 'Copy', 'Your ads'].map((label, i) => {
+            const idx = ['photos', 'copy', 'ads'].indexOf(stage);
+            const st = i < idx ? 'done' : i === idx ? 'active' : 'todo';
+            return (
+              <span key={label} style={{
+                fontFamily: "'IBM Plex Mono',monospace", fontSize: 11, letterSpacing: '.06em', textTransform: 'uppercase',
+                borderRadius: 999, padding: '6px 14px', fontWeight: 600,
+                background: st === 'active' ? '#0D57D0' : st === 'done' ? '#E7EEFB' : 'var(--surface-2)',
+                color: st === 'active' ? '#fff' : st === 'done' ? '#0D57D0' : 'var(--text-muted)',
+                border: st === 'todo' ? '1px solid var(--border)' : '1px solid transparent',
+              }}>{st === 'done' ? '✓' : i + 1} · {label}</span>
+            );
+          })}
+        </div>
+      )}
+
+      {lander && (!angleMeta || stage === 'photos') && (
         <div>
-          <p style={eyebrow}>{angleMeta ? `2 · Photos: we picked ${photoUrls.length || MAX_ADS}, tap to swap` : `2 · Photos: pick up to ${MAX_ADS}`}</p>
+          <p style={eyebrow}>{angleMeta ? `Pick ${MAX_ADS} photos for your ads · ${photoUrls.length} of ${MAX_ADS} selected` : `Photos: pick up to ${MAX_ADS}`}</p>
           {photos.length === 0
             ? <p style={{ color: 'var(--text-secondary)', fontSize: 14, margin: 0 }}>This lander has no photos to build ads from.</p>
             : <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(110px,1fr))', gap: 8 }}>
@@ -732,24 +768,54 @@ function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn }) {
         </div>
       )}
 
-      {lander && photoUrls.length > 0 && angleMeta && (
-        <div>
-          <p style={eyebrow}>3 · Copy: 4 takes on your angle</p>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-            <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 10.5, letterSpacing: '.08em', textTransform: 'uppercase', color: '#0D57D0', fontWeight: 600, background: '#E7EEFB', borderRadius: 999, padding: '4px 10px' }}>
-              {angleMeta.label}
-            </span>
-            <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>"{angleMeta.hook}"</span>
-            <button className="lb-btn-ghost" onClick={handleGenerateVariations} disabled={busy}>
-              {busy ? 'Writing 4 variations…' : 'Regenerate variations'}
-            </button>
-          </div>
+      {lander && angleMeta && stage === 'copy' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          <button className="lb-back" style={{ alignSelf: 'flex-start' }} onClick={() => setStage('photos')}>
+            <i className="ti ti-arrow-left" aria-hidden="true" /> Change photos
+          </button>
+          {busy && !variations.length ? (
+            <p style={{ color: 'var(--text-secondary)', fontSize: 14, margin: 0 }}>Writing your copy options from the "{angleMeta.label}" angle…</p>
+          ) : (
+            <>
+              <div>
+                <p style={eyebrow}>Choose your headline</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {variations.map((v, i) => (
+                    <button key={i} onClick={() => chooseHeadline(i)} style={{
+                      textAlign: 'left', cursor: 'pointer', borderRadius: 10, padding: '13px 16px',
+                      fontFamily: "'Plus Jakarta Sans',system-ui,sans-serif", fontWeight: 700, fontSize: 15.5,
+                      background: selHead === i ? '#E7EEFB' : 'var(--surface-2)',
+                      border: selHead === i ? '2px solid #0D57D0' : '2px solid var(--border)',
+                      color: 'var(--text-primary)',
+                    }}>{v.headline}</button>
+                  ))}
+                </div>
+              </div>
+              <div style={{ opacity: selHead > -1 ? 1 : 0.45 }}>
+                <p style={eyebrow}>{selHead > -1 ? 'Choose your supporting line' : 'Choose your supporting line (pick a headline first)'}</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {variations.map((v, i) => (v.subline || '').trim() ? (
+                    <button key={i} disabled={selHead === -1} onClick={() => chooseSubline(i)} style={{
+                      textAlign: 'left', cursor: selHead === -1 ? 'default' : 'pointer', borderRadius: 10, padding: '12px 16px',
+                      fontSize: 14, fontFamily: 'inherit',
+                      background: selSub === i ? '#E7EEFB' : 'var(--surface-2)',
+                      border: selSub === i ? '2px solid #0D57D0' : '2px solid var(--border)',
+                      color: 'var(--text-secondary)',
+                    }}>{v.subline}</button>
+                  ) : null)}
+                </div>
+              </div>
+              <button className="lb-btn-ghost" style={{ alignSelf: 'flex-start' }} onClick={handleGenerateVariations} disabled={busy}>
+                {busy ? 'Writing new options…' : 'Write me different options'}
+              </button>
+            </>
+          )}
         </div>
       )}
 
       {lander && photoUrls.length > 0 && !angleMeta && (
         <div>
-          <p style={eyebrow}>3 · Copy</p>
+          <p style={eyebrow}>Copy</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 11, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Angle</span>
@@ -772,45 +838,44 @@ function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn }) {
 
       {error && <div className="lb-error">{error}</div>}
 
-      {lander && photoUrls.length > 0 && (
+      {lander && photoUrls.length > 0 && (!angleMeta || stage === 'ads') && (
         <div>
-          <p style={eyebrow}>Your ads ({photoUrls.length})</p>
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            {photoUrls.map((url, i) => {
-              const v = angleMeta ? (variations[i] || null) : null;
-              return (
-                <div key={url} style={{ flex: '1 1 220px', maxWidth: 340 }}>
-                  {!imgs[url] && <p style={{ color: 'var(--text-secondary)', fontSize: 13, margin: '0 0 6px' }}>Loading photo…</p>}
-                  <canvas ref={el => { canvasesRef.current[i] = el; }} width={AD_SIZE} height={AD_SIZE}
-                    style={{ width: '100%', borderRadius: 12, border: '0.5px solid var(--border)', display: imgs[url] ? 'block' : 'none' }} />
-                  {v && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
-                      <input className="lb-input" style={{ height: 40, fontSize: 13.5 }} placeholder="Headline" value={v.headline || ''} onChange={e => editVariation(i, { headline: e.target.value })} />
-                      <input className="lb-input" style={{ height: 40, fontSize: 13.5 }} placeholder="Supporting line" value={v.subline || ''} onChange={e => editVariation(i, { subline: e.target.value })} />
-                      <input className="lb-input" style={{ height: 40, fontSize: 13.5 }} placeholder="Button label" value={v.cta || ''} onChange={e => editVariation(i, { cta: e.target.value })} />
-                      <textarea className="lb-input" placeholder="Primary text (shown next to the image in the feed)" value={v.primary_text || ''} onChange={e => editVariation(i, { primary_text: e.target.value })} style={{ height: 84, padding: '10px 12px', fontSize: 13.5, resize: 'vertical', lineHeight: 1.5 }} />
-                      {(v.primary_text || '').trim() && (
-                        <button className="lb-btn-ghost" style={{ alignSelf: 'flex-start' }} onClick={() => copyPrimaryText(v.primary_text, i)}>
-                          {copied === i ? 'Copied!' : 'Copy primary text'}
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-          {angleMeta && busy && !variations.length && (
-            <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 12 }}>Writing 4 takes on your "{angleMeta.label}" angle…</p>
+          {angleMeta && (
+            <button className="lb-back" style={{ marginBottom: 16 }} onClick={() => setStage('copy')}>
+              <i className="ti ti-arrow-left" aria-hidden="true" /> Change copy
+            </button>
           )}
-          {!angleMeta && copy.primary_text.trim() && (
-            <div style={{ marginTop: 12 }}>
+          <p style={eyebrow}>{angleMeta ? (allLoaded ? `Your ${photoUrls.length} ads` : `Generating your ${photoUrls.length} ads…`) : `Your ads (${photoUrls.length})`}</p>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            {photoUrls.map((url, i) => (
+              <div key={url} style={{ flex: '1 1 220px', maxWidth: 340 }}>
+                {!imgs[url] && <p style={{ color: 'var(--text-secondary)', fontSize: 13, margin: '0 0 6px' }}>Generating ad…</p>}
+                <canvas ref={el => { canvasesRef.current[i] = el; }} width={AD_SIZE} height={AD_SIZE}
+                  style={{ width: '100%', borderRadius: 12, border: '0.5px solid var(--border)', display: imgs[url] ? 'block' : 'none' }} />
+              </div>
+            ))}
+          </div>
+          {(copy.primary_text || '').trim() && (
+            <div style={{ marginTop: 16, maxWidth: 560 }}>
+              <p style={eyebrow}>Primary text (paste next to the image in your ad)</p>
+              <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', lineHeight: 1.55, margin: '0 0 8px' }}>{copy.primary_text}</p>
               <button className="lb-btn-ghost" onClick={() => copyPrimaryText(copy.primary_text, -2)}>{copied === -2 ? 'Copied!' : 'Copy primary text'}</button>
             </div>
           )}
-          <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 14 }}>
-            Happy with them? Hit <b>Step 3: Download Lander &amp; Ads</b> up top to get the files.
-          </p>
+          {angleMeta ? (
+            <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-start' }}>
+              <button className="lb-btn-signal" onClick={onDownload} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                Download my lander &amp; ads <i className="ti ti-download" aria-hidden="true" />
+              </button>
+              <p style={{ color: 'var(--text-secondary)', fontSize: 13, margin: 0 }}>
+                Comes with instructions for putting them live yourself. No agency required.
+              </p>
+            </div>
+          ) : (
+            <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 14 }}>
+              Happy with them? Hit <b>Step 3: Download Lander &amp; Ads</b> up top to get the files.
+            </p>
+          )}
         </div>
       )}
     </div>
@@ -838,9 +903,11 @@ export default function App() {
   const [mainService,    setMainService]    = useState('');
   const [scanDone,       setScanDone]       = useState(false); // website scan (offer generation) finished
   const [angles,         setAngles]         = useState([]);    // researched ad angles awaiting the owner's pick
-  const offerPromiseRef = useRef(null); // in-flight website-scan/offer call, started before the service question
-  const iframeRef = useRef(null);
-  const blobRef   = useRef(null);
+  const offerPromiseRef = useRef(null); // in-flight website-scan/offer call, started once the profile lands
+  const profilePromiseRef = useRef(null); // in-flight profile fetch, started the moment a business is selected
+  const [builtPhase, setBuiltPhase] = useState('building'); // 'built' step: building → ready → adsSpin → adsReady
+  const [buildIndex, setBuildIndex] = useState(0);          // active row in the built-step trace
+  const [showPage,   setShowPage]   = useState(false);      // desktop page popup over the built step
   const timerRef  = useRef(null);
   const adCanvasesRef = useRef([]);     // canvases drawn by AdsTab, exported at Step 3
   const adsStateRef = useRef(null);     // AdsTab's current {photoUrls, copy}, for the pre-redirect stash
@@ -925,24 +992,6 @@ export default function App() {
     return () => sub?.subscription?.unsubscribe();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => {
-    if (step !== 'preview' || !html || !iframeRef.current) return;
-    if (blobRef.current) URL.revokeObjectURL(blobRef.current);
-    const blob = new Blob([html.replace('</body>', `${PREVIEW_CTA_HTML}</body>`)], { type: 'text/html' });
-    blobRef.current = URL.createObjectURL(blob);
-    iframeRef.current.src = blobRef.current;
-    return () => { if (blobRef.current) URL.revokeObjectURL(blobRef.current); };
-  }, [step, html]);
-
-  // The injected preview CTA lives inside the iframe -- it signals back up
-  // via postMessage to advance to the ads step.
-  useEffect(() => {
-    if (step !== 'preview') return;
-    const onMsg = e => { if (e.data === 'sendkpi-create-ads') goToAds(); };
-    window.addEventListener('message', onMsg);
-    return () => window.removeEventListener('message', onMsg);
-  }, [step]); // eslint-disable-line react-hooks/exhaustive-deps
-
   // Advances loadIndex through `steps` on a timer, one at a time, holding on
   // the last step (still spinning, never looping back) if the real work
   // outruns the scripted list -- a finished row should never "un-complete".
@@ -974,18 +1023,18 @@ export default function App() {
     } catch(err) { stop(); setError(err.message); setStep('search'); }
   }
 
-  async function runBuild(candidate) {
+  function runBuild(candidate) {
+    // Straight to the main-service question -- no loading screen between.
+    // The profile fetch (and the website scan it feeds) runs behind the
+    // question; handleServiceSubmit awaits whatever hasn't finished yet, and
+    // a fetch failure surfaces there as the form error.
     setError('');
-    setStep('loading');
-    const stop = cycleSteps(['Reading their Google Business Profile', 'Pulling photos, reviews & hours', 'Scanning their brand colors'], 1300);
-    try {
-      const profile = await getProfile(candidate.place_id);
-      stop();
-      // Kick off the website scan (offer generation) now but don't block on
-      // it -- it keeps running behind the main-service question, and the
-      // angle step awaits it. Failure is fine: the flow continues without
-      // site-derived copy.
-      setScanDone(false);
+    setScanDone(false);
+    setPendingProfile(null);
+    setMainService('');
+    setStep('service');
+    const load = getProfile(candidate.place_id).then(profile => {
+      setPendingProfile(profile);
       const scan = generateOffer({
         website: profile.website,
         name: profile.name,
@@ -996,14 +1045,10 @@ export default function App() {
       }).catch(() => ({}));
       offerPromiseRef.current = scan;
       scan.then(() => setScanDone(true));
-      setPendingProfile(profile);
-      setMainService('');
-      setStep('service');
-    } catch(err) {
-      stop();
-      setError(err.message);
-      setStep(candidates.length ? 'candidates' : 'search');
-    }
+      return profile;
+    });
+    load.catch(() => {}); // handled at submit time; this just silences the unhandled-rejection warning
+    profilePromiseRef.current = load;
   }
 
   // The AI only returns fields it's confident about (e.g. a refined category
@@ -1021,18 +1066,18 @@ export default function App() {
     if (!svc) { setError('Type the service you want more calls for, e.g. "water heater replacement".'); return; }
     setError('');
     setStep('loading');
-    const cat = (pendingProfile?.category || 'your trade').toLowerCase();
     const stop = cycleSteps([
-      `Researching winning ad angles for ${cat}`,
+      'Finding best ad angles',
       'Studying campaigns that made the phone ring',
       'Reading your reviews for proof points',
       `Matching angles to "${svc}"`,
       'Shortlisting the strongest angles',
     ], 1700);
     try {
+      const profile = await profilePromiseRef.current;
       let extras = {};
       try { extras = (await offerPromiseRef.current) || {}; } catch { /* scan failed -- continue without it */ }
-      const merged = { ...pendingProfile, ...cleanExtras(extras), main_service: svc };
+      const merged = { ...profile, ...cleanExtras(extras), main_service: svc };
       const res = await generateAngles({
         name: merged.name,
         category: merged.category || '',
@@ -1076,13 +1121,42 @@ export default function App() {
   function finishBuild(profile) {
     setBusiness(profile);
     setHtml(buildLanderHTML(profile));
-    setStep('preview');
+    setShowPage(false);
+    setBuiltPhase('building');
+    setBuildIndex(1); // row 0 ("Finding best ad angles") arrives already checked
+    setStep('built');
+    // Short scripted trace while the (instant) build "runs" -- ends in the
+    // completed state with the View button instead of holding forever.
+    if (timerRef.current) clearInterval(timerRef.current);
+    let i = 1;
+    timerRef.current = setInterval(() => {
+      i++;
+      if (i >= BUILD_ROWS.length) {
+        clearInterval(timerRef.current); timerRef.current = null;
+        setBuiltPhase('ready');
+        return;
+      }
+      setBuildIndex(i);
+    }, 1100);
+  }
+
+  // Closing the page popup is what kicks off the ads handoff: the trace
+  // grows a "creating matching ads" spinner, then flips green with the
+  // button into Step 2.
+  function closePageModal() {
+    setShowPage(false);
+    if (builtPhase === 'ready') {
+      setBuiltPhase('adsSpin');
+      setTimeout(() => setBuiltPhase('adsReady'), 2400);
+    }
   }
 
   function reset() {
     setStep('search'); setQuery(''); setCandidates([]); setHtml(''); setBusiness(null); setError('');
     setPendingProfile(null); setMainService(''); setAngles([]); setScanDone(false);
+    setBuiltPhase('building'); setBuildIndex(0); setShowPage(false);
     offerPromiseRef.current = null;
+    profilePromiseRef.current = null;
   }
 
   /* ── returning users: sign in from the homepage, sign out anywhere ── */
@@ -1330,9 +1404,7 @@ export default function App() {
                   {c.phone&&<span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:12,color:'var(--text-secondary)'}}>{c.phone}</span>}
                 </div>
               </div>
-              <span style={{flexShrink:0,fontFamily:"'IBM Plex Mono',monospace",fontSize:12,color:'#0D57D0',fontWeight:600,letterSpacing:'.02em',display:'flex',alignItems:'center',gap:4}}>
-                Build lander <i className="ti ti-arrow-right" aria-hidden="true" />
-              </span>
+              <button className="lb-btn-signal" style={{flexShrink:0,height:40,padding:'0 24px',fontSize:14}}>Select</button>
             </div>
           ))}
         </div>
@@ -1354,7 +1426,9 @@ export default function App() {
 
         <div style={{padding:'32px 20px 48px',maxWidth:600,margin:'0 auto'}}>
           <div style={{background:'#F4F5F3',border:'1px solid #E5E7E3',borderRadius:12,padding:'16px 18px',marginBottom:28}}>
-            <p style={{...mono,fontSize:12,color:'#1F8A5F',margin:'0 0 8px'}}>✓ Pulling profile information</p>
+            <p style={{...mono,fontSize:12,color:pendingProfile?'#1F8A5F':'var(--text-secondary)',margin:'0 0 8px'}}>
+              {pendingProfile ? '✓ Pulling profile information' : '▸ Pulling profile information…'}
+            </p>
             <p style={{...mono,fontSize:12,color:scanDone?'#1F8A5F':'var(--text-secondary)',margin:0}}>
               {scanDone ? '✓ Scanning website from profile' : '▸ Scanning website from profile…'}
             </p>
@@ -1371,7 +1445,7 @@ export default function App() {
             <input
               className="lb-input"
               autoFocus
-              placeholder={(() => { const [a, b] = serviceExamples(pendingProfile); return `e.g. "${a}" or "${b}"`; })()}
+              placeholder="Type the service offering you want more calls for here."
               value={mainService}
               onChange={e => setMainService(e.target.value)}
             />
@@ -1412,9 +1486,7 @@ export default function App() {
                 style={{background:'#F4F5F3',borderColor:'#E5E7E3',alignItems:'flex-start',flexDirection:'column',gap:8}}>
                 <div style={{display:'flex',alignItems:'center',gap:10,width:'100%'}}>
                   <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10.5,letterSpacing:'.08em',textTransform:'uppercase',color:'#0D57D0',fontWeight:600,background:'#E7EEFB',borderRadius:999,padding:'4px 10px'}}>{a.label}</span>
-                  <span style={{marginLeft:'auto',flexShrink:0,fontFamily:"'IBM Plex Mono',monospace",fontSize:12,color:'#0D57D0',fontWeight:600,display:'flex',alignItems:'center',gap:4}}>
-                    Use this angle <i className="ti ti-arrow-right" aria-hidden="true" />
-                  </span>
+                  <button className="lb-btn-signal" style={{marginLeft:'auto',flexShrink:0,height:38,padding:'0 22px',fontSize:14}}>Select</button>
                 </div>
                 <div style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:17,letterSpacing:'-.01em',color:'var(--text-primary)',lineHeight:1.25}}>
                   "{a.hook}"
@@ -1430,20 +1502,63 @@ export default function App() {
     );
   }
 
-  /* ── preview ───────────────────────────────────────────────────────── */
-  if (step === 'preview') {
+  /* ── built: trace completion → desktop page popup → ads handoff ────── */
+  if (step === 'built') {
+    const rows = BUILD_ROWS
+      .map((s, i) => ({
+        text: s,
+        state: builtPhase !== 'building' || i < buildIndex ? 'done' : i === buildIndex ? 'active' : 'hidden',
+      }))
+      .filter(r => r.state !== 'hidden');
+    if (builtPhase !== 'building') rows.push({ text: 'Landing page completed', state: 'done' });
+    if (builtPhase === 'adsSpin')  rows.push({ text: 'Creating your matching ads', state: 'active' });
+    if (builtPhase === 'adsReady') rows.push({ text: 'Matching ads ready', state: 'done' });
     return (
-      <div style={{display:'flex',flexDirection:'column',height:'100dvh',background:'#0E1318'}}>
-        <div style={{flex:'0 0 10%',minHeight:52,background:'#181D24',padding:'0 16px',display:'flex',alignItems:'center',gap:8,borderBottom:'1px solid rgba(255,255,255,.08)'}}>
-          <LogoMark size={24} ring="#181D24" />
-          <button className="lb-btn-signal" style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:8}} onClick={goToAds}>
-            Step 2: Create Ads <i className="ti ti-arrow-right" aria-hidden="true" />
-          </button>
+      <div style={{minHeight:'100dvh',background:'#fff',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:34,padding:32}}>
+        <div style={{display:'flex',alignItems:'center',gap:8}}>
+          <LogoMark size={26} />
+          <span style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:15,color:'#181310',letterSpacing:'-.01em'}}>SendKPI</span>
+        </div>
+        <div className="lb-trace">
+          {rows.map(r => (
+            <div key={r.text} className={`lb-trace-row${r.state === 'active' ? ' active' : ' done'}`}>
+              <span className={`lb-trace-icon ${r.state === 'active' ? 'spin' : 'done'}`} aria-hidden="true">
+                {r.state === 'done' && <i className="ti ti-check" style={{fontSize:12}} />}
+              </span>
+              <span className="lb-trace-text">{r.text}</span>
+            </div>
+          ))}
         </div>
 
-        <div style={{flex:'1 1 90%',minHeight:0,padding:'0 10px',display:'flex',justifyContent:'center'}}>
-          <iframe ref={iframeRef} style={{width:'100%',maxWidth:480,height:'100%',border:'none',display:'block',background:'#fff'}} title="Lander preview (mobile)" />
-        </div>
+        {builtPhase === 'ready' && (
+          <button className="lb-btn-signal" onClick={() => setShowPage(true)} style={{display:'flex',alignItems:'center',gap:8}}>
+            View my page <i className="ti ti-eye" aria-hidden="true" />
+          </button>
+        )}
+        {builtPhase === 'adsReady' && (
+          <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:12}}>
+            <button className="lb-btn-signal" onClick={goToAds} style={{display:'flex',alignItems:'center',gap:8}}>
+              Step 2: Build my ads <i className="ti ti-arrow-right" aria-hidden="true" />
+            </button>
+            <button className="lb-back" onClick={() => setShowPage(true)}>
+              <i className="ti ti-eye" aria-hidden="true" /> View my page again
+            </button>
+          </div>
+        )}
+
+        {showPage && (
+          <div style={{position:'fixed',inset:0,zIndex:100,background:'rgba(14,19,24,.72)',padding:'clamp(8px,2vw,28px)'}}>
+            <div style={{width:'100%',height:'100%',maxWidth:1280,margin:'0 auto',background:'#fff',borderRadius:16,overflow:'hidden',display:'flex',flexDirection:'column',boxShadow:'0 30px 80px rgba(0,0,0,.45)'}}>
+              <div style={{flexShrink:0,background:'#181D24',padding:'10px 14px',display:'flex',alignItems:'center',gap:14}}>
+                <button onClick={closePageModal} style={{display:'flex',alignItems:'center',gap:8,background:'#fff',color:'#181D24',border:'none',borderRadius:10,padding:'11px 22px',fontSize:15,fontWeight:700,cursor:'pointer',fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif"}}>
+                  <i className="ti ti-arrow-left" aria-hidden="true" /> Back
+                </button>
+                <span style={{color:'#C7CDD2',fontSize:13,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>Your landing page · desktop preview</span>
+              </div>
+              <iframe srcDoc={html} title="Landing page preview (desktop)" style={{flex:1,width:'100%',border:'none',background:'#fff'}} />
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -1563,6 +1678,7 @@ export default function App() {
               initialAds={restoredAds}
               onAdsState={s => { adsStateRef.current = s; }}
               onAllDrawn={handleAdsDrawn}
+              onDownload={handleStep3}
             />
           )}
         </div>
