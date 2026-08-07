@@ -354,37 +354,44 @@ html { scroll-behavior: smooth; }
   font-family:var(--font-mono);font-size:11px;color:var(--ink-3);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
-.lb-home .mock-body{padding:20px}
-.lb-home .mock-eyebrow{
-  font-family:var(--font-mono);font-size:10px;font-weight:600;
-  letter-spacing:.12em;text-transform:uppercase;color:var(--orange);
+/* Mock body mirrors the "Soft Light" lander template: centered rating pill,
+   title-case headline, ink-black call button, photo collage strip. */
+.lb-home .mock-body{padding:22px 20px;text-align:center}
+.lb-home .mock-pill{
+  display:inline-flex;align-items:center;gap:7px;
+  background:var(--paper-2);border:1px solid var(--line);border-radius:999px;
+  padding:5px 12px;font-size:10.5px;color:var(--ink-2);
 }
+.lb-home .mock-pill .stars{color:var(--star);letter-spacing:1px;font-size:10px}
+.lb-home .mock-pill b{color:var(--ink)}
+.lb-home .mock-pill-sep{width:1px;height:11px;background:var(--line-2)}
+.lb-home .mock-pill .open{color:var(--green);font-weight:600}
+.lb-home .mock-pill .open::before{content:"●";margin-right:4px;font-size:7px;vertical-align:1px}
 .lb-home .mock-h1{
   font-family:var(--font-display);font-weight:800;
-  font-size:21px;line-height:1.15;letter-spacing:-.015em;
-  margin-top:6px;
+  font-size:21px;line-height:1.12;letter-spacing:-.02em;
+  margin-top:12px;
 }
 .lb-home .mock-sub{font-size:12.5px;color:var(--ink-2);margin-top:8px;line-height:1.5}
 .lb-home .mock-call{
   margin-top:14px;width:100%;
   display:flex;align-items:center;justify-content:center;gap:9px;
-  background:var(--green);color:#fff;border:none;border-radius:11px;
+  background:var(--ink);color:#fff;border:none;border-radius:12px;
   font-weight:700;font-size:15px;padding:13px;
-  font-family:var(--font-body);
-  box-shadow:0 8px 20px -6px color-mix(in srgb,var(--green) 60%,transparent);
+  font-family:var(--font-display);
+  box-shadow:0 10px 24px -8px color-mix(in srgb,var(--ink) 55%,transparent);
   animation:lb-home-pulse 2.6s ease-in-out infinite;
 }
 @keyframes lb-home-pulse{
-  0%,100%{box-shadow:0 8px 20px -6px color-mix(in srgb,var(--green) 60%,transparent)}
-  50%{box-shadow:0 8px 26px -4px color-mix(in srgb,var(--green) 85%,transparent)}
+  0%,100%{box-shadow:0 10px 24px -8px color-mix(in srgb,var(--ink) 55%,transparent)}
+  50%{box-shadow:0 12px 30px -6px color-mix(in srgb,var(--ink) 75%,transparent)}
 }
-.lb-home .mock-meta{
-  display:flex;justify-content:space-between;gap:10px;
-  margin-top:14px;padding-top:14px;border-top:1px dashed var(--line-2);
-  font-size:11.5px;color:var(--ink-2);
+.lb-home .mock-collage{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:14px;
 }
-.lb-home .mock-meta .stars{color:var(--star);letter-spacing:1px}
-.lb-home .mock-meta .open{color:var(--green);font-weight:600;font-family:var(--font-mono);font-size:11px}
+.lb-home .mock-collage img{
+  width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:9px;display:block;background:var(--paper-2);
+}
 
 /* ---------- sections ---------- */
 .lb-home .section{padding:clamp(64px,9vw,110px) 0}

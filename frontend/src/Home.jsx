@@ -227,16 +227,20 @@ export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
                   <span className="mock-url">roofing.musiccityroofers.com</span>
                 </div>
                 <div className="mock-body">
-                  <p className="mock-eyebrow">Nashville's highest-rated roofers</p>
-                  <p className="mock-h1">Did last night's storm hit your roof?</p>
-                  <p className="mock-sub">Free storm inspections this week. Photos and a written report before you call your insurance.</p>
+                  <div className="mock-pill">
+                    <span className="stars" aria-hidden="true">★★★★★</span>
+                    <span><b>4.7</b> · 874 reviews</span>
+                    <span className="mock-pill-sep" aria-hidden="true"></span>
+                    <span className="open">Open now</span>
+                  </div>
+                  <p className="mock-h1">Roof Leaks Fixed Before They Spread</p>
+                  <p className="mock-sub">Fast repairs and honest inspections from Nashville's highest-rated roofing crew.</p>
                   <button className="mock-call" type="button" aria-label="Example call button">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.13.96.36 1.9.7 2.8a2 2 0 0 1-.45 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.45c.9.34 1.84.57 2.8.7a2 2 0 0 1 1.7 2.05Z" /></svg>
-                    Call Now (615) 555-0119
+                    Call (615) 555-0119
                   </button>
-                  <div className="mock-meta">
-                    <span><span className="stars" aria-hidden="true">★★★★★</span> 4.7 · 874 reviews</span>
-                    <span className="open">● OPEN NOW</span>
+                  <div className="mock-collage" aria-hidden="true">
+                    {EX_ROOFER.listingPhotos.map(p => <img key={p} src={p} alt="" loading="lazy" />)}
                   </div>
                 </div>
               </div>
