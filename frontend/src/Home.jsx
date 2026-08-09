@@ -25,7 +25,7 @@ const BUILD_LOG = [
   ]},
   { head: "pulling photos & reviews from your listing", lines: [
     "fetch(listing.photos)  → 8 photos",
-    "fetch(listing.reviews) → ★ 4.9 · 212 reviews",
+    "fetch(listing.reviews) → ★ 4.7 · 874 reviews",
     "✓ proof attached above the fold",
   ]},
   { head: "scanning logo for color palette", lines: [
@@ -178,26 +178,25 @@ export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
                 {error && <p className="finder-hint" style={{ color: "var(--orange-deep)" }}>{error}</p>}
               </form>
 
-              <div className="build-log" aria-hidden="true">
-                <div className="build-log-roll">
-                  {[0, 1].map(copy => (
-                    <div key={copy}>
-                      {BUILD_LOG.map(phase => (
-                        <div key={phase.head} className="build-log-phase">
-                          <p className="build-log-head"><span className="caret">▸</span> {phase.head}</p>
-                          {phase.lines.map(ln => (
-                            <p key={ln} className={`build-log-line${ln.startsWith("✓") ? " ok" : ""}`}>{ln}</p>
-                          ))}
-                        </div>
-                      ))}
-                    </div>
-                  ))}
-                </div>
+              <div className="hero-trust">
+                <span><em>✓</em> Free to build</span>
+                <span><em>✓</em> Takes about 2 minutes</span>
+                <span><em>✓</em> No card required</span>
+              </div>
+              <div className="steps-row" aria-label="How it works, in four steps">
+                <span className="step-chip"><b>1</b> Find your listing</span>
+                <span className="step-chip"><b>2</b> Name your money service</span>
+                <span className="step-chip"><b>3</b> Pick a winning angle</span>
+                <span className="step-chip"><b>4</b> Get your page + ads</span>
               </div>
             </div>
 
-            {/* listing → lander transformation */}
-            <div className="transform" aria-label="Illustration: a Google Business Profile becoming a landing page">
+            {/* listing → ads → lander pipeline, one highlighted message */}
+            <div className="transform pipeline" aria-label="Illustration: one angle carried from your Google listing into your ads and your call page">
+              <p className="tf-cap">One angle. Three places. <span className="hl">Same promise.</span></p>
+              <p className="tf-cap-sub">Listing → Ads → Call Lander</p>
+              <div className="pipe-row">
+              <div className="pipe-col">
               <div className="gbp-card">
                 <span className="gbp-tag">Your Google listing</span>
                 <div className="gbp-top">
@@ -215,12 +214,26 @@ export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
                   {EX_ROOFER.listingPhotos.map(p => <img key={p} src={p} alt="" loading="lazy" />)}<span>+5</span>
                 </div>
               </div>
-
-              <div className="route" aria-hidden="true">
-                <svg viewBox="0 0 400 74" preserveAspectRatio="none"><path d="M80 4 C 80 46, 320 28, 320 70" /></svg>
-                <span className="route-label"><span className="dot"></span>Building your page</span>
               </div>
-
+              <span className="pipe-arrow" aria-hidden="true">→</span>
+              <div className="tf-ads" aria-hidden="true">
+                <div className="meta-mini">
+                  <div className="mm-head"><span className="mm-avatar">M</span><span><b>Music City Roofers</b><em>Sponsored</em></span></div>
+                  <div className="mm-img">
+                    <img src={EX_ROOFER.adPhoto} alt="" loading="lazy" />
+                    <p><span className="hl">Roof Leaks Fixed Before They Spread</span></p>
+                  </div>
+                  <div className="mm-cta"><span>musiccityroofers.com</span><i>Call Now</i></div>
+                </div>
+                <div className="gad-mini">
+                  <div className="gm-top"><span className="gm-fav">M</span><span><b>Sponsored</b> · musiccityroofers.com</span></div>
+                  <p className="gm-title"><span className="hl">Roof Leaks Fixed Before They Spread</span> | Music City Roofers</p>
+                  <p className="gm-desc">Rated 4.7 by 874 Nashville homeowners. Honest inspections, fast repairs.</p>
+                  <span className="gm-call"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.13.96.36 1.9.7 2.8a2 2 0 0 1-.45 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.45c.9.34 1.84.57 2.8.7a2 2 0 0 1 1.7 2.05Z" /></svg> Call (615) 555-0119</span>
+                </div>
+              </div>
+              <span className="pipe-arrow" aria-hidden="true">→</span>
+              <div className="pipe-col">
               <div className="lander-mock">
                 <div className="mock-chrome" aria-hidden="true">
                   <span className="mock-dots"><i></i><i></i><i></i></span>
@@ -233,7 +246,7 @@ export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
                     <span className="mock-pill-sep" aria-hidden="true"></span>
                     <span className="open">Open now</span>
                   </div>
-                  <p className="mock-h1">Roof Leaks Fixed Before They Spread</p>
+                  <p className="mock-h1"><span className="hl">Roof Leaks Fixed Before They Spread</span></p>
                   <p className="mock-sub">Fast repairs and honest inspections from Nashville's highest-rated roofing crew.</p>
                   <button className="mock-call" type="button" aria-label="Example call button">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.13.96.36 1.9.7 2.8a2 2 0 0 1-.45 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.45c.9.34 1.84.57 2.8.7a2 2 0 0 1 1.7 2.05Z" /></svg>
@@ -243,6 +256,8 @@ export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
                     {EX_ROOFER.listingPhotos.map(p => <img key={p} src={p} alt="" loading="lazy" />)}
                   </div>
                 </div>
+              </div>
+              </div>
               </div>
             </div>
           </div>
@@ -515,21 +530,20 @@ export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
                 </div>
               </div>
             </div>
-            <div className="code-card reveal" aria-label="Example of the HTML output">
-              <div className="code-head">
-                <span className="mock-dots"><i></i><i></i><i></i></span>
-                mikes-roofing-nashville.html · 1 file · zero dependencies
-              </div>
-              <div className="code-body">
-                <span className="cm">&lt;!-- Generated from Music City Roofers, Nashville TN --&gt;</span><br />
-                <span className="tag">&lt;section</span> <span className="attr">class</span>=<span className="val">"hero"</span><span className="tag">&gt;</span><br />
-                &nbsp;&nbsp;<span className="tag">&lt;h1&gt;</span>Roof repair in Nashville<span className="tag">&lt;/h1&gt;</span><br />
-                &nbsp;&nbsp;<span className="tag">&lt;a</span> <span className="attr">href</span>=<span className="val">"tel:+16155550119"</span> <span className="attr">class</span>=<span className="val">"call"</span><span className="tag">&gt;</span><br />
-                &nbsp;&nbsp;&nbsp;&nbsp;Call (615) 555-0119<br />
-                &nbsp;&nbsp;<span className="tag">&lt;/a&gt;</span><br />
-                &nbsp;&nbsp;<span className="tag">&lt;div</span> <span className="attr">class</span>=<span className="val">"rating"</span><span className="tag">&gt;</span>★ 4.9 · 212 reviews<span className="tag">&lt;/div&gt;</span><br />
-                <span className="tag">&lt;/section&gt;</span><br />
-                <span className="cm">&lt;!-- hours, services &amp; photos from your profile… --&gt;</span>
+            <div className="build-log build-log-panel reveal" aria-hidden="true">
+              <div className="build-log-roll">
+                {[0, 1].map(copy => (
+                  <div key={copy}>
+                    {BUILD_LOG.map(phase => (
+                      <div key={phase.head} className="build-log-phase">
+                        <p className="build-log-head"><span className="caret">▸</span> {phase.head}</p>
+                        {phase.lines.map(ln => (
+                          <p key={ln} className={`build-log-line${ln.startsWith("✓") ? " ok" : ""}`}>{ln}</p>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                ))}
               </div>
             </div>
           </div>
