@@ -635,8 +635,11 @@ Call button: {angle.get("cta_label") or "(none)"}"""
     client = _client()
     resp = client.messages.create(
         model=MODEL,
-        # 15 short headlines + 4 descriptions; 1200 leaves comfortable room.
-        max_tokens=1200,
+        # 15 short headlines + 4 descriptions is little text, but on Sonnet 5
+        # adaptive thinking spends from the same budget before any text is
+        # emitted -- 1200 came back with an empty reply. Match the angles
+        # call's headroom.
+        max_tokens=4096,
         system=_GOOGLE_ADS_SYSTEM + _STYLE_RULES,
         messages=[{"role": "user", "content": user_content}],
     )
