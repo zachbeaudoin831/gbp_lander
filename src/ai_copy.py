@@ -16,6 +16,8 @@ from typing import Optional
 
 import anthropic
 
+from src.usage_log import log_ai
+
 MODEL = "claude-sonnet-5"
 
 # Appended to every system prompt. House style: no em/en dashes in anything
@@ -378,6 +380,7 @@ SERVICE AREAS PAGE TEXT (raw, may include noise)
         system=_SYSTEM_PROMPT + _STYLE_RULES,
         messages=[{"role": "user", "content": user_content}],
     )
+    log_ai("generate-offer", resp)
     return _reply_json(resp)
 
 
@@ -438,6 +441,7 @@ WHAT THE BUSINESS DOES
         system=system + _STYLE_RULES,
         messages=[{"role": "user", "content": user_content}],
     )
+    log_ai("generate-ad-copy", resp)
     return _reply_json(resp)
 
 
@@ -518,6 +522,7 @@ MAIN SERVICE THE OWNER WANTS MORE CALLS FOR
         system=_ANGLES_SYSTEM + _STYLE_RULES,
         messages=[{"role": "user", "content": user_content}],
     )
+    log_ai("generate-angles", resp)
     return _reply_json(resp)
 
 
@@ -562,4 +567,5 @@ Call button: {angle.get("cta_label") or "(none)"}"""
         system=_ANGLE_ADS_SYSTEM + _STYLE_RULES,
         messages=[{"role": "user", "content": user_content}],
     )
+    log_ai("generate-angle-ads", resp)
     return _reply_json(resp)

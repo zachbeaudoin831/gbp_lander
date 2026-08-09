@@ -29,8 +29,9 @@ from typing import Optional
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field
+from starlette.concurrency import run_in_threadpool
 
 from src.ai_copy import (
     generate_ad_angles,
@@ -44,6 +45,7 @@ from src.lander_builder import build_profile
 from src.lead_store import LeadStoreError, insert_lead
 from src.meta_capi import MetaCapiError, send_event
 from src.places_client import GooglePlacesClient, PlacesApiError
+from src.usage_log import is_blocked, log_request
 from src.website_scraper import (
     ScrapeBlocked,
     scrape_about_page,
@@ -67,6 +69,34 @@ app.add_middleware(
 )
 
 BASE_URL = os.environ.get("PUBLIC_BASE_URL", "").rstrip("/")
+
+
+@app.middleware("http")
+async def usage_and_blocklist(request: Request, call_next):
+    """Log every /api/* request and enforce the admin's IP blocklist.
+
+    Both halves power the admin dashboard: the log feeds the traffic/bot
+    view, and the blocklist is how a bot gets cut off before it burns
+    Places/Claude spend. DB work runs in the threadpool (psycopg is sync)
+    and silently no-ops if the usage store isn't configured. /api/health is
+    exempt so monitoring never depends on the database.
+    """
+    path = request.url.path
+    if not path.startswith("/api/") or path == "/api/health":
+        return await call_next(request)
+
+    # Behind Vercel's proxy the caller is the first x-forwarded-for hop.
+    ip = (request.headers.get("x-forwarded-for") or "").split(",")[0].strip() or (
+        request.client.host if request.client else ""
+    )
+    if ip and await run_in_threadpool(is_blocked, ip):
+        return JSONResponse(status_code=403, content={"detail": "Access blocked"})
+
+    response = await call_next(request)
+    await run_in_threadpool(
+        log_request, path.removeprefix("/api/"), ip, request.headers.get("user-agent")
+    )
+    return response
 
 
 def _client() -> GooglePlacesClient:
