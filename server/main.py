@@ -39,6 +39,7 @@ from src.ai_copy import (
     generate_extras,
 )
 from src.brand_color import fetch_brand_color
+from src.ghl_client import GhlError, is_configured as ghl_is_configured, upsert_contact
 from src.lander_builder import build_profile
 from src.lead_store import LeadStoreError, insert_lead
 from src.meta_capi import MetaCapiError, send_event
@@ -193,6 +194,7 @@ def health():
         "anthropic_key_configured": has_anthropic_key,
         "lead_store_configured": bool(os.environ.get("DATABASE_URL")),
         "meta_capi_configured": bool(os.environ.get("META_PIXEL_ID") and os.environ.get("META_CAPI_ACCESS_TOKEN")),
+        "ghl_configured": ghl_is_configured(),
     }
 
 
@@ -233,6 +235,35 @@ def meta_event(req: MetaEventRequest, request: Request):
         )
         return {"ok": True}
     except MetaCapiError:
+        return {"ok": False}
+
+
+class GhlContactRequest(BaseModel):
+    """One funnel signup to sync into GoHighLevel as a contact. Sent by the
+    frontend right after the lander save lands (i.e. post Google OAuth).
+    """
+    name: Optional[str] = Field(default=None, max_length=200)
+    email: Optional[str] = Field(default=None, max_length=320)
+    phone: Optional[str] = Field(default=None, max_length=50)
+    business: Optional[str] = Field(default=None, max_length=200)
+
+
+@app.post("/api/ghl-contact")
+def ghl_contact(req: GhlContactRequest):
+    """Upsert a signup into the GHL sub-account. Same contract as
+    /api/meta-event: never allowed to fail the caller's actual action --
+    if GHL isn't configured yet or its API errors, report ok:false and
+    move on. The signup itself already succeeded in Supabase.
+    """
+    try:
+        upsert_contact(
+            name=req.name,
+            email=req.email,
+            phone=req.phone,
+            business=req.business,
+        )
+        return {"ok": True}
+    except GhlError:
         return {"ok": False}
 
 

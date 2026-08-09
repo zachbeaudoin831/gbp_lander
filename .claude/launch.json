@@ -4,8 +4,9 @@
     {
       "name": "gbp-lander-frontend",
       "runtimeExecutable": "bash",
-      "runtimeArgs": ["-c", "cd frontend && npm run dev -- --port 5183"],
-      "port": 5183
+      "runtimeArgs": ["-c", "cd frontend && npm run dev -- --port ${PORT:-5183}"],
+      "port": 5183,
+      "autoPort": true
     }
   ]
 }

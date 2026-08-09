@@ -36,7 +36,9 @@ const contrastInk = hex => {
 };
 
 /* ─── lander HTML generator ("Soft Light" template) ─────────────────── */
-function buildLanderHTML(d) {
+// Exported for the /admin asset portal, which regenerates any saved
+// lander from its profile jsonb -- same input, same file the user got.
+export function buildLanderHTML(d) {
   // Em dashes never reach the end user: spaced ones read as a comma pause,
   // anything left becomes a plain hyphen.
   const noDash = s => s == null ? '' : String(s).replace(/\s*—\s*/g, ', ').replace(/—/g, '-');
@@ -378,7 +380,7 @@ function serviceExamples(profile) {
 /* ─── Ads tab: lander photo + AI copy → downloadable ad graphic ─────── */
 const AD_SIZE = 1080; // square, works on Facebook/Instagram feed and Google display
 
-const slugify = s => (String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')) || 'lander';
+export const slugify = s => (String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')) || 'lander';
 
 // Google OAuth navigates the whole app away; the in-progress lander + ads are
 // stashed under this key so the redirect back can rebuild the screen.
@@ -914,6 +916,7 @@ export default function App() {
   const adsDrawnRef = useRef(false);    // all selected ad canvases have rendered
   const pendingDownloadRef = useRef(null); // {biz, wantAds} queued until canvases are ready
   const savedOnceRef = useRef(false);   // guard against duplicate lander inserts on repeat Step 3 clicks
+  const savedLanderRef = useRef(null);  // {landerId, userId} of this session's save, for the asset upload
 
   useEffect(() => {
     let s = document.getElementById('lb-global-css');
@@ -1225,18 +1228,41 @@ export default function App() {
     pendingDownloadRef.current = null;
     const slug = slugify(pend.biz?.name);
     const files = [];
+    const uploads = []; // exact copies of the deliverables, for the admin asset portal
     if (pend.biz) {
-      const url = URL.createObjectURL(new Blob([buildLanderHTML(pend.biz)], { type: 'text/html' }));
-      files.push({ href: url, name: `${slug}-lander.html`, label: 'Landing page', detail: 'Single HTML file. Host it on any subdomain' });
+      const htmlBlob = new Blob([buildLanderHTML(pend.biz)], { type: 'text/html' });
+      files.push({ href: URL.createObjectURL(htmlBlob), name: `${slug}-lander.html`, label: 'Landing page', detail: 'Single HTML file. Host it on any subdomain' });
+      uploads.push({ name: `${slug}-lander.html`, blob: htmlBlob, contentType: 'text/html' });
     }
     (adCanvasesRef.current || []).filter(Boolean).forEach((canvas, i) => {
       try {
         files.push({ href: canvas.toDataURL('image/png'), name: `${slug}-ad-${i + 1}.png`, label: `Ad graphic ${i + 1}`, detail: '1080×1080 PNG, ready for Meta' });
+        uploads.push({ name: `${slug}-ad-${i + 1}.png`, canvas, contentType: 'image/png' });
       } catch { /* tainted canvas -- skip this ad rather than fail the batch */ }
     });
+    uploadAssets(uploads);
     setDeliverables(files);
     setStep('thankyou');
     window.scrollTo(0, 0);
+  }
+
+  // Mirror the delivered files into the private `assets` bucket at
+  // {user_id}/{lander_id}/ so the admin portal can show exactly what this
+  // signup walked away with. Entirely fire-and-forget: any failure here is
+  // invisible to the user, whose downloads already work from local state.
+  function uploadAssets(uploads) {
+    const saved = savedLanderRef.current;
+    if (!supabase || !saved?.landerId || !uploads.length) return;
+    const put = (name, blob, contentType) => {
+      supabase.storage
+        .from('assets')
+        .upload(`${saved.userId}/${saved.landerId}/${name}`, blob, { contentType, upsert: true })
+        .catch(() => {});
+    };
+    uploads.forEach(u => {
+      if (u.blob) put(u.name, u.blob, u.contentType);
+      else u.canvas.toBlob(b => { if (b) put(u.name, b, u.contentType); }, 'image/png');
+    });
   }
 
   function handleAdsDrawn() {
@@ -1313,16 +1339,26 @@ export default function App() {
         });
         if (profileError) throw profileError;
 
-        const { error: landerError } = await supabase.from('landers').insert({
+        const { data: savedLander, error: landerError } = await supabase.from('landers').insert({
           user_id: user.id,
           name: biz?.name || 'Untitled lander',
           profile: biz,
-        });
+        }).select('id').single();
         if (landerError) throw landerError;
+        savedLanderRef.current = { landerId: savedLander?.id, userId: user.id };
         savedOnceRef.current = true;
         // The real "this ad worked" moment: a new business owner just
         // finished Google sign-in and their first lander saved.
         trackSignup({ email: user.email, phone: biz?.phone_national || biz?.phone_international });
+        // Mirror the signup into GoHighLevel so follow-up lives in the CRM.
+        // Fire-and-forget: the backend answers ok:false rather than erroring,
+        // and even a network failure must never break the save flow.
+        apiPost('/api/ghl-contact', {
+          name: user.user_metadata?.full_name || user.user_metadata?.name || user.email,
+          email: user.email,
+          phone: biz?.phone_national || biz?.phone_international || null,
+          business: biz?.name || null,
+        }).catch(() => {});
 
         const { data: allLanders } = await supabase
           .from('landers')
