@@ -28,7 +28,7 @@ const MOCK_LEADS = !MOCK ? [] : [
       profile: {
         name: "Duncan Plumbing", category: "Plumber", address: "3212 Mission Dr, Santa Cruz, CA",
         phone_national: "(831) 555-0199", rating: 4.9, review_count: 152,
-        tagline: "Fast, honest plumbing since 1982",
+        tagline: "Fast, honest plumbing since 1982", main_service: "water heater replacement",
         services: ["Drain cleaning", "Water heaters", "Leak repair"],
         service_areas: ["Santa Cruz", "Capitola"], reviews: [], photos: [], hours: [],
       },
@@ -479,7 +479,7 @@ export default function Admin() {
     const q = query.trim().toLowerCase();
     if (!q) return leads;
     return leads.filter(l =>
-      [l.name, l.email, l.phone, ...l.landers.map(x => x.name)]
+      [l.name, l.email, l.phone, ...l.landers.map(x => x.name), ...l.landers.map(x => x.profile?.main_service)]
         .some(v => String(v || "").toLowerCase().includes(q))
     );
   }, [leads, query]);
@@ -559,6 +559,9 @@ export default function Admin() {
                     {lead.landers[0]?.name || "No lander saved"}
                     {lead.landers.length > 1 ? ` +${lead.landers.length - 1} more` : ""}
                   </div>
+                  {lead.landers[0]?.profile?.main_service && (
+                    <div className="ap-tag" style={{ marginTop: 4 }}>wants calls for: {lead.landers[0].profile.main_service}</div>
+                  )}
                 </div>
                 <span style={{ flex: 1 }} />
                 <div className="ap-meta" style={{ textAlign: "right" }}>
