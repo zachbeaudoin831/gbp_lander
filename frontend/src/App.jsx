@@ -617,6 +617,11 @@ function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn, onDo
   // picked (unless they were restored from the pre-OAuth stash).
   useEffect(() => {
     if (!profile || !angleMeta) return;
+    // Google ads copy doesn't depend on which photos get picked, so it runs
+    // while the owner is still browsing -- by the time they finish picking,
+    // both AI calls are usually done and the build trace only has to cover
+    // the photo renders. (Self-guarded: no-op if already started/restored.)
+    generateGoogleAdsOnce();
     if (variations.length || autoGenRef.current) return;
     autoGenRef.current = true;
     handleGenerateVariations();
@@ -714,10 +719,12 @@ function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn, onDo
     finishedRef.current = false;
     buildTimersRef.current.forEach(clearTimeout);
     const timers = [];
-    // Scripted trace: one row every ~1.9s, then the gate opens once the real
-    // work (copy + google ads + photo loads) has also finished.
-    BUILD_STEPS.forEach((_, i) => { if (i > 0) timers.push(setTimeout(() => setBuildStep(i), i * 1900)); });
-    timers.push(setTimeout(() => setMinWaitDone(true), BUILD_STEPS.length * 1900));
+    // Scripted trace: one row every ~1.2s, then the gate opens once the real
+    // work (copy + google ads + photo loads) has also finished. Both AI
+    // calls start back at the photo picker, so ~4.8s of trace usually covers
+    // whatever's left.
+    BUILD_STEPS.forEach((_, i) => { if (i > 0) timers.push(setTimeout(() => setBuildStep(i), i * 1200)); });
+    timers.push(setTimeout(() => setMinWaitDone(true), BUILD_STEPS.length * 1200));
     timers.push(setTimeout(() => setForceFinish(true), 30000)); // failsafe: never trap the user here
     buildTimersRef.current = timers;
     generateGoogleAdsOnce();
@@ -1014,6 +1021,9 @@ export default function App() {
       document.head.appendChild(s);
     }
     initPixel();
+    // Warm the backend while the visitor is still reading the homepage --
+    // Vercel's Python cold start would otherwise land on their first search.
+    apiGet('/api/health').catch(() => {});
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, []);
 
@@ -1166,7 +1176,14 @@ export default function App() {
     try {
       const profile = await profilePromiseRef.current;
       let extras = {};
-      try { extras = (await offerPromiseRef.current) || {}; } catch { /* scan failed -- continue without it */ }
+      // The website scan usually finished while the owner was typing. If it
+      // didn't (slow site), give it 4 more seconds and move on without it --
+      // the angles call treats the summary as optional, and a stalled scrape
+      // must not sit between the owner and their angles.
+      try {
+        const scan = offerPromiseRef.current;
+        if (scan) extras = (await Promise.race([scan, new Promise(res => setTimeout(() => res(null), 4000))])) || {};
+      } catch { /* scan failed -- continue without it */ }
       const merged = { ...profile, ...cleanExtras(extras), main_service: svc };
       const res = await generateAngles({
         name: merged.name,
@@ -1217,6 +1234,7 @@ export default function App() {
     setStep('built');
     // Short scripted trace while the (instant) build "runs" -- ends in the
     // completed state with the View button instead of holding forever.
+    // 700ms/row: quick enough to feel snappy, slow enough to read.
     if (timerRef.current) clearInterval(timerRef.current);
     let i = 1;
     timerRef.current = setInterval(() => {
@@ -1227,7 +1245,7 @@ export default function App() {
         return;
       }
       setBuildIndex(i);
-    }, 1100);
+    }, 700);
   }
 
   // Closing the page popup is what kicks off the ads handoff: the trace
@@ -1237,7 +1255,7 @@ export default function App() {
     setShowPage(false);
     if (builtPhase === 'ready') {
       setBuiltPhase('adsSpin');
-      setTimeout(() => setBuiltPhase('adsReady'), 2400);
+      setTimeout(() => setBuiltPhase('adsReady'), 1300);
     }
   }
 

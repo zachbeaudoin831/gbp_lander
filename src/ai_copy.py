@@ -640,6 +640,10 @@ Call button: {angle.get("cta_label") or "(none)"}"""
         # emitted -- 1200 came back with an empty reply. Match the angles
         # call's headroom.
         max_tokens=4096,
+        # Low effort: measured 33s at the default -- the model overthinks the
+        # character counting, and this call sits on the funnel's build gate.
+        # Length limits are enforced server-side below either way.
+        output_config={"effort": "low"},
         system=_GOOGLE_ADS_SYSTEM + _STYLE_RULES,
         messages=[{"role": "user", "content": user_content}],
     )

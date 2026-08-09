@@ -31,6 +31,7 @@ from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field
+from starlette.background import BackgroundTask
 from starlette.concurrency import run_in_threadpool
 
 from src.ai_copy import (
@@ -94,7 +95,10 @@ async def usage_and_blocklist(request: Request, call_next):
         return JSONResponse(status_code=403, content={"detail": "Access blocked"})
 
     response = await call_next(request)
-    await run_in_threadpool(
+    # Log AFTER the response is sent (Starlette background tasks run once the
+    # body has gone out, still inside this invocation) -- the caller never
+    # waits on the usage INSERT.
+    response.background = BackgroundTask(
         log_request, path.removeprefix("/api/"), ip, request.headers.get("user-agent")
     )
     return response
