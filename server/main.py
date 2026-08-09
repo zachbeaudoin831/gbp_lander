@@ -38,6 +38,7 @@ from src.ai_copy import (
     generate_ad_copy,
     generate_angle_ad_variations,
     generate_extras,
+    generate_google_rsa,
 )
 from src.brand_color import fetch_brand_color
 from src.ghl_client import GhlError, is_configured as ghl_is_configured, upsert_contact
@@ -489,6 +490,44 @@ def generate_angle_ads_route(req: AngleAdsRequest):
         raise HTTPException(status_code=500, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"Ad variation generation failed: {e}")
+
+
+class GoogleAdsRequest(BaseModel):
+    """Same profile-derived payload as AngleAdsRequest -- the frontend already
+    holds everything, no new fetches needed."""
+    name: str
+    category: str = ""
+    services: list[str] = []
+    service_areas: list[str] = []
+    rating: Optional[float] = None
+    review_count: Optional[int] = None
+    summary: Optional[str] = None
+    main_service: str = ""
+    angle: ChosenAngle
+
+
+@app.post("/api/generate-google-ads")
+def generate_google_ads_route(req: GoogleAdsRequest):
+    """One Claude call turning the chosen angle into Responsive Search Ad
+    assets (15 headlines / 4 descriptions), delivered to the user as a text
+    file alongside the lander and Meta ad images.
+    """
+    try:
+        return generate_google_rsa(
+            name=req.name,
+            category=req.category,
+            services=req.services,
+            service_areas=req.service_areas,
+            rating=req.rating,
+            review_count=req.review_count,
+            summary=req.summary,
+            main_service=req.main_service,
+            angle=req.angle.model_dump(),
+        )
+    except RuntimeError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Google ads generation failed: {e}")
 
 
 class AdCopyRequest(BaseModel):

@@ -569,3 +569,88 @@ Call button: {angle.get("cta_label") or "(none)"}"""
     )
     log_ai("generate-angle-ads", resp)
     return _reply_json(resp)
+
+_GOOGLE_ADS_SYSTEM = """You write Google Search ads (Responsive Search Ad \
+assets) for local service businesses. The searcher typed something like the \
+business's main service + their city; your job is copy that wins that click \
+and produces a phone call.
+
+Return STRICT JSON, nothing else:
+{"headlines": ["...", ...], "descriptions": ["...", ...]}
+
+HARD LIMITS (Google rejects anything longer, so these are absolute):
+- Exactly 15 headlines, each 30 characters or fewer INCLUDING spaces.
+- Exactly 4 descriptions, each 90 characters or fewer INCLUDING spaces.
+Count characters before including a line. If a line is over, shorten it.
+
+Headline mix (spread across the 15): the main service plus a city or area; \
+the chosen angle's hook; the offer or guarantee; star rating + review count \
+as social proof; speed/availability ("Same-Day", "24/7") only if the profile \
+supports it; free-quote or price-anchor hooks; and 2-3 plain call-to-action \
+headlines ("Call For A Free Quote"). Title Case for headlines. At most one \
+headline may use an exclamation point.
+
+Descriptions: complete sentences selling the angle with concrete proof \
+(rating, years, guarantee), each ending in a call to action. Sentence case.
+
+Never invent facts, discounts, licenses, or years in business that are not \
+in the profile. No phone numbers in the copy (Google inserts call assets \
+separately)."""
+
+
+def generate_google_rsa(
+    *,
+    name: str,
+    category: str,
+    services: list[str],
+    service_areas: list[str],
+    rating: Optional[float],
+    review_count: Optional[int],
+    summary: Optional[str],
+    main_service: str,
+    angle: dict,
+) -> dict:
+    """One Claude call producing Responsive Search Ad assets (15 headlines /
+    4 descriptions) for the owner's chosen main service + angle. Returned as
+    {"headlines": [...], "descriptions": [...]} with Google's length limits
+    enforced server-side (over-length lines are dropped, not trimmed, so we
+    never ship a mid-word cut)."""
+    user_content = f"""BUSINESS PROFILE
+Name: {name}
+Category: {category or "(unknown)"}
+Services: {", ".join(services) if services else "(none listed)"}
+Service areas: {", ".join(service_areas) if service_areas else "(none listed)"}
+Rating: {f"{rating} stars from {review_count} Google reviews" if rating else "(no rating on file)"}
+About: {summary or "(no website summary available)"}
+
+MAIN SERVICE THE OWNER WANTS CALLS FOR
+{main_service or category or "(unspecified)"}
+
+CHOSEN ANGLE
+Label: {angle.get("label") or "(unnamed)"}
+Hook: {angle.get("hook") or "(none)"}
+Landing page headline: {angle.get("lander_headline") or "(none)"}
+Call button: {angle.get("cta_label") or "(none)"}"""
+
+    client = _client()
+    resp = client.messages.create(
+        model=MODEL,
+        # 15 short headlines + 4 descriptions; 1200 leaves comfortable room.
+        max_tokens=1200,
+        system=_GOOGLE_ADS_SYSTEM + _STYLE_RULES,
+        messages=[{"role": "user", "content": user_content}],
+    )
+    log_ai("generate-google-ads", resp)
+    data = _reply_json(resp)
+
+    headlines = [
+        h.strip() for h in data.get("headlines", [])
+        if isinstance(h, str) and h.strip() and len(h.strip()) <= 30
+    ][:15]
+    descriptions = [
+        d.strip() for d in data.get("descriptions", [])
+        if isinstance(d, str) and d.strip() and len(d.strip()) <= 90
+    ][:4]
+    if len(headlines) < 3 or len(descriptions) < 2:
+        raise RuntimeError("Google ads generation returned too few usable lines")
+    return {"headlines": headlines, "descriptions": descriptions}
