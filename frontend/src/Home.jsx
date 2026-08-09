@@ -210,13 +210,37 @@ export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
                   <b>4.7</b><span className="stars" aria-hidden="true">★★★★★</span><span className="count">874 reviews</span>
                 </div>
                 <div className="gbp-open"><span className="o">Open</span> <span className="c">· Closes 6 PM</span></div>
+                <div className="gbp-actions" aria-hidden="true">
+                  <span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.13.96.36 1.9.7 2.8a2 2 0 0 1-.45 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.45c.9.34 1.84.57 2.8.7a2 2 0 0 1 1.7 2.05Z" /></svg> Call</span>
+                  <span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="m21.7 11.3-9-9a1 1 0 0 0-1.4 0l-9 9a1 1 0 0 0 0 1.4l9 9a1 1 0 0 0 1.4 0l9-9a1 1 0 0 0 0-1.4Z"/><path d="m14 14.5 2.5-2.5L14 9.5"/><path d="M8.5 14v-1.5a1 1 0 0 1 1-1h7"/></svg> Directions</span>
+                  <span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10Z"/></svg> Website</span>
+                </div>
                 <div className="gbp-photos" aria-hidden="true">
                   {EX_ROOFER.listingPhotos.map(p => <img key={p} src={p} alt="" loading="lazy" />)}<span>+5</span>
+                </div>
+                <div className="gbp-review" aria-hidden="true">
+                  <span className="stars">★★★★★</span> "Fixed our leak the same day, honest pricing and a spotless cleanup..."
+                </div>
+                <div className="gbp-addr" aria-hidden="true">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>
+                  2617 Grissom Dr, Nashville, TN 37204
                 </div>
               </div>
               </div>
               <span className="pipe-arrow" aria-hidden="true">→</span>
               <div className="tf-ads" aria-hidden="true">
+                <div className="gad-mini">
+                  <div className="gm-top"><span className="gm-fav">M</span><span><b>Sponsored</b> · musiccityroofers.com</span></div>
+                  <p className="gm-title"><span className="hl">Roof Leaks Fixed Before They Spread</span></p>
+                  <p className="gm-desc">Rated 4.7 by 874 Nashville homeowners.</p>
+                  <span className="gm-call"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.13.96.36 1.9.7 2.8a2 2 0 0 1-.45 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.45c.9.34 1.84.57 2.8.7a2 2 0 0 1 1.7 2.05Z" /></svg> Call (615) 555-0119</span>
+                </div>
+                <div className="gad-mini">
+                  <div className="gm-top"><span className="gm-fav">M</span><span><b>Sponsored</b> · musiccityroofers.com</span></div>
+                  <p className="gm-title">Nashville's Highest-Rated Roofers</p>
+                  <p className="gm-desc">874 five-star reviews. Honest inspections, fast repairs.</p>
+                  <span className="gm-call"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.13.96.36 1.9.7 2.8a2 2 0 0 1-.45 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.45c.9.34 1.84.57 2.8.7a2 2 0 0 1 1.7 2.05Z" /></svg> Call (615) 555-0119</span>
+                </div>
                 <div className="meta-mini">
                   <div className="mm-head"><span className="mm-avatar">M</span><span><b>Music City Roofers</b><em>Sponsored</em></span></div>
                   <div className="mm-img">
@@ -225,11 +249,13 @@ export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
                   </div>
                   <div className="mm-cta"><span>musiccityroofers.com</span><i>Call Now</i></div>
                 </div>
-                <div className="gad-mini">
-                  <div className="gm-top"><span className="gm-fav">M</span><span><b>Sponsored</b> · musiccityroofers.com</span></div>
-                  <p className="gm-title"><span className="hl">Roof Leaks Fixed Before They Spread</span> | Music City Roofers</p>
-                  <p className="gm-desc">Rated 4.7 by 874 Nashville homeowners. Honest inspections, fast repairs.</p>
-                  <span className="gm-call"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.13.96.36 1.9.7 2.8a2 2 0 0 1-.45 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.45c.9.34 1.84.57 2.8.7a2 2 0 0 1 1.7 2.05Z" /></svg> Call (615) 555-0119</span>
+                <div className="meta-mini">
+                  <div className="mm-head"><span className="mm-avatar">M</span><span><b>Music City Roofers</b><em>Sponsored</em></span></div>
+                  <div className="mm-img">
+                    <img src={EX_ROOFER.listingPhotos[2]} alt="" loading="lazy" />
+                    <p>Nashville's Highest-Rated Roofers</p>
+                  </div>
+                  <div className="mm-cta"><span>musiccityroofers.com</span><i>Call Now</i></div>
                 </div>
               </div>
               <span className="pipe-arrow" aria-hidden="true">→</span>
