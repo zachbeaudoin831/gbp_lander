@@ -326,33 +326,51 @@ html { scroll-behavior: smooth; }
 .lb-home .pipe-col{min-width:0}
 .lb-home .pipe-arrow{color:var(--orange);font-size:20px;font-weight:700}
 .lb-home .pipeline .gbp-card{
-  aspect-ratio:1;padding:12px 14px;font-size:12px;
-  display:flex;flex-direction:column;justify-content:space-between;gap:0;
+  aspect-ratio:1;padding:0;font-size:12px;
+  display:flex;flex-direction:column;gap:0;
 }
-.lb-home .pipeline .gbp-avatar{width:30px;height:30px;font-size:13px}
-.lb-home .pipeline .gbp-name{font-size:13px}
+/* photo cover strip, full bleed across the card's top */
+.lb-home .gbp-cover{
+  display:grid;grid-template-columns:1.5fr 1fr 1fr .9fr;gap:2px;
+  height:76px;flex:none;
+  border-radius:var(--radius) var(--radius) 0 0;overflow:hidden;
+}
+.lb-home .gbp-cover img{width:100%;height:100%;object-fit:cover}
+.lb-home .gbp-cover-more{position:relative;display:block}
+.lb-home .gbp-cover-more img{position:absolute;inset:0}
+.lb-home .gbp-cover-more i{
+  position:absolute;inset:0;display:grid;place-items:center;
+  background:rgba(12,9,7,.45);color:#fff;font-style:normal;
+  font-size:11px;font-weight:700;
+}
+.lb-home .gbp-body{
+  flex:1;min-height:0;padding:10px 14px 12px;
+  display:flex;flex-direction:column;justify-content:space-between;gap:6px;
+}
+.lb-home .pipeline .gbp-top{gap:9px;align-items:center}
+.lb-home .pipeline .gbp-avatar{width:28px;height:28px;font-size:12px;border-radius:8px}
+.lb-home .pipeline .gbp-name{font-size:13.5px}
 .lb-home .pipeline .gbp-cat{font-size:10.5px}
 .lb-home .pipeline .gbp-rating{font-size:11.5px}
-.lb-home .pipeline .gbp-open{font-size:10.5px}
-.lb-home .pipeline .gbp-photos img,
-.lb-home .pipeline .gbp-photos span{aspect-ratio:3/2}
-.lb-home .gbp-actions{display:flex;gap:7px;flex-wrap:wrap}
+.lb-home .pipeline .gbp-rating .count{color:var(--ink-3)}
+.lb-home .gbp-info{
+  display:flex;align-items:center;gap:7px;
+  font-size:11px;color:var(--ink-2);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.lb-home .gbp-info svg{flex:none;color:var(--ink-3)}
+.lb-home .gbp-info .o{color:var(--green);font-weight:600}
+.lb-home .gbp-actions{display:flex;gap:6px;flex-wrap:wrap}
 .lb-home .gbp-actions span{
   display:inline-flex;align-items:center;gap:5px;
-  border:1px solid var(--line);border-radius:999px;padding:4px 11px;
+  background:var(--orange-soft);border-radius:999px;padding:5px 12px;
   font-size:11px;font-weight:600;color:var(--orange);
 }
 .lb-home .gbp-review{
-  font-size:10px;color:var(--ink-2);line-height:1.35;
-  background:var(--paper-2);border-radius:8px;padding:6px 9px;
+  font-size:10px;color:var(--ink-2);line-height:1.4;font-style:italic;
+  border-top:1px solid var(--line);padding-top:7px;
 }
-.lb-home .gbp-review .stars{font-size:9px}
-.lb-home .gbp-addr{
-  display:flex;align-items:center;gap:5px;
-  font-family:var(--font-mono);font-size:10px;color:var(--ink-3);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-}
-.lb-home .gbp-addr svg{flex:none}
+.lb-home .gbp-review .stars{font-size:8.5px;font-style:normal;margin-right:2px}
 .lb-home .pipeline .lander-mock{aspect-ratio:1;display:flex;flex-direction:column}
 .lb-home .pipeline .mock-chrome{padding:8px 12px}
 .lb-home .pipeline .mock-body{padding:12px 14px;flex:1;display:flex;flex-direction:column;justify-content:center}

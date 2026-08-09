@@ -199,31 +199,37 @@ export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
               <div className="pipe-col">
               <div className="gbp-card">
                 <span className="gbp-tag">Your Google listing</span>
-                <div className="gbp-top">
-                  <div className="gbp-avatar" aria-hidden="true">M</div>
-                  <div>
-                    <div className="gbp-name">Music City Roofers</div>
-                    <div className="gbp-cat">Roofing contractor · Nashville, TN</div>
+                <div className="gbp-cover" aria-hidden="true">
+                  {EX_ROOFER.listingPhotos.map(p => <img key={p} src={p} alt="" loading="lazy" />)}
+                  <span className="gbp-cover-more"><img src={EX_ROOFER.cardPhoto} alt="" loading="lazy" /><i>+5</i></span>
+                </div>
+                <div className="gbp-body">
+                  <div className="gbp-top">
+                    <div className="gbp-avatar" aria-hidden="true">M</div>
+                    <div>
+                      <div className="gbp-name">Music City Roofers</div>
+                      <div className="gbp-cat">Roofing contractor · Nashville, TN</div>
+                    </div>
                   </div>
-                </div>
-                <div className="gbp-rating">
-                  <b>4.7</b><span className="stars" aria-hidden="true">★★★★★</span><span className="count">874 reviews</span>
-                </div>
-                <div className="gbp-open"><span className="o">Open</span> <span className="c">· Closes 6 PM</span></div>
-                <div className="gbp-actions" aria-hidden="true">
-                  <span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.13.96.36 1.9.7 2.8a2 2 0 0 1-.45 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.45c.9.34 1.84.57 2.8.7a2 2 0 0 1 1.7 2.05Z" /></svg> Call</span>
-                  <span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="m21.7 11.3-9-9a1 1 0 0 0-1.4 0l-9 9a1 1 0 0 0 0 1.4l9 9a1 1 0 0 0 1.4 0l9-9a1 1 0 0 0 0-1.4Z"/><path d="m14 14.5 2.5-2.5L14 9.5"/><path d="M8.5 14v-1.5a1 1 0 0 1 1-1h7"/></svg> Directions</span>
-                  <span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10Z"/></svg> Website</span>
-                </div>
-                <div className="gbp-photos" aria-hidden="true">
-                  {EX_ROOFER.listingPhotos.map(p => <img key={p} src={p} alt="" loading="lazy" />)}<span>+5</span>
-                </div>
-                <div className="gbp-review" aria-hidden="true">
-                  <span className="stars">★★★★★</span> "Fixed our leak the same day, honest pricing and a spotless cleanup..."
-                </div>
-                <div className="gbp-addr" aria-hidden="true">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>
-                  2617 Grissom Dr, Nashville, TN 37204
+                  <div className="gbp-rating">
+                    <b>4.7</b><span className="stars" aria-hidden="true">★★★★★</span><span className="count">(874)</span>
+                  </div>
+                  <div className="gbp-info" aria-hidden="true">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    <span><span className="o">Open</span> · Closes 6 PM</span>
+                  </div>
+                  <div className="gbp-info" aria-hidden="true">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>
+                    <span>2617 Grissom Dr, Nashville, TN</span>
+                  </div>
+                  <div className="gbp-actions" aria-hidden="true">
+                    <span><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.13.96.36 1.9.7 2.8a2 2 0 0 1-.45 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.45c.9.34 1.84.57 2.8.7a2 2 0 0 1 1.7 2.05Z" /></svg> Call</span>
+                    <span><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="m21.7 11.3-9-9a1 1 0 0 0-1.4 0l-9 9a1 1 0 0 0 0 1.4l9 9a1 1 0 0 0 1.4 0l9-9a1 1 0 0 0 0-1.4Z"/><path d="m14 14.5 2.5-2.5L14 9.5"/><path d="M8.5 14v-1.5a1 1 0 0 1 1-1h7"/></svg> Directions</span>
+                    <span><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10Z"/></svg> Website</span>
+                  </div>
+                  <div className="gbp-review" aria-hidden="true">
+                    <span className="stars">★★★★★</span> "Fixed our leak the same day, honest pricing and a spotless cleanup..."
+                  </div>
                 </div>
               </div>
               </div>
