@@ -140,7 +140,8 @@ function LanderAssets({ lander }) {
     a.click();
   }
 
-  const storedLander = assets?.find(f => !f.isImage);
+  const storedLander = assets?.find(f => f.name.endsWith(".html"));
+  const storedDocs = assets?.filter(f => !f.isImage && !f.name.endsWith(".html")) || [];
   const storedAds = assets?.filter(f => f.isImage) || [];
 
   return (
@@ -152,6 +153,11 @@ function LanderAssets({ lander }) {
         <button className="ap-btn" onClick={() => setShowPreview(v => !v)}>
           {showPreview ? "Hide preview" : "Preview lander"}
         </button>
+        {storedDocs.map(f => (
+          <a key={f.name} className="ap-btn" href={f.downloadUrl}>
+            {f.name.includes("google-ads") ? "Google ads" : f.name}
+          </a>
+        ))}
         {storedLander
           ? <a className="ap-btn primary" href={storedLander.downloadUrl}>Download lander</a>
           : <button className="ap-btn primary" onClick={downloadRebuiltLander}>Download lander</button>}

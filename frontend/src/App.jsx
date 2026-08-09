@@ -298,6 +298,10 @@ async function generateAngleAds(payload) {
   return apiPost('/api/generate-angle-ads', payload);
 }
 
+async function generateGoogleAdsCopy(payload) {
+  return apiPost('/api/generate-google-ads', payload);
+}
+
 /* ─── built-step trace rows shown while the lander is assembled. Row 0
    mirrors the angle-research trace's first line and starts pre-completed,
    so the two loading screens read as one continuous checklist. ───────── */
@@ -381,6 +385,25 @@ function serviceExamples(profile) {
 const AD_SIZE = 1080; // square, works on Facebook/Instagram feed and Google display
 
 export const slugify = s => (String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')) || 'lander';
+
+// The Google Search ads deliverable: a plain-text file the owner pastes into
+// a Responsive Search Ad. Kept deliberately simple so it opens anywhere.
+function buildGoogleAdsText(biz, g) {
+  const head = g.headlines.map((h, i) => `${i + 1}. ${h}`).join('\n');
+  const desc = g.descriptions.map((d, i) => `${i + 1}. ${d}`).join('\n');
+  return `GOOGLE SEARCH ADS: ${biz?.name || 'your business'}
+
+How to use: in Google Ads, create a Search campaign, add a Responsive Search
+Ad, and paste these in. Turn on call assets so the ad can ring your phone
+directly.
+
+HEADLINES (Google mixes and matches these, 30 characters max each)
+${head}
+
+DESCRIPTIONS (Google shows up to 2 at a time, 90 characters max each)
+${desc}
+`;
+}
 
 // Google OAuth navigates the whole app away; the in-progress lander + ads are
 // stashed under this key so the redirect back can rebuild the screen.
@@ -526,12 +549,20 @@ function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn, onDo
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(-1); // index of the variation whose primary text was just copied (-2 = legacy single copy)
-  // Angle-mode wizard: photos → copy → ads. A post-OAuth restore with a full
-  // photo selection drops straight back onto the finished-ads screen.
-  const [stage, setStage] = useState((initialAds?.photoUrls?.length || 0) >= MAX_ADS ? 'ads' : 'photos');
-  const [selHead, setSelHead] = useState(-1); // chosen headline option (index into variations)
-  const [selSub,  setSelSub]  = useState(-1); // chosen supporting-line option
+  // Angle-mode wizard: photos → building (scripted trace while everything
+  // generates) → ads + the create-account modal. A post-OAuth restore with
+  // any photo selection drops straight back onto the finished-ads screen.
+  const [stage, setStage] = useState((initialAds?.photoUrls?.length || 0) > 0 ? 'ads' : 'photos');
+  const [googleAds, setGoogleAds] = useState(initialAds?.googleAds || null); // {headlines, descriptions} once generated
+  const [varFailed, setVarFailed] = useState(false); // variations call failed -- proceed on prefill copy
+  const [buildStep, setBuildStep] = useState(0);     // active row in the building trace
+  const [minWaitDone, setMinWaitDone] = useState(false); // trace has played through once
+  const [forceFinish, setForceFinish] = useState(false); // 30s failsafe -- never trap the user in the loader
   const autoGenRef = useRef(false); // variations auto-generation already kicked off for this lander
+  const googleGenRef = useRef(!!initialAds?.googleAds); // google-ads generation already kicked off
+  const autoAppliedRef = useRef(!!initialAds); // restored state keeps its stashed copy choice
+  const buildTimersRef = useRef([]);
+  const finishedRef = useRef(false);
 
   const profile = lander?.profile || null;
   const photos = profile?.photos || [];
@@ -553,8 +584,11 @@ function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn, onDo
 
   // Let the parent stash the current selection before the OAuth redirect.
   useEffect(() => {
-    onAdsState?.({ photoUrls, copy, variations });
-  }, [photoUrls, copy, variations]); // eslint-disable-line react-hooks/exhaustive-deps
+    onAdsState?.({ photoUrls, copy, variations, googleAds });
+  }, [photoUrls, copy, variations, googleAds]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Clear any in-flight build timers if the tab unmounts mid-trace.
+  useEffect(() => () => buildTimersRef.current.forEach(clearTimeout), []);
 
   function pickLander(l) {
     const p = l.profile || {};
@@ -565,7 +599,10 @@ function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn, onDo
     // themselves, so always start with none selected.
     setPhotoUrls([]);
     setStage('photos');
-    setSelHead(-1); setSelSub(-1);
+    setGoogleAds(null);
+    googleGenRef.current = false;
+    autoAppliedRef.current = false;
+    setVarFailed(false);
     // Prefill from the lander's own offer so there's a usable ad before the
     // AI call -- generation then just tightens what's already here.
     setCopy({
@@ -587,8 +624,7 @@ function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn, onDo
 
   async function handleGenerateVariations() {
     if (!profile?.chosen_angle) return;
-    setBusy(true); setError('');
-    setSelHead(-1); setSelSub(-1); // fresh options -- clear any prior picks
+    setBusy(true); setError(''); setVarFailed(false);
     try {
       const res = await generateAngleAds({
         name: profile.name || lander?.name || '',
@@ -607,6 +643,7 @@ function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn, onDo
       setVariations(list);
     } catch (err) {
       setError(err.message);
+      setVarFailed(true); // the build proceeds on the prefilled offer copy
     } finally {
       setBusy(false);
     }
@@ -618,24 +655,89 @@ function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn, onDo
       ? photoUrls.filter(u => u !== url)
       : photoUrls.length >= MAX_ADS ? photoUrls : [...photoUrls, url];
     setPhotoUrls(next);
-    // Wizard: the 4th pick advances straight to the copy screen.
-    if (angleMeta && next.length === MAX_ADS) setStage('copy');
+    // Wizard: the final pick kicks off the build straight away.
+    if (angleMeta && next.length === MAX_ADS) startBuild(next);
   }
 
-  function chooseHeadline(i) {
-    const v = variations[i] || {};
-    setSelHead(i);
-    // The headline's variation also carries the CTA + feed primary text that
-    // were written for it -- they ride along with the choice.
-    setCopy(c => ({ ...c, headline: v.headline || c.headline, cta: v.cta || c.cta, primary_text: v.primary_text || c.primary_text }));
+  // The owner no longer hand-picks headlines -- the first AI variation (plus
+  // the first non-empty supporting line) becomes the ad copy automatically.
+  useEffect(() => {
+    if (!angleMeta || !variations.length || autoAppliedRef.current) return;
+    autoAppliedRef.current = true;
+    const v = variations[0] || {};
+    const withSub = variations.find(x => (x.subline || '').trim()) || v;
+    setCopy(c => ({
+      headline: v.headline || c.headline,
+      subline: (withSub.subline || '').trim() ? withSub.subline : c.subline,
+      cta: v.cta || c.cta,
+      primary_text: v.primary_text || c.primary_text,
+    }));
+  }, [variations, angleMeta]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function generateGoogleAdsOnce() {
+    if (googleGenRef.current || !profile?.chosen_angle) return;
+    googleGenRef.current = true;
+    try {
+      const res = await generateGoogleAdsCopy({
+        name: profile.name || lander?.name || '',
+        category: profile.category || '',
+        services: profile.services || [],
+        service_areas: profile.service_areas || [],
+        rating: profile.rating,
+        review_count: profile.review_count,
+        summary: profile.site_summary || profile.about_summary || null,
+        main_service: profile.main_service || '',
+        angle: profile.chosen_angle,
+      });
+      setGoogleAds({ headlines: res.headlines || [], descriptions: res.descriptions || [] });
+    } catch {
+      // Never block the funnel on this file -- the download just won't
+      // include the Google ads text.
+      setGoogleAds({ headlines: [], descriptions: [] });
+    }
   }
 
-  function chooseSubline(i) {
-    const v = variations[i] || {};
-    setSelSub(i);
-    setCopy(c => ({ ...c, subline: v.subline ?? c.subline }));
-    setStage('ads'); // both chosen -- the ads generate on the next screen
+  const BUILD_STEPS = [
+    `Writing ad copy for "${profile?.main_service || profile?.category || 'your service'}"`,
+    'Creating your Meta ads',
+    'Creating your Google ads',
+    'Finalizing your campaign kit',
+  ];
+
+  function startBuild(urls) {
+    if (stage === 'building' || !(urls?.length || photoUrls.length)) return;
+    setError('');
+    setStage('building');
+    setBuildStep(0);
+    setMinWaitDone(false);
+    setForceFinish(false);
+    finishedRef.current = false;
+    buildTimersRef.current.forEach(clearTimeout);
+    const timers = [];
+    // Scripted trace: one row every ~1.9s, then the gate opens once the real
+    // work (copy + google ads + photo loads) has also finished.
+    BUILD_STEPS.forEach((_, i) => { if (i > 0) timers.push(setTimeout(() => setBuildStep(i), i * 1900)); });
+    timers.push(setTimeout(() => setMinWaitDone(true), BUILD_STEPS.length * 1900));
+    timers.push(setTimeout(() => setForceFinish(true), 30000)); // failsafe: never trap the user here
+    buildTimersRef.current = timers;
+    generateGoogleAdsOnce();
+    if (!variations.length && !busy) handleGenerateVariations(); // retry if the auto-gen failed earlier
   }
+
+  // The gate: trace played through AND copy settled AND google ads settled
+  // AND every chosen photo loaded -- then show the ads and pop the
+  // create-account modal (onDownload → handleStep3).
+  useEffect(() => {
+    if (stage !== 'building' || finishedRef.current) return;
+    const copySettled = variations.length > 0 || varFailed;
+    const googleSettled = googleAds !== null;
+    const ready = copySettled && googleSettled && allLoaded;
+    if (!minWaitDone || (!ready && !forceFinish)) return;
+    finishedRef.current = true;
+    buildTimersRef.current.forEach(clearTimeout);
+    setStage('ads');
+    onDownload?.();
+  }, [stage, variations, varFailed, googleAds, allLoaded, minWaitDone, forceFinish]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     let cancelled = false;
@@ -662,12 +764,17 @@ function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn, onDo
         const img = imgs[url];
         if (canvas && img) drawAd(canvas, img, copy, profile);
       });
-      // Every selected photo rendered -- downloads queued behind the OAuth
-      // redirect can fire now.
-      if (photoUrls.length && photoUrls.every(u => imgs[u])) onAllDrawn?.();
+      // Every selected photo rendered onto a MOUNTED canvas -- downloads
+      // queued behind the OAuth redirect can fire now. The canvas check
+      // matters: during the 'building' stage the grid isn't mounted, and
+      // reporting "drawn" then would let the capture path export blanks.
+      if (photoUrls.length && photoUrls.every((u, i) => imgs[u] && canvasesRef.current[i])) onAllDrawn?.();
     })();
     return () => { cancelled = true; };
-  }, [photoUrls, imgs, copy, variations, profile, canvasesRef]); // eslint-disable-line react-hooks/exhaustive-deps
+    // `stage` is a dep so the flip building → ads (which mounts the
+    // canvases) re-runs the draw -- by then copy/imgs have settled and
+    // nothing else would trigger it.
+  }, [photoUrls, imgs, copy, variations, profile, canvasesRef, stage]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleGenerate() {
     if (!profile) return;
@@ -714,6 +821,7 @@ function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn, onDo
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+      {stage !== 'building' && (
       <div>
         <p style={eyebrow}>Lander</p>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -722,11 +830,12 @@ function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn, onDo
           ))}
         </div>
       </div>
+      )}
 
-      {lander && angleMeta && (
+      {lander && angleMeta && stage !== 'building' && (
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {['Photos', 'Copy', 'Your ads'].map((label, i) => {
-            const idx = ['photos', 'copy', 'ads'].indexOf(stage);
+          {['Photos', 'Your ads'].map((label, i) => {
+            const idx = ['photos', 'ads'].indexOf(stage);
             const st = i < idx ? 'done' : i === idx ? 'active' : 'todo';
             return (
               <span key={label} style={{
@@ -743,7 +852,7 @@ function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn, onDo
 
       {lander && (!angleMeta || stage === 'photos') && (
         <div>
-          <p style={eyebrow}>{angleMeta ? `Pick ${MAX_ADS} photos for your ads · ${photoUrls.length} of ${MAX_ADS} selected` : `Photos: pick up to ${MAX_ADS}`}</p>
+          <p style={eyebrow}>{angleMeta ? `Pick ${MAX_ADS} photos for your ${profile?.main_service || 'service'} ads · ${photoUrls.length} of ${MAX_ADS} selected` : `Photos: pick up to ${MAX_ADS}`}</p>
           {photos.length === 0
             ? <p style={{ color: 'var(--text-secondary)', fontSize: 14, margin: 0 }}>This lander has no photos to build ads from.</p>
             : <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(110px,1fr))', gap: 8 }}>
@@ -767,51 +876,29 @@ function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn, onDo
                   );
                 })}
               </div>}
+          {angleMeta && photoUrls.length > 0 && photoUrls.length < MAX_ADS && (
+            <button className="lb-btn-signal" style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 8 }} onClick={() => startBuild()}>
+              Create my ads with {photoUrls.length} photo{photoUrls.length === 1 ? '' : 's'} <i className="ti ti-arrow-right" aria-hidden="true" />
+            </button>
+          )}
         </div>
       )}
 
-      {lander && angleMeta && stage === 'copy' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-          <button className="lb-back" style={{ alignSelf: 'flex-start' }} onClick={() => setStage('photos')}>
-            <i className="ti ti-arrow-left" aria-hidden="true" /> Change photos
-          </button>
-          {busy && !variations.length ? (
-            <p style={{ color: 'var(--text-secondary)', fontSize: 14, margin: 0 }}>Writing your copy options from the "{angleMeta.label}" angle…</p>
-          ) : (
-            <>
-              <div>
-                <p style={eyebrow}>Choose your headline</p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {variations.map((v, i) => (
-                    <button key={i} onClick={() => chooseHeadline(i)} style={{
-                      textAlign: 'left', cursor: 'pointer', borderRadius: 10, padding: '13px 16px',
-                      fontFamily: "'Plus Jakarta Sans',system-ui,sans-serif", fontWeight: 700, fontSize: 15.5,
-                      background: selHead === i ? '#E7EEFB' : 'var(--surface-2)',
-                      border: selHead === i ? '2px solid #0D57D0' : '2px solid var(--border)',
-                      color: 'var(--text-primary)',
-                    }}>{v.headline}</button>
-                  ))}
-                </div>
+      {lander && angleMeta && stage === 'building' && (
+        <div style={{ minHeight: 340, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 30, padding: '40px 0' }}>
+          <p style={{ fontFamily: "'Plus Jakarta Sans',system-ui,sans-serif", fontWeight: 700, fontSize: 20, letterSpacing: '-.01em', color: 'var(--text-primary)', margin: 0, textAlign: 'center' }}>
+            Building your campaign kit
+          </p>
+          <div className="lb-trace">
+            {BUILD_STEPS.map((s, i) => i > buildStep ? null : (
+              <div key={s} className={`lb-trace-row${i === buildStep ? ' active' : ' done'}`}>
+                <span className={`lb-trace-icon ${i === buildStep ? 'spin' : 'done'}`} aria-hidden="true">
+                  {i < buildStep && <i className="ti ti-check" style={{ fontSize: 12 }} />}
+                </span>
+                <span className="lb-trace-text">{s}</span>
               </div>
-              <div style={{ opacity: selHead > -1 ? 1 : 0.45 }}>
-                <p style={eyebrow}>{selHead > -1 ? 'Choose your supporting line' : 'Choose your supporting line (pick a headline first)'}</p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {variations.map((v, i) => (v.subline || '').trim() ? (
-                    <button key={i} disabled={selHead === -1} onClick={() => chooseSubline(i)} style={{
-                      textAlign: 'left', cursor: selHead === -1 ? 'default' : 'pointer', borderRadius: 10, padding: '12px 16px',
-                      fontSize: 14, fontFamily: 'inherit',
-                      background: selSub === i ? '#E7EEFB' : 'var(--surface-2)',
-                      border: selSub === i ? '2px solid #0D57D0' : '2px solid var(--border)',
-                      color: 'var(--text-secondary)',
-                    }}>{v.subline}</button>
-                  ) : null)}
-                </div>
-              </div>
-              <button className="lb-btn-ghost" style={{ alignSelf: 'flex-start' }} onClick={handleGenerateVariations} disabled={busy}>
-                {busy ? 'Writing new options…' : 'Write me different options'}
-              </button>
-            </>
-          )}
+            ))}
+          </div>
         </div>
       )}
 
@@ -843,8 +930,8 @@ function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn, onDo
       {lander && photoUrls.length > 0 && (!angleMeta || stage === 'ads') && (
         <div>
           {angleMeta && (
-            <button className="lb-back" style={{ marginBottom: 16 }} onClick={() => setStage('copy')}>
-              <i className="ti ti-arrow-left" aria-hidden="true" /> Change copy
+            <button className="lb-back" style={{ marginBottom: 16 }} onClick={() => setStage('photos')}>
+              <i className="ti ti-arrow-left" aria-hidden="true" /> Change photos
             </button>
           )}
           <p style={eyebrow}>{angleMeta ? (allLoaded ? `Your ${photoUrls.length} ads` : `Generating your ${photoUrls.length} ads…`) : `Your ads (${photoUrls.length})`}</p>
@@ -1233,6 +1320,12 @@ export default function App() {
       const htmlBlob = new Blob([buildLanderHTML(pend.biz)], { type: 'text/html' });
       files.push({ href: URL.createObjectURL(htmlBlob), name: `${slug}-lander.html`, label: 'Landing page', detail: 'Single HTML file. Host it on any subdomain' });
       uploads.push({ name: `${slug}-lander.html`, blob: htmlBlob, contentType: 'text/html' });
+    }
+    const gAds = adsStateRef.current?.googleAds;
+    if (pend.biz && gAds?.headlines?.length) {
+      const gBlob = new Blob([buildGoogleAdsText(pend.biz, gAds)], { type: 'text/plain' });
+      files.push({ href: URL.createObjectURL(gBlob), name: `${slug}-google-ads.txt`, label: 'Google Search ads', detail: 'Headlines and descriptions, ready to paste into a Responsive Search Ad' });
+      uploads.push({ name: `${slug}-google-ads.txt`, blob: gBlob, contentType: 'text/plain' });
     }
     (adCanvasesRef.current || []).filter(Boolean).forEach((canvas, i) => {
       try {
@@ -1724,8 +1817,8 @@ export default function App() {
             <div style={{position:'absolute',inset:0,background:'rgba(14,19,24,.7)'}} onClick={closeAccountModal} />
             <div style={{position:'relative',background:'#fff',borderRadius:14,maxWidth:380,width:'100%',padding:'28px 24px',boxShadow:'0 20px 60px rgba(0,0,0,.4)'}}>
               <button onClick={closeAccountModal} aria-label="Close" style={{position:'absolute',top:10,right:14,background:'none',border:0,fontSize:26,lineHeight:1,color:'var(--text-secondary)',cursor:'pointer'}}>&times;</button>
-              <h3 style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:20,letterSpacing:'-.01em',margin:'0 0 8px',color:'var(--text-primary)'}}>Almost there</h3>
-              <p style={{fontSize:14,color:'var(--text-secondary)',margin:'0 0 20px',lineHeight:1.5}}>Sign in with Google and we'll save your lander and ads to your account. Your files will be waiting on the next page.</p>
+              <h3 style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:20,letterSpacing:'-.01em',margin:'0 0 8px',color:'var(--text-primary)'}}>Your campaign kit is ready</h3>
+              <p style={{fontSize:14,color:'var(--text-secondary)',margin:'0 0 20px',lineHeight:1.5}}>Create your free account to download your call lander and ads. Everything will be waiting on the next page.</p>
               {accountError && <div className="lb-error" style={{marginBottom:12}}>{accountError}</div>}
               <button className="lb-btn-signal" onClick={startGoogleAuth} disabled={accountBusy || !supabase} style={{width:'100%',display:'flex',alignItems:'center',justifyContent:'center',gap:10}}>
                 <span style={{display:'flex',alignItems:'center',justifyContent:'center',width:22,height:22,borderRadius:6,background:'#fff',flexShrink:0}} aria-hidden="true">
