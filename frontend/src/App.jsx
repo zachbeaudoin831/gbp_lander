@@ -1335,19 +1335,20 @@ export default function App() {
     const files = [];
     const uploads = []; // exact copies of the deliverables, for the admin asset portal
     if (pend.biz) {
-      const htmlBlob = new Blob([buildLanderHTML(pend.biz)], { type: 'text/html' });
-      files.push({ href: URL.createObjectURL(htmlBlob), name: `${slug}-lander.html`, label: 'Landing page', detail: 'Single HTML file. Host it on any subdomain' });
+      const landerHtml = buildLanderHTML(pend.biz);
+      const htmlBlob = new Blob([landerHtml], { type: 'text/html' });
+      files.push({ href: URL.createObjectURL(htmlBlob), name: `${slug}-lander.html`, label: 'Landing page', detail: 'Single HTML file. Host it on any subdomain', kind: 'html', previewHtml: landerHtml });
       uploads.push({ name: `${slug}-lander.html`, blob: htmlBlob, contentType: 'text/html' });
     }
     const gAds = adsStateRef.current?.googleAds;
     if (pend.biz && gAds?.headlines?.length) {
       const gBlob = new Blob([buildGoogleAdsText(pend.biz, gAds)], { type: 'text/plain' });
-      files.push({ href: URL.createObjectURL(gBlob), name: `${slug}-google-ads.txt`, label: 'Google Search ads', detail: 'Headlines and descriptions, ready to paste into a Responsive Search Ad' });
+      files.push({ href: URL.createObjectURL(gBlob), name: `${slug}-google-ads.txt`, label: 'Google Search ads', detail: 'Headlines and descriptions, ready to paste into a Responsive Search Ad', kind: 'gads', previewHeadline: gAds.headlines[0], previewDesc: gAds.descriptions?.[0] });
       uploads.push({ name: `${slug}-google-ads.txt`, blob: gBlob, contentType: 'text/plain' });
     }
     (adCanvasesRef.current || []).filter(Boolean).forEach((canvas, i) => {
       try {
-        files.push({ href: canvas.toDataURL('image/png'), name: `${slug}-ad-${i + 1}.png`, label: `Ad graphic ${i + 1}`, detail: '1080×1080 PNG, ready for Meta' });
+        files.push({ href: canvas.toDataURL('image/png'), name: `${slug}-ad-${i + 1}.png`, label: `Ad graphic ${i + 1}`, detail: '1080×1080 PNG, ready for Meta', kind: 'png' });
         uploads.push({ name: `${slug}-ad-${i + 1}.png`, canvas, contentType: 'image/png' });
       } catch { /* tainted canvas -- skip this ad rather than fail the batch */ }
     });
@@ -1751,6 +1752,22 @@ export default function App() {
             {deliverables.length === 0 && <p style={{color:'var(--text-secondary)',fontSize:14}}>No files here yet. Head back to the dashboard and hit Step 3 again.</p>}
             {deliverables.map(f => (
               <div key={f.name} className="lb-card" style={{cursor:'default'}}>
+                {f.kind && (
+                  <div aria-hidden="true" style={{width:64,height:64,borderRadius:10,border:'1px solid var(--border)',overflow:'hidden',flexShrink:0,background:'#fff'}}>
+                    {f.kind === 'png' && <img src={f.href} alt="" style={{width:'100%',height:'100%',objectFit:'cover',display:'block'}} />}
+                    {f.kind === 'html' && (
+                      <iframe srcDoc={f.previewHtml} sandbox="" scrolling="no" tabIndex={-1} title=""
+                        style={{width:480,height:480,border:0,transform:'scale(0.1334)',transformOrigin:'0 0',pointerEvents:'none',display:'block'}} />
+                    )}
+                    {f.kind === 'gads' && (
+                      <div style={{width:220,height:220,transform:'scale(0.291)',transformOrigin:'0 0',padding:'14px 12px',boxSizing:'border-box',fontFamily:'arial,sans-serif',textAlign:'left'}}>
+                        <div style={{fontSize:11,fontWeight:700,color:'#202124',marginBottom:6}}>Sponsored</div>
+                        <div style={{fontSize:16,color:'#1a0dab',lineHeight:1.25,marginBottom:5,display:'-webkit-box',WebkitLineClamp:3,WebkitBoxOrient:'vertical',overflow:'hidden'}}>{f.previewHeadline}</div>
+                        <div style={{fontSize:12,color:'#4d5156',lineHeight:1.4,display:'-webkit-box',WebkitLineClamp:3,WebkitBoxOrient:'vertical',overflow:'hidden'}}>{f.previewDesc || ''}</div>
+                      </div>
+                    )}
+                  </div>
+                )}
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:14,color:'var(--text-primary)'}}>{f.label}</div>
                   <div style={{fontSize:12,color:'var(--text-secondary)',marginTop:2}}>{f.detail}</div>
