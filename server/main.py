@@ -197,6 +197,7 @@ def profile(place_id: str):
         "reviews": ctx["reviews"],
         "photos": photo_urls,
         "brand_color": brand_color,
+        "logo_url": logo_url,
     }
 
 
