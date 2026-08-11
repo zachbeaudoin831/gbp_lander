@@ -323,10 +323,10 @@ export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
                 <p>The angle becomes the headline. Every scroll is one tap from a call.</p>
               </div>
               <div className="stepA reveal">
-                <div className="mv" aria-hidden="true"><div className="mv-ads"><i></i><i></i><i></i><i></i></div></div>
+                <div className="mv" aria-hidden="true"><div className="mv-ads"><i className="g"></i><i className="g"></i><i className="m"></i><i className="m"></i></div></div>
                 <span className="stepA-n" aria-hidden="true">5</span>
-                <h3>Four matching ads for Meta</h3>
-                <p>Four takes on your angle, primary text written. Download and launch.</p>
+                <h3>Receive matching Google and Meta ads with it</h3>
+                <p>Search ads ready to paste, ad graphics ready to upload. Download and launch.</p>
               </div>
             </div>
           </div>

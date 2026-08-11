@@ -592,13 +592,25 @@ html { scroll-behavior: smooth; }
 .lb-home .mv-page .h{width:86%;height:7px;border-radius:3px;background:var(--ink);margin-bottom:3px}
 .lb-home .mv-page .h2{width:60%;height:7px;border-radius:3px;background:var(--ink);margin-bottom:7px}
 .lb-home .mv-page .call{height:14px;border-radius:5px;background:var(--green)}
-.lb-home .mv-ads{display:grid;grid-template-columns:1fr 1fr;gap:4px;width:52%}
-.lb-home .mv-ads i{aspect-ratio:1;border-radius:5px;position:relative;overflow:hidden}
-.lb-home .mv-ads i:nth-child(1){background:linear-gradient(150deg,#7D97AC,#3D5468)}
-.lb-home .mv-ads i:nth-child(2){background:linear-gradient(150deg,#9DBFB4,#527568)}
-.lb-home .mv-ads i:nth-child(3){background:linear-gradient(150deg,#C0A184,#7A5A3D)}
-.lb-home .mv-ads i:nth-child(4){background:linear-gradient(150deg,#8B8FA3,#4A4E63)}
-.lb-home .mv-ads i::after{content:"";position:absolute;left:4px;bottom:4px;width:60%;height:4px;border-radius:2px;background:rgba(255,255,255,.9)}
+/* step 5: two mini Google search ads over two Meta ad tiles */
+.lb-home .mv-ads{display:grid;grid-template-columns:1fr 1fr;gap:4px;width:58%}
+.lb-home .mv-ads i{border-radius:5px;position:relative;overflow:hidden}
+.lb-home .mv-ads i.g{
+  aspect-ratio:4/2.6;background:#fff;border:1px solid #E4E0D8;
+}
+.lb-home .mv-ads i.g::before{
+  content:"";position:absolute;left:5px;top:5px;width:62%;height:4px;
+  border-radius:2px;background:#1a0dab;opacity:.85;
+}
+.lb-home .mv-ads i.g::after{
+  content:"";position:absolute;left:5px;top:13px;width:78%;height:3px;
+  border-radius:2px;background:#C9C4BA;
+  box-shadow:0 6px 0 0 #C9C4BA;
+}
+.lb-home .mv-ads i.m{aspect-ratio:4/2.6}
+.lb-home .mv-ads i.m:nth-of-type(3){background:linear-gradient(150deg,#7D97AC,#3D5468)}
+.lb-home .mv-ads i.m:nth-of-type(4){background:linear-gradient(150deg,#9DBFB4,#527568)}
+.lb-home .mv-ads i.m::after{content:"";position:absolute;left:4px;bottom:4px;width:60%;height:4px;border-radius:2px;background:rgba(255,255,255,.9)}
 
 /* angle research section + picker mock */
 .lb-home .angle-sec .wrap{
