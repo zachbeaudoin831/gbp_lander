@@ -1023,6 +1023,7 @@ export default function App() {
   const [builtPhase, setBuiltPhase] = useState('building'); // 'built' step: building → ready → adsSpin → adsReady
   const [buildIndex, setBuildIndex] = useState(0);          // active row in the built-step trace
   const [showPage,   setShowPage]   = useState(false);      // desktop page popup over the built step
+  const [previewNoteHidden, setPreviewNoteHidden] = useState(false); // "everything can change" banner dismissed
   const timerRef  = useRef(null);
   const adCanvasesRef = useRef([]);     // canvases drawn by AdsTab, exported at Step 3
   const adsStateRef = useRef(null);     // AdsTab's current {photoUrls, copy}, for the pre-redirect stash
@@ -1697,9 +1698,13 @@ export default function App() {
           <h2 style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:24,letterSpacing:'-.01em',color:'var(--text-primary)',margin:'0 0 6px'}}>
             Pick {target} photos that show your {mainService.trim() || 'best'} work
           </h2>
-          <p style={{color:'var(--text-secondary)',fontSize:14,margin:'0 0 24px',lineHeight:1.55}}>
+          <p style={{color:'var(--text-secondary)',fontSize:14,margin:'0 0 16px',lineHeight:1.55}}>
             Straight from your Google Business Profile. These go on your landing page and become your ads, so choose the ones that fit "{mainService.trim() || 'your service'}". Your first pick becomes the main photo.
           </p>
+          <div style={{background:'#E7EEFB',border:'1px solid #D3DFF6',borderRadius:12,padding:'13px 16px',display:'flex',gap:10,alignItems:'flex-start',fontSize:13.5,color:'#2A3550',lineHeight:1.5,marginBottom:16}}>
+            <i className="ti ti-pencil" aria-hidden="true" style={{color:'#0D57D0',flexShrink:0,marginTop:2}} />
+            <span><b style={{color:'var(--text-primary)'}}>These aren't set in stone.</b> Pick the best of what's here. Once your page and ads are built, we can customize everything: your exact photos, services, wording, all of it.</span>
+          </div>
 
           <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(110px,1fr))',gap:8}}>
             {photos.map((p, i) => {
@@ -1830,6 +1835,13 @@ export default function App() {
                 </button>
                 <span style={{color:'#C7CDD2',fontSize:13,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>Your landing page · desktop preview</span>
               </div>
+              {!previewNoteHidden && (
+                <div style={{flexShrink:0,background:'#FFF4DC',color:'#8A6100',fontSize:13,padding:'9px 16px',display:'flex',alignItems:'center',justifyContent:'center',gap:8,borderBottom:'1px solid #F2E3B8',fontWeight:600}}>
+                  <i className="ti ti-pencil" aria-hidden="true" />
+                  <span>This is your first draft. Images, services, service areas, and wording can all be customized.</span>
+                  <button onClick={() => setPreviewNoteHidden(true)} aria-label="Dismiss" style={{marginLeft:10,background:'none',border:'none',color:'#B99B4A',fontWeight:700,cursor:'pointer',fontSize:14,padding:0}}>✕</button>
+                </div>
+              )}
               <iframe srcDoc={html} title="Landing page preview (desktop)" style={{flex:1,width:'100%',border:'none',background:'#fff'}} />
             </div>
           </div>
