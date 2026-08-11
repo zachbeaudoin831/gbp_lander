@@ -45,18 +45,6 @@ const BUILD_LOG = [
   ]},
 ];
 
-// Keep in sync with scripts/build_niche_pages.py (the /for-* pages).
-const INDUSTRIES = [
-  { label: "Plumbers", href: "/for-plumbers" },
-  { label: "HVAC", href: "/for-hvac" },
-  { label: "Electricians", href: "/for-electricians" },
-  { label: "Roofers", href: "/for-roofers" },
-  { label: "Pest control", href: "/for-pest-control" },
-  { label: "Tree services", href: "/for-tree-service" },
-  { label: "Garage door", href: "/for-garage-door" },
-  { label: "Auto repair", href: "/for-auto-repair" },
-];
-
 /* SendKPI mark: dialpad key (#) with a "new report" badge. The # is the
    true typographic glyph (Inter SemiBold outline, baked in as a path so it
    renders identically everywhere). ring = the background color behind the
@@ -78,22 +66,19 @@ export const LogoMark = ({ size = 30, ring = "#FBFAF7" }) => (
    use the app-shell theme in index.css. */
 export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
   const rootRef = useRef(null);
-  const dropRef = useRef(null);
   const mobileRef = useRef(null);
-  const [industriesOpen, setIndustriesOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   useEffect(() => {
-    if (!industriesOpen && !mobileNavOpen) return;
+    if (!mobileNavOpen) return;
     const onDown = e => {
-      if (industriesOpen && dropRef.current && !dropRef.current.contains(e.target)) setIndustriesOpen(false);
-      if (mobileNavOpen && mobileRef.current && !mobileRef.current.contains(e.target)) setMobileNavOpen(false);
+      if (mobileRef.current && !mobileRef.current.contains(e.target)) setMobileNavOpen(false);
     };
-    const onKey = e => { if (e.key === "Escape") { setIndustriesOpen(false); setMobileNavOpen(false); } };
+    const onKey = e => { if (e.key === "Escape") setMobileNavOpen(false); };
     document.addEventListener("mousedown", onDown);
     document.addEventListener("keydown", onKey);
     return () => { document.removeEventListener("mousedown", onDown); document.removeEventListener("keydown", onKey); };
-  }, [industriesOpen, mobileNavOpen]);
+  }, [mobileNavOpen]);
 
   useEffect(() => {
     const els = rootRef.current?.querySelectorAll(".reveal") || [];
@@ -124,15 +109,6 @@ export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
           <nav className="nav-links" aria-label="Main">
             <a href="#how">How it works</a>
             <a href="#pulls">What we pull in</a>
-            <div className={`nav-drop${industriesOpen ? " open" : ""}`} ref={dropRef}>
-              <button type="button" className="nav-drop-btn" aria-expanded={industriesOpen} aria-haspopup="true" onClick={() => setIndustriesOpen(o => !o)}>
-                Top Industries
-                <svg width="10" height="6" viewBox="0 0 10 6" fill="none" aria-hidden="true"><path d="M1 1l4 4 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
-              </button>
-              <div className="nav-drop-panel" role="menu">
-                {INDUSTRIES.map(i => <a key={i.href} href={i.href} role="menuitem">{i.label}</a>)}
-              </div>
-            </div>
             <a href="#examples">Examples</a>
             <a href="#faq">FAQ</a>
           </nav>
@@ -147,8 +123,6 @@ export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
               <a href="#pulls" onClick={() => setMobileNavOpen(false)}>What we pull in</a>
               <a href="#examples" onClick={() => setMobileNavOpen(false)}>Examples</a>
               <a href="#faq" onClick={() => setMobileNavOpen(false)}>FAQ</a>
-              <div className="mobile-nav-sep">Top Industries</div>
-              {INDUSTRIES.map(i => <a key={i.href} href={i.href}>{i.label}</a>)}
             </div>
           </div>
           <button className="btn btn-primary header-cta" type="button" onClick={onSignIn}>Login</button>
