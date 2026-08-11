@@ -325,7 +325,7 @@ export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
               <div className="stepA reveal">
                 <div className="mv" aria-hidden="true"><div className="mv-ads"><i className="g"></i><i className="g"></i><i className="m"></i><i className="m"></i></div></div>
                 <span className="stepA-n" aria-hidden="true">5</span>
-                <h3>Receive matching Google and Meta ads with it</h3>
+                <h3>Receive Google and Meta Ads</h3>
                 <p>Search ads ready to paste, ad graphics ready to upload. Download and launch.</p>
               </div>
             </div>
