@@ -482,7 +482,8 @@ html { scroll-behavior: smooth; }
    title-case headline, ink-black call button, photo collage strip. */
 .lb-home .mock-body{padding:22px 20px;text-align:center}
 .lb-home .mock-pill{
-  display:inline-flex;align-items:center;gap:7px;
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  align-self:center; /* flex-column parent otherwise stretches the pill full width */
   background:var(--paper-2);border:1px solid var(--line);border-radius:999px;
   padding:5px 12px;font-size:10.5px;color:var(--ink-2);
 }
