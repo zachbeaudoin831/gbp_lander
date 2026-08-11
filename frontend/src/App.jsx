@@ -537,7 +537,7 @@ function drawAd(canvas, img, copy, biz) {
   }
 }
 
-const MAX_ADS = 4;
+const MAX_ADS = 5; // photos on the lander collage = ads in the campaign kit
 
 function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn, onDownload }) {
   const [lander, setLander] = useState(null);
@@ -625,6 +625,17 @@ function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn, onDo
     if (variations.length || autoGenRef.current) return;
     autoGenRef.current = true;
     handleGenerateVariations();
+  }, [profile]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // The owner already picked their photos during the funnel (they shape the
+  // lander collage) -- reuse them here and jump straight into the
+  // campaign-kit build instead of asking again.
+  useEffect(() => {
+    if (!profile || !angleMeta || stage !== 'photos' || photoUrls.length) return;
+    const pre = (profile.lander_photos || []).filter(u => photos.includes(u)).slice(0, MAX_ADS);
+    if (!pre.length) return;
+    setPhotoUrls(pre);
+    startBuild(pre);
   }, [profile]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleGenerateVariations() {
@@ -728,7 +739,13 @@ function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn, onDo
     timers.push(setTimeout(() => setForceFinish(true), 30000)); // failsafe: never trap the user here
     buildTimersRef.current = timers;
     generateGoogleAdsOnce();
-    if (!variations.length && !busy) handleGenerateVariations(); // retry if the auto-gen failed earlier
+    // Retry if the auto-gen failed earlier. The autoGenRef guard matters when
+    // startBuild fires in the same commit as the auto-gen effect (pre-picked
+    // photos): `busy` hasn't updated yet, so without it this double-calls.
+    if (!variations.length && !busy && (varFailed || !autoGenRef.current)) {
+      autoGenRef.current = true;
+      handleGenerateVariations();
+    }
   }
 
   // The gate: trace played through AND copy settled AND google ads settled
@@ -999,8 +1016,10 @@ export default function App() {
   const [mainService,    setMainService]    = useState('');
   const [scanDone,       setScanDone]       = useState(false); // website scan (offer generation) finished
   const [angles,         setAngles]         = useState([]);    // researched ad angles awaiting the owner's pick
+  const [pickedPhotos,   setPickedPhotos]   = useState([]);    // photos chosen for the lander (and reused for the ads), in click order
   const offerPromiseRef = useRef(null); // in-flight website-scan/offer call, started once the profile lands
   const profilePromiseRef = useRef(null); // in-flight profile fetch, started the moment a business is selected
+  const anglesPromiseRef = useRef(null); // in-flight angle research, runs behind the photo-picking step
   const [builtPhase, setBuiltPhase] = useState('building'); // 'built' step: building → ready → adsSpin → adsReady
   const [buildIndex, setBuildIndex] = useState(0);          // active row in the built-step trace
   const [showPage,   setShowPage]   = useState(false);      // desktop page popup over the built step
@@ -1165,15 +1184,9 @@ export default function App() {
     const svc = mainService.trim();
     if (!svc) { setError('Type the service you want more calls for, e.g. "water heater replacement".'); return; }
     setError('');
-    setStep('loading');
-    const stop = cycleSteps([
-      'Finding best ad angles',
-      'Studying campaigns that made the phone ring',
-      'Reading your reviews for proof points',
-      `Matching angles to "${svc}"`,
-      'Shortlisting the strongest angles',
-    ], 1700);
-    try {
+    // Angle research runs behind the photo-picking step -- by the time the
+    // owner has tapped their photos, the angles are usually ready.
+    anglesPromiseRef.current = (async () => {
       const profile = await profilePromiseRef.current;
       let extras = {};
       // The website scan usually finished while the owner was typing. If it
@@ -1199,14 +1212,69 @@ export default function App() {
         summary: merged.site_summary || merged.about_summary || null,
         main_service: svc,
       });
-      stop();
       const list = (Array.isArray(res.angles) ? res.angles : []).filter(a => a && a.label && a.hook);
       if (!list.length) throw new Error('Could not build angles for this business. Try again.');
-      setBusiness(merged);
+      return { merged, list };
+    })();
+    anglesPromiseRef.current.catch(() => {}); // surfaced when awaited; this silences the unhandled-rejection warning
+    // The photo grid needs the profile; it usually loaded while they typed.
+    if (pendingProfile) {
+      if (!(pendingProfile.photos || []).length) { continueToAngles([]); return; }
+      setPickedPhotos([]);
+      setStep('photopick');
+      window.scrollTo(0, 0);
+      return;
+    }
+    setStep('loading');
+    const stop = cycleSteps(['Pulling your Google photos'], 1700);
+    try {
+      const profile = await profilePromiseRef.current;
+      stop();
+      if (!(profile.photos || []).length) { continueToAngles([]); return; }
+      setPickedPhotos([]);
+      setStep('photopick');
+      window.scrollTo(0, 0);
+    } catch (err) {
+      stop();
+      setError(err.message);
+      setStep('service');
+    }
+  }
+
+  function toggleLanderPhoto(url) {
+    const next = pickedPhotos.includes(url)
+      ? pickedPhotos.filter(u => u !== url)
+      : pickedPhotos.length >= MAX_ADS ? pickedPhotos : [...pickedPhotos, url];
+    setPickedPhotos(next);
+    // The final pick moves the funnel forward on its own.
+    const target = Math.min(MAX_ADS, (pendingProfile?.photos || []).length);
+    if (next.length === target && target > 0) continueToAngles(next);
+  }
+
+  async function continueToAngles(picked) {
+    setStep('loading');
+    const stop = cycleSteps([
+      'Finding best ad angles',
+      'Studying campaigns that made the phone ring',
+      'Reading your reviews for proof points',
+      `Matching angles to "${mainService.trim() || 'your service'}"`,
+      'Shortlisting the strongest angles',
+    ], 1700);
+    try {
+      const { merged, list } = await anglesPromiseRef.current;
+      stop();
+      const rest = (merged.photos || []).filter(p => !picked.includes(p));
+      setBusiness({
+        ...merged,
+        // The collage renders the first photos in order, so the owner's picks
+        // lead (first pick = hero tile) and the rest trail as spares.
+        photos: [...picked, ...rest],
+        lander_photos: picked, // Step 2 builds the ads from these same photos
+      });
       setAngles(list);
       setStep('angles');
       window.scrollTo(0, 0);
-    } catch(err) {
+    } catch (err) {
       stop();
       setError(err.message);
       setStep('service');
@@ -1262,9 +1330,11 @@ export default function App() {
   function reset() {
     setStep('search'); setQuery(''); setCandidates([]); setHtml(''); setBusiness(null); setError('');
     setPendingProfile(null); setMainService(''); setAngles([]); setScanDone(false);
+    setPickedPhotos([]);
     setBuiltPhase('building'); setBuildIndex(0); setShowPage(false);
     offerPromiseRef.current = null;
     profilePromiseRef.current = null;
+    anglesPromiseRef.current = null;
   }
 
   /* ── returning users: sign in from the homepage, sign out anywhere ── */
@@ -1601,6 +1671,63 @@ export default function App() {
               Find my winning angles <i className="ti ti-arrow-right" aria-hidden="true" />
             </button>
           </form>
+
+          {error && <div className="lb-error" style={{marginTop:16}}>{error}</div>}
+        </div>
+      </div>
+    );
+  }
+
+  /* ── photo picker: the owner's picks become the lander collage and the
+     ads, while the angle research runs behind this screen ─────────────── */
+  if (step === 'photopick') {
+    const photos = pendingProfile?.photos || [];
+    const target = Math.min(MAX_ADS, photos.length);
+    return (
+      <div style={{background:'#fff',minHeight:'100dvh'}}>
+        <div style={{background:'#181D24',padding:'12px 20px',display:'flex',alignItems:'center',gap:10}}>
+          <LogoMark size={26} ring="#181D24" />
+          <span style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:14,color:'#fff',letterSpacing:'-.01em',marginLeft:-5}}>SendKPI</span>
+        </div>
+
+        <div style={{padding:'32px 20px 64px',maxWidth:640,margin:'0 auto'}}>
+          <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,letterSpacing:'.1em',textTransform:'uppercase',color:'#0D57D0',margin:'0 0 10px'}}>
+            {pickedPhotos.length} of {target} selected
+          </p>
+          <h2 style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:24,letterSpacing:'-.01em',color:'var(--text-primary)',margin:'0 0 6px'}}>
+            Pick {target} photos that show your {mainService.trim() || 'best'} work
+          </h2>
+          <p style={{color:'var(--text-secondary)',fontSize:14,margin:'0 0 24px',lineHeight:1.55}}>
+            Straight from your Google Business Profile. These go on your landing page and become your ads, so choose the ones that fit "{mainService.trim() || 'your service'}". Your first pick becomes the main photo.
+          </p>
+
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(110px,1fr))',gap:8}}>
+            {photos.map((p, i) => {
+              const idx = pickedPhotos.indexOf(p);
+              return (
+                <button key={p} onClick={() => toggleLanderPhoto(p)} style={{
+                  position:'relative', padding:0, border: idx > -1 ? '3px solid #0D57D0' : '3px solid transparent',
+                  borderRadius:10, overflow:'hidden', cursor:'pointer', background:'var(--surface-1)',
+                  aspectRatio:'1',
+                }}>
+                  <img src={p} alt={`Photo ${i + 1}`} loading="lazy" style={{width:'100%',height:'100%',objectFit:'cover',display:'block'}} />
+                  {idx > -1 && (
+                    <span style={{
+                      position:'absolute', top:6, right:6, width:22, height:22, borderRadius:'50%',
+                      background:'#0D57D0', color:'#fff', fontSize:12, fontWeight:700,
+                      display:'flex', alignItems:'center', justifyContent:'center',
+                    }}>{idx + 1}</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {pickedPhotos.length > 0 && pickedPhotos.length < target && (
+            <button className="lb-btn-signal" style={{marginTop:20,display:'flex',alignItems:'center',gap:8}} onClick={() => continueToAngles(pickedPhotos)}>
+              Continue with {pickedPhotos.length} photo{pickedPhotos.length === 1 ? '' : 's'} <i className="ti ti-arrow-right" aria-hidden="true" />
+            </button>
+          )}
 
           {error && <div className="lb-error" style={{marginTop:16}}>{error}</div>}
         </div>

@@ -168,7 +168,9 @@ def profile(place_id: str):
     if not brand_color and site and site.og_image:
         brand_color = fetch_brand_color(site.og_image)
 
-    photo_refs = [p["name"] for p in place.photos[:8]]
+    # Places API returns at most 10 photos per listing (Google's featured
+    # ranking; there's no recency ordering or paging beyond this).
+    photo_refs = [p["name"] for p in place.photos[:10]]
     photo_urls = [_photo_url(ref) for ref in photo_refs]
 
     # Reuse the existing merge/heuristic logic (tagline, service chips,
