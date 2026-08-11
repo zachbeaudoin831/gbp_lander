@@ -633,31 +633,94 @@ Landing page headline: {angle.get("lander_headline") or "(none)"}
 Call button: {angle.get("cta_label") or "(none)"}"""
 
     client = _client()
-    resp = client.messages.create(
-        model=MODEL,
-        # 15 short headlines + 4 descriptions is little text, but on Sonnet 5
-        # adaptive thinking spends from the same budget before any text is
-        # emitted -- 1200 came back with an empty reply. Match the angles
-        # call's headroom.
-        max_tokens=4096,
-        # Low effort: measured 33s at the default -- the model overthinks the
-        # character counting, and this call sits on the funnel's build gate.
-        # Length limits are enforced server-side below either way.
-        output_config={"effort": "low"},
-        system=_GOOGLE_ADS_SYSTEM + _STYLE_RULES,
-        messages=[{"role": "user", "content": user_content}],
-    )
-    log_ai("generate-google-ads", resp)
-    data = _reply_json(resp)
 
-    headlines = [
-        h.strip() for h in data.get("headlines", [])
-        if isinstance(h, str) and h.strip() and len(h.strip()) <= 30
-    ][:15]
-    descriptions = [
-        d.strip() for d in data.get("descriptions", [])
-        if isinstance(d, str) and d.strip() and len(d.strip()) <= 90
-    ][:4]
+    def _call(content: str) -> dict:
+        resp = client.messages.create(
+            model=MODEL,
+            # 15 short headlines + 4 descriptions is little text, but on Sonnet 5
+            # adaptive thinking spends from the same budget before any text is
+            # emitted -- 1200 came back with an empty reply. Match the angles
+            # call's headroom.
+            max_tokens=4096,
+            # Low effort: measured 33s at the default -- the model overthinks the
+            # character counting, and this call sits on the funnel's build gate.
+            # Length limits are enforced server-side below either way.
+            output_config={"effort": "low"},
+            system=_GOOGLE_ADS_SYSTEM + _STYLE_RULES,
+            messages=[{"role": "user", "content": content}],
+        )
+        log_ai("generate-google-ads", resp)
+        return _reply_json(resp)
+
+    def _usable(data: dict) -> tuple[list[str], list[str]]:
+        headlines = [
+            h.strip() for h in data.get("headlines", [])
+            if isinstance(h, str) and h.strip() and len(h.strip()) <= 30
+        ][:15]
+        descriptions = [
+            d.strip() for d in data.get("descriptions", [])
+            if isinstance(d, str) and d.strip() and len(d.strip()) <= 90
+        ][:4]
+        return headlines, descriptions
+
+    data = _call(user_content)
+    headlines, descriptions = _usable(data)
+
+    # Long business names make the model blow the 30-char headline cap on
+    # roughly half of runs (low effort skips careful character counting), and
+    # dropping those lines can gut the set. One corrective retry naming the
+    # rejected lines fixes nearly all of them.
+    if len(headlines) < 3 or len(descriptions) < 2:
+        over = [
+            f'- headline ({len(h.strip())} chars): "{h.strip()}"'
+            for h in data.get("headlines", [])
+            if isinstance(h, str) and len(h.strip()) > 30
+        ] + [
+            f'- description ({len(d.strip())} chars): "{d.strip()}"'
+            for d in data.get("descriptions", [])
+            if isinstance(d, str) and len(d.strip()) > 90
+        ]
+        retry_content = user_content + (
+            "\n\nYOUR PREVIOUS ATTEMPT WAS REJECTED. These lines exceed Google's hard limits:\n"
+            + ("\n".join(over) or "- (output was not valid JSON)")
+            + "\nReturn the full JSON again: 15 headlines of 30 characters or fewer and "
+            "4 descriptions of 90 characters or fewer. Leave the business name out of "
+            "any headline it will not fit in."
+        )
+        data2 = _call(retry_content)
+        h2, d2 = _usable(data2)
+        if len(h2) > len(headlines):
+            headlines = h2
+        if len(d2) > len(descriptions):
+            descriptions = d2
+
+        # Last resort: shorten over-length lines at word boundaries (never a
+        # mid-word cut) and top up from both attempts.
+        if len(headlines) < 3 or len(descriptions) < 2:
+            def trim(line, limit: int, floor: int) -> str:
+                words = str(line).strip().split()
+                while words and len(" ".join(words)) > limit:
+                    words.pop()
+                out = " ".join(words)
+                return out if len(out) >= floor else ""
+
+            seen = {h.lower() for h in headlines}
+            for h in data.get("headlines", []) + data2.get("headlines", []):
+                t = trim(h, 30, 12) if isinstance(h, str) else ""
+                if t and t.lower() not in seen:
+                    headlines.append(t)
+                    seen.add(t.lower())
+                if len(headlines) >= 15:
+                    break
+            seen = {d.lower() for d in descriptions}
+            for d in data.get("descriptions", []) + data2.get("descriptions", []):
+                t = trim(d, 90, 40) if isinstance(d, str) else ""
+                if t and t.lower() not in seen:
+                    descriptions.append(t)
+                    seen.add(t.lower())
+                if len(descriptions) >= 4:
+                    break
+
     if len(headlines) < 3 or len(descriptions) < 2:
         raise RuntimeError("Google ads generation returned too few usable lines")
     return {"headlines": headlines, "descriptions": descriptions}
