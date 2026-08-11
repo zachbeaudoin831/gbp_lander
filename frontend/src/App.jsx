@@ -869,7 +869,7 @@ function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn, onDo
                     <button key={p} onClick={() => togglePhoto(p)} style={{
                       position: 'relative', padding: 0, border: idx > -1 ? '3px solid #0D57D0' : '3px solid transparent',
                       borderRadius: 10, overflow: 'hidden', cursor: 'pointer', background: 'var(--surface-1)',
-                      aspectRatio: '1', opacity: photoUrls.length && idx === -1 ? 0.6 : 1, transition: 'opacity .15s',
+                      aspectRatio: '1',
                     }}>
                       <img src={p} alt={`Photo ${i + 1}`} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                       {idx > -1 && (
