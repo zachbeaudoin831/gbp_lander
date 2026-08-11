@@ -385,7 +385,13 @@ LOCATIONS / SERVICE-AREAS / CONTACT PAGE TEXT (raw, may include noise)
     client = _client()
     resp = client.messages.create(
         model=MODEL,
-        max_tokens=600,
+        # Adaptive thinking spends from the same budget before any text is
+        # emitted -- 600 came back empty once the prompt grew (nav labels +
+        # locations text + required corrected arrays). Same lesson as the
+        # google-ads call: generous cap, low effort for this speed-sensitive
+        # extraction task.
+        max_tokens=2048,
+        output_config={"effort": "low"},
         system=_SYSTEM_PROMPT + _STYLE_RULES,
         messages=[{"role": "user", "content": user_content}],
     )
