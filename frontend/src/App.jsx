@@ -1189,13 +1189,13 @@ export default function App() {
     anglesPromiseRef.current = (async () => {
       const profile = await profilePromiseRef.current;
       let extras = {};
-      // The website scan usually finished while the owner was typing. If it
-      // didn't (slow site), give it 4 more seconds and move on without it --
-      // the angles call treats the summary as optional, and a stalled scrape
-      // must not sit between the owner and their angles.
+      // The website scan cleans the services/service-areas chips and feeds
+      // the angle research. It races the owner picking photos (10s+), so a
+      // generous cap costs almost nothing in perceived wait -- but a stalled
+      // scrape still must not sit between the owner and their angles.
       try {
         const scan = offerPromiseRef.current;
-        if (scan) extras = (await Promise.race([scan, new Promise(res => setTimeout(() => res(null), 4000))])) || {};
+        if (scan) extras = (await Promise.race([scan, new Promise(res => setTimeout(() => res(null), 12000))])) || {};
       } catch { /* scan failed -- continue without it */ }
       const merged = { ...profile, ...cleanExtras(extras), main_service: svc };
       const res = await generateAngles({

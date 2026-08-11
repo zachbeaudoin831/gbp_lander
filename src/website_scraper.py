@@ -44,6 +44,8 @@ class WebsiteContent:
     headings: list  # short phrases -- candidate "service" labels
     paragraphs: list  # cleaned body text blocks, longest first
     images: list  # absolute URLs to likely-content images
+    nav_labels: list = dataclasses.field(default_factory=list)  # top-nav link texts -- the site's own taxonomy
+    link_labels: list = dataclasses.field(default_factory=list)  # body link texts -- on a locations page these ARE the city list
 
 
 class ScrapeBlocked(RuntimeError):
@@ -107,8 +109,36 @@ def scrape_website(
     resp.raise_for_status()
 
     soup = BeautifulSoup(resp.text, "lxml")
+
+    # The nav menu is the business's own taxonomy of what they do ("Heating
+    # & Cooling", "Plumbing & Drains", "Locations") -- capture its link
+    # labels before the noise pass strips <nav> from the tree entirely.
+    nav_labels: list[str] = []
+    seen_nav = set()
+    for container in soup.find_all(["nav", "header"]):
+        for a in container.find_all("a"):
+            label = a.get_text(" ", strip=True)
+            key = label.lower()
+            if label and 2 <= len(label) <= 40 and key not in seen_nav:
+                seen_nav.add(key)
+                nav_labels.append(label)
+    nav_labels = nav_labels[:24]
+
     for tag in soup.find_all(NOISE_TAGS):
         tag.decompose()
+
+    # Body links, after the noise pass (so header/footer nav is excluded).
+    # Locations pages typically present their cities/regions as link cards
+    # whose text never lands in a heading or paragraph.
+    link_labels: list[str] = []
+    seen_links = set()
+    for a in soup.find_all("a"):
+        label = a.get_text(" ", strip=True)
+        key = label.lower()
+        if label and 2 <= len(label) <= 40 and key not in seen_links:
+            seen_links.add(key)
+            link_labels.append(label)
+    link_labels = link_labels[:30]
 
     title = soup.title.get_text(strip=True) if soup.title else None
 
@@ -164,17 +194,25 @@ def scrape_website(
         headings=headings[:20],
         paragraphs=paragraphs,
         images=images,
+        nav_labels=nav_labels,
+        link_labels=link_labels,
     )
 
 _ABOUT_HINTS = ("about", "our-story", "who-we-are", "meet-the-team", "our-team")
 
 # Local service businesses almost universally use one of these phrasings
-# for their "here's everywhere we work" page.
+# for their "here's everywhere we work" page. A bare "Locations" tab (e.g.
+# multi-branch companies) counts too -- it lists the cities they operate in.
 _SERVICE_AREA_HINTS = (
     "service-area", "service areas", "areas-we-serve", "areas we serve",
     "where-we-serve", "where we serve", "locations-we-serve",
     "locations we serve", "our-locations", "our locations", "coverage-area",
+    "/locations", "locations", "cities-we-serve", "cities we serve",
 )
+
+# Fallback when there's no locations page at all: the Contact page usually
+# names at least the cities/counties the business works in.
+_CONTACT_HINTS = ("contact", "get-in-touch", "get in touch")
 
 
 def _find_page_url(home_url: str, hints: tuple[str, ...], timeout: int = 12) -> Optional[str]:
@@ -244,5 +282,19 @@ def scrape_service_area_page(home_url: str, respect_robots: bool = True) -> Opti
         return None
     try:
         return scrape_website(areas_url, respect_robots=respect_robots)
+    except Exception:
+        return None
+
+
+def scrape_contact_page(home_url: str, respect_robots: bool = True) -> Optional[WebsiteContent]:
+    """Convenience wrapper: find the Contact page (if any) and scrape it.
+    Useful as a service-area fallback -- contact pages usually name the
+    cities/counties the business works in.
+    """
+    contact_url = _find_page_url(home_url, _CONTACT_HINTS)
+    if not contact_url:
+        return None
+    try:
+        return scrape_website(contact_url, respect_robots=respect_robots)
     except Exception:
         return None

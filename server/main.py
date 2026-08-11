@@ -51,6 +51,7 @@ from src.usage_log import is_blocked, log_request
 from src.website_scraper import (
     ScrapeBlocked,
     scrape_about_page,
+    scrape_contact_page,
     scrape_service_area_page,
     scrape_website,
 )
@@ -369,11 +370,13 @@ def generate_offer(req: OfferRequest):
     home_text = ""
     about_text = None
     service_area_text = None
+    nav_labels: list[str] = []
 
     if req.website:
         try:
             home = scrape_website(req.website)
             home_text = " ".join(home.paragraphs + home.headings)
+            nav_labels = home.nav_labels
         except (ScrapeBlocked, Exception):
             home_text = ""
 
@@ -381,9 +384,25 @@ def generate_offer(req: OfferRequest):
         if about:
             about_text = " ".join(about.paragraphs + about.headings)
 
+        # Locations pages often name their cities only in places plain text
+        # extraction misses: the meta description ("Three Locations in San
+        # Jose, San Rafael, and Santa Cruz"), the title, or link-card labels.
+        # Include all of them alongside the body text.
+        def _area_text(page):
+            return " ".join(
+                [page.title or "", page.meta_description or ""]
+                + page.paragraphs + page.headings + page.link_labels
+            ).strip()
+
         areas_page = scrape_service_area_page(req.website)
         if areas_page:
-            service_area_text = " ".join(areas_page.paragraphs + areas_page.headings)
+            service_area_text = _area_text(areas_page)
+        else:
+            # No locations/service-areas page -- the Contact page usually at
+            # least names the cities/counties the business works in.
+            contact_page = scrape_contact_page(req.website)
+            if contact_page:
+                service_area_text = _area_text(contact_page)
 
     try:
         extras = generate_extras(
@@ -395,6 +414,7 @@ def generate_offer(req: OfferRequest):
             about_text=about_text,
             service_areas=req.service_areas,
             service_area_text=service_area_text,
+            nav_labels=nav_labels,
         )
     except RuntimeError as e:
         raise HTTPException(status_code=500, detail=str(e))

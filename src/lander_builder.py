@@ -80,7 +80,14 @@ _SERVICE_AREA_RE = re.compile(
 # We Serve", "Our Coverage Area") from being mistaken for an actual city
 # name when scanning that page's headings.
 _NON_AREA_LABEL_RE = re.compile(
-    r"\b(area|areas|service|serve|serving|location|locations|coverage|region|regions|zip|contact|about|home|faq)\b",
+    r"\b(area|areas|service|serve|serving|location|locations|coverage|region|regions|zip|contact|about|home|faq|"
+    # Service/trade words -- a block containing these is an offering that a
+    # "we service X, Y, Z" sentence smuggled in, not a place name.
+    r"cleaning|conditioning|heating|cooling|plumbing|electrical|hvac|furnace|furnaces|repair|repairs|"
+    r"installation|install|maintenance|drain|drains|recharging|zoning|controls|heat pump|water heater|"
+    # CTA/audience/marketing words that show up capitalized mid-sentence.
+    r"book|appointment|schedule|call|families|customers|estimate|quote|financing|"
+    r"commercial|residential|industrial|emergency|trusted|premier|since)\b",
     re.IGNORECASE,
 )
 
@@ -104,6 +111,8 @@ def _extract_service_areas(
                 2 <= len(block) <= 30
                 and block[:1].isupper()
                 and "," not in block
+                and ":" not in block
+                and not any(ch.isdigit() for ch in block)  # phone numbers, "Since 1984"
                 and not _NON_AREA_LABEL_RE.search(block)
             ):
                 candidates.append(block)
@@ -118,7 +127,14 @@ def _extract_service_areas(
             tail = re.split(r"[.!?]", m.group(1))[0]
             for part in re.split(r",|\band\b|&", tail):
                 part = part.strip(" .")
-                if 2 <= len(part) <= 30 and part[:1].isupper():
+                if (
+                    2 <= len(part) <= 30
+                    and part[:1].isupper()
+                    # "we service central air conditioning..." smuggles
+                    # offerings into this path -- same blocklist applies.
+                    and not any(ch.isdigit() for ch in part)
+                    and not _NON_AREA_LABEL_RE.search(part)
+                ):
                     candidates.append(part)
 
     if not candidates and address:
@@ -145,7 +161,10 @@ _NON_SERVICE_HEADING_RE = re.compile(
     r"reviews?|blog|gallery|areas?( we serv[a-z]*)?|service areas?|"
     r"proudly serving|serving\b|surrounding|location|hours|our team|"
     r"meet the team|careers|privacy|terms( of service)?|why choose|"
-    r"welcome to|home)\b",
+    r"welcome to|home|hear from|happy customers?|book (an |your )?appointment|"
+    r"schedule|call (us|now|today)|financing|coupons?|specials?|"
+    r"request (a |an )?(quote|estimate|service)|get (a |an )?(quote|estimate)|"
+    r"\d+\+? years|experience|since \d{4})\b",
     re.IGNORECASE,
 )
 
