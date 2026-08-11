@@ -1725,25 +1725,11 @@ export default function App() {
         <div style={{padding:'40px 20px 64px',maxWidth:680,margin:'0 auto'}}>
           <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:12,letterSpacing:'.1em',textTransform:'uppercase',color:'#0D57D0',margin:'0 0 12px'}}>You're all set</p>
           <h1 style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:'clamp(26px,5vw,36px)',letterSpacing:'-.01em',color:'var(--text-primary)',margin:'0 0 10px',lineHeight:1.15}}>Your lander and ads for {first} are ready</h1>
-          <p style={{fontSize:15,color:'var(--text-secondary)',margin:'0 0 32px',lineHeight:1.6}}>They're saved to your account, and the files are below. First, two minutes on how to get them live and making the phone ring:</p>
+          <p style={{fontSize:15,color:'var(--text-secondary)',margin:'0 0 32px',lineHeight:1.6}}>They're saved to your account, and the files are below.{VSL_EMBED_URL ? ' First, two minutes on how to get them live and making the phone ring:' : ''}</p>
 
-          {VSL_EMBED_URL ? (
+          {VSL_EMBED_URL && (
             <div style={{position:'relative',paddingTop:'56.25%',borderRadius:12,overflow:'hidden',background:'#181D24',marginBottom:32}}>
               <iframe src={VSL_EMBED_URL} title="How to launch your lander and ads" allow="autoplay; fullscreen; picture-in-picture" allowFullScreen style={{position:'absolute',inset:0,width:'100%',height:'100%',border:0}} />
-            </div>
-          ) : (
-            <div style={{background:'var(--surface-2)',border:'0.5px solid var(--border)',borderRadius:12,padding:'22px 24px',marginBottom:32}}>
-              <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,letterSpacing:'.1em',textTransform:'uppercase',color:'var(--text-muted)',margin:'0 0 14px'}}>How to launch in 3 steps</p>
-              {[
-                ['1 · Put the lander on a subdomain', 'Upload the HTML file to any host and point a subdomain at it (e.g. go.yourcompany.com). It’s one self-contained file. No plugins, no builder.'],
-                ['2 · Load the ads into Meta', 'In Meta Ads Manager, create a campaign optimized for calls or traffic, upload the ad graphics, and set the destination to your new subdomain.'],
-                ['3 · Start small and watch the calls', 'Run $10–20/day for a week. Leads from the lander’s question form are tagged with the ad click they came from, so you’ll see what’s working.'],
-              ].map(([t, b]) => (
-                <div key={t} style={{marginBottom:14}}>
-                  <p style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:15,color:'var(--text-primary)',margin:'0 0 4px'}}>{t}</p>
-                  <p style={{fontSize:14,color:'var(--text-secondary)',margin:0,lineHeight:1.55}}>{b}</p>
-                </div>
-              ))}
             </div>
           )}
 
