@@ -183,12 +183,6 @@ export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
                 <span><em>✓</em> Takes about 2 minutes</span>
                 <span><em>✓</em> No card required</span>
               </div>
-              <div className="steps-row" aria-label="How it works, in four steps">
-                <span className="step-chip"><b>1</b> Find your listing</span>
-                <span className="step-chip"><b>2</b> Name your money service</span>
-                <span className="step-chip"><b>3</b> Pick a winning angle</span>
-                <span className="step-chip"><b>4</b> Get your page + ads</span>
-              </div>
             </div>
 
             {/* listing → ads → lander pipeline, one highlighted message */}
