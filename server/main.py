@@ -71,7 +71,7 @@ app = FastAPI(title="GBP Lander Builder API")
 # URL) can be added via ALLOWED_ORIGINS (comma-separated) without a deploy.
 _DEFAULT_ORIGINS = (
     "https://sendkpi.com,https://www.sendkpi.com,"
-    "https://gbp-lander.vercel.app,"
+    "https://gbp-lander-frontend.vercel.app,https://gbp-lander.vercel.app,"
     "http://localhost:5173,http://localhost:4173"
 )
 app.add_middleware(
