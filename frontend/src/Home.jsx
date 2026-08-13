@@ -1,20 +1,22 @@
 import { useEffect, useRef, useState } from "react";
 import "./home.css";
 
-/* Real Google Business Profiles used as homepage examples -- photos come
-   through our own photo proxy. Phone numbers shown in mocks are fictional
+/* Real Google Business Profiles used as homepage examples -- photos were
+   downloaded once from their listings and are served as static assets
+   (frontend/public/img/home/), so homepage traffic never touches the
+   billable Places photo API. Phone numbers shown in mocks are fictional
    (555-01xx), never the businesses' real lines. */
 const EX_ROOFER = {
   listingPhotos: [
-    "https://gbp-lander.vercel.app/api/photo?photo_name=places/ChIJs9FFH-lmZIgROLTGV2GYvLg/photos/AWCwydjr517K_49QaqntfDj96gcmKGij1GpB_zvOqqtvhk3NmkW2xCpAvuJgsEgqjb2isEz4fkIdasD4vCttBR_Yti8xWyApMUgO4nk0iPqDtmzetOZorjfvwGfpZZxPKp_-T7EzrHeGSEfxc3-U_gfYC1neRdSxA7f3W5HXoCKJH_FPFZryYX1Cw4NVXdY1fdx5ZLYrCbKQm1hUu9MzdD9cwNDRS3XgASl_6vT8qbJxK183X3F2RJQRo-GF5Q9nxboBqGWqEt5zXU3aScKmNJgnV7QdGbw_wFFY9gDqNj0CFf-HlWKqvspVZAujswrjyztnAB0WR4dGWvIa-qz1fI_pPBwgf1b8EOmlUoIIPOxb7hjrLtdGj-kKVIN7FurjgoYA7rjacX2jXnaFgLYUuOXGHq-K6vNybrEHPjSinVh5GxzuH_w",
-    "https://gbp-lander.vercel.app/api/photo?photo_name=places/ChIJs9FFH-lmZIgROLTGV2GYvLg/photos/AWCwydg9jSqiou63k0xPAEAnmHIbn0gTrpYcuGa3iSeMEXkugBOAdJePt6c8lcHnd11f7uge-rK3LL0n89lqQAdA11Svg0W6i03yDh-cwOE7UpyOYnt7NamOR5VHo-wKPJpMpfaECrb9ibmuZ1q0veyR_I_XZO4wwBm5SXOtTIOGrT0QGzyPwnSE-71uNo0H3X8gptx_hKhbvHHhvJ8AHu_jj1wkqI96oW7aAPMWCAu0v2Hoyfwh3zuQIdhRMjLGkSg82BHXwNToxTXiPzvRLYrdALQlCmYe79vBB3fOtWXMVSHjfNC4KrVWNFmq8zrYmoKyyRqDNhaaPhHFOS6_kcxoFobwAVcQ-vw0GfdBTXOp0BupihhmuaVvvlcJqimQJ0VhqWHxtut95psbkz0N0byPq2sMc_XSNihl3zZcDLbmR3WOpYZkHrIWKRZsM9tz",
-    "https://gbp-lander.vercel.app/api/photo?photo_name=places/ChIJs9FFH-lmZIgROLTGV2GYvLg/photos/AWCwydhrrhqii4mdh3BmmXOpcOs6Ol7pSmau8yLnfeDKTdod8NxGmXnNsDVhWtuHNjXQNyt_CdRm2wvMM2Bw1JT3hi1eUBNI4SMW9iEqdMbaA2AM4ZhmFMYTfcKYt80en-0VdNvIsxQYUYzITsuLetjxjaj6FP11QzAaDnlsdpwrlkGER81LI_LFaRHE660f267hLsHinZAdcHvp6G3ZW4-7sbkonuDxmKqZC673aK8d0N1MSA7WXyyqvTUNo9mkn3UpL_Cr29LeHy2g5CdeAmk_mmqPkqjHKA2DxETSR_ysTnTa9OUKBKf1cDeLEU_vyzfcXN8Rmuea2vokomIgsnckspZgGd8I-5tRXIM2FxmM27eyzgZlWvVmZPs4HSY10tKeE05hWWfHfvuXBC-o10iqt0SBx9zb1ESMl6R1T9N6UXjHAjJ3lt6Uuye_yGADDA",
+    "/img/home/roofer-1.jpg",
+    "/img/home/roofer-2.jpg",
+    "/img/home/roofer-3.jpg",
   ],
-  adPhoto: "https://gbp-lander.vercel.app/api/photo?photo_name=places/ChIJs9FFH-lmZIgROLTGV2GYvLg/photos/AWCwydg9jSqiou63k0xPAEAnmHIbn0gTrpYcuGa3iSeMEXkugBOAdJePt6c8lcHnd11f7uge-rK3LL0n89lqQAdA11Svg0W6i03yDh-cwOE7UpyOYnt7NamOR5VHo-wKPJpMpfaECrb9ibmuZ1q0veyR_I_XZO4wwBm5SXOtTIOGrT0QGzyPwnSE-71uNo0H3X8gptx_hKhbvHHhvJ8AHu_jj1wkqI96oW7aAPMWCAu0v2Hoyfwh3zuQIdhRMjLGkSg82BHXwNToxTXiPzvRLYrdALQlCmYe79vBB3fOtWXMVSHjfNC4KrVWNFmq8zrYmoKyyRqDNhaaPhHFOS6_kcxoFobwAVcQ-vw0GfdBTXOp0BupihhmuaVvvlcJqimQJ0VhqWHxtut95psbkz0N0byPq2sMc_XSNihl3zZcDLbmR3WOpYZkHrIWKRZsM9tz",
-  cardPhoto: "https://gbp-lander.vercel.app/api/photo?photo_name=places/ChIJs9FFH-lmZIgROLTGV2GYvLg/photos/AWCwydi6vT2amaXWNG6bj24VQPi179kwWmGpjTbgwVU1W8xGrWWtciZzLXRqSNNCsvWyDpkLFxrHB8cTPGq3KGtO339Vt-wS8jRYUlY2T2ghKZK4Pv6ltkcf824T3PgIa1Bpa67GiR7ao3MtYZVhqWosUjP-2hi76ZLizd6SwQj7p_oCvKV0y_iuO8uPCsj2Iwz4J4-a1hDTOR2qG_Dvh_2xn5e8Kc62HyrTnqGODdyNhSgkcHzAy_OZv3qTwBtJ0nJIfjYoITWIW0xKX7ZJva-xikZR9rdoU2Slx3GSbvOTV2fS3m1qwilg4-dkA5lLz29ehB3BkCcdPVQb5oKu7-7QTkE_EYRJZWtUabo0kTPsVAqrFOhkU5KBfXc4Jivg-S-b7HK-rDFR1cCV636TAfbSRryzOIKkXNU5RTgmzQEy4eyKoQQ",
+  adPhoto: "/img/home/roofer-2.jpg",
+  cardPhoto: "/img/home/roofer-card.jpg",
 };
-const EX_PLUMBER_PHOTO = "https://gbp-lander.vercel.app/api/photo?photo_name=places/ChIJGdCd3EUVjoARFYg6qDg9Bxk/photos/AWCwydi6pY2jP1okysCIEdGHHRFmHPJ836JZdz7e1ZPnGC44eDWtk02FkqC0OdgY9KqlZ_m8V9iVnTZqASuucPEA7sjLXQZQiIMvkI9zlV0rchhvlalnW5QQP0CcmiMnG4pTjeQ0JwbjUPUXt47TotTcGpHuv89bCmQA0q_qOSIGDVjFr0Iv_QG8b-3GjMMkzi1iPr3njdDGKAfdiACzMEy4NUs_11N_0tg2AQMfTxiApzh0LdwBsunKUzENLxQoGOer-ZnEmQRNFv0ZVgqSybxmjSo468yXFked9qllbfyFoT78XUGYHVaSdMFVDsMZCTl3Rcdfi4MK-0zSod1YwxxB13V0tFsvZtQRGmr5XuUaf6527aX74myXWundxSvYuO_76ZsrCcZQ66I5S3dm3xwKTcFZitTCHZMBny0JcaRFrg";
-const EX_HVAC_PHOTO = "https://gbp-lander.vercel.app/api/photo?photo_name=places/ChIJOW0KNIZBkFQRRvNBuB9GruA/photos/AWCwydie11ULL7buPhPXW6IttuIiIlbaLexennbXqLq5NMKVcPBh4jLCpxe-25Zb7QPkDDVe4KNKV0qPVSw1G90WHO8VOaMkaOugDYxiE6k_Oq80G49HKcYYflwRlA5WWmSBBUyoI2ATxvOXW591qh21CBP6NwBQZA36VGvImMboiJcTpfGgJBhkR2hR0o_1cx8fYJ7g8hZPsgHriV4nS9HEooD2CPRsh1VxkJohulAHlKN3ZgtHn33cTFyQfB3DNDUkmTgqEER3ED5cCszrUSmHvpXqfYCTRgSB1YCO1emxISuzZHn5C5hsVVPUVs80Ur5Cfwj4-xKEvnSgDSt86sNWR0kKkYzYAupLYwhaUu7L9GF6ti_x2KZ86TI2n-lYdF_ia0WaMzMCwzChZ3ulAbwV8fA01PPZKRR0hksLm2ScQk5J_NI";
+const EX_PLUMBER_PHOTO = "/img/home/plumber.jpg";
+const EX_HVAC_PHOTO = "/img/home/hvac.jpg";
 
 /* The hero "build log": phases the tool runs, rendered as code rolling by. */
 const BUILD_LOG = [
