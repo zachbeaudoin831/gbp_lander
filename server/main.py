@@ -23,7 +23,9 @@ Environment variables required:
 from __future__ import annotations
 
 import io
+import ipaddress
 import os
+import re
 from typing import Optional
 
 from dotenv import load_dotenv
@@ -47,7 +49,7 @@ from src.lander_builder import build_profile
 from src.lead_store import LeadStoreError, insert_lead
 from src.meta_capi import MetaCapiError, send_event
 from src.places_client import GooglePlacesClient, PlacesApiError
-from src.usage_log import is_blocked, log_request
+from src.usage_log import daily_count, is_blocked, log_request, recent_count
 from src.website_scraper import (
     ScrapeBlocked,
     scrape_about_page,
@@ -60,47 +62,141 @@ load_dotenv()
 
 app = FastAPI(title="GBP Lander Builder API")
 
-# Wide open on purpose -- this API only ever returns public business-listing
-# data (no user accounts, no write operations), so there's nothing sensitive
-# to protect with a stricter origin allowlist. Tighten this later if that
-# ever changes.
+# Only the funnel's own origins may drive this API from a browser. It used
+# to be wide open, but the API now writes leads/CRM contacts and spends
+# Places + Claude money on every call -- allow_origins=["*"] would let any
+# webpage on the internet do that from its visitors' browsers. Doesn't stop
+# curl-style bots (the rate limits below handle those); it closes the
+# distributed browser-based vector. Extra origins (e.g. a Vercel preview
+# URL) can be added via ALLOWED_ORIGINS (comma-separated) without a deploy.
+_DEFAULT_ORIGINS = (
+    "https://sendkpi.com,https://www.sendkpi.com,"
+    "https://gbp-lander.vercel.app,"
+    "http://localhost:5173,http://localhost:4173"
+)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        o.strip()
+        for o in os.environ.get("ALLOWED_ORIGINS", _DEFAULT_ORIGINS).split(",")
+        if o.strip()
+    ],
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
 
 BASE_URL = os.environ.get("PUBLIC_BASE_URL", "").rstrip("/")
 
+# Per-IP rate limits: endpoint -> (max requests, window seconds). Sized from
+# what one real funnel run needs (1-3 searches, 1 profile, ~10 photos, one
+# of each generate call) with room for retries and a second run -- a human
+# never hits these; a loop does. Counted against api_usage in Postgres, not
+# in-process memory, because concurrent serverless instances don't share
+# memory and cold starts would reset any local counter.
+RATE_LIMITS: dict[str, tuple[int, int]] = {
+    "search": (30, 600),
+    "profile": (12, 600),
+    "photo": (200, 600),
+    "generate-offer": (8, 3600),
+    "generate-angles": (8, 3600),
+    "generate-angle-ads": (8, 3600),
+    "generate-google-ads": (8, 3600),
+    "generate-ad-copy": (20, 3600),
+    "lead": (10, 3600),
+    "ghl-contact": (8, 3600),
+    "meta-event": (60, 3600),
+}
+
+# Global daily caps (all IPs combined): the circuit breaker for distributed
+# abuse that per-IP limits can't see. Sized at ~10-20x a good day's organic
+# traffic -- tripping one means something is wrong, and a bounded bad day
+# beats an unbounded bill. Raise these as real traffic grows.
+DAILY_CAPS: dict[str, int] = {
+    "search": 2000,
+    "profile": 500,
+    "photo": 6000,
+    "generate-offer": 300,
+    "generate-angles": 300,
+    "generate-angle-ads": 300,
+    "generate-google-ads": 300,
+    "generate-ad-copy": 300,
+    "lead": 300,
+    "ghl-contact": 300,
+    "meta-event": 2000,
+}
+
+
+def _client_ip(request: Request) -> str:
+    """Trusted caller IP, or "" if none can be established.
+
+    The LAST x-forwarded-for hop is the one appended (or, on Vercel,
+    sanitized) by the proxy in front of us -- earlier hops are whatever the
+    client claims, so keying anything off them would let a bot dodge the
+    blocklist and rate limits with a forged header. The parse check keeps
+    header garbage out of the usage log and limiter keys.
+    """
+    xff = request.headers.get("x-forwarded-for") or ""
+    candidate = xff.split(",")[-1].strip() if xff.strip() else (
+        request.client.host if request.client else ""
+    )
+    try:
+        ipaddress.ip_address(candidate)
+        return candidate
+    except ValueError:
+        return ""
+
 
 @app.middleware("http")
 async def usage_and_blocklist(request: Request, call_next):
-    """Log every /api/* request and enforce the admin's IP blocklist.
+    """Log every /api/* request and enforce the admin's IP blocklist plus
+    the rate limits above.
 
-    Both halves power the admin dashboard: the log feeds the traffic/bot
-    view, and the blocklist is how a bot gets cut off before it burns
-    Places/Claude spend. DB work runs in the threadpool (psycopg is sync)
-    and silently no-ops if the usage store isn't configured. /api/health is
-    exempt so monitoring never depends on the database.
+    All of it powers or protects against spend: the log feeds the admin
+    traffic/bot view, the blocklist cuts off known-bad IPs, the per-IP
+    limits stop a single bot loop, and the daily caps bound the worst case.
+    DB work runs in the threadpool (psycopg is sync) and every check fails
+    open if the usage store isn't configured -- protection must never break
+    the funnel. /api/health is exempt so monitoring never depends on the
+    database.
     """
     path = request.url.path
     if not path.startswith("/api/") or path == "/api/health":
         return await call_next(request)
+    if request.method == "OPTIONS":
+        # CORS preflights: let the CORSMiddleware answer; counting them
+        # would double-charge every browser POST against the limits.
+        return await call_next(request)
 
-    # Behind Vercel's proxy the caller is the first x-forwarded-for hop.
-    ip = (request.headers.get("x-forwarded-for") or "").split(",")[0].strip() or (
-        request.client.host if request.client else ""
-    )
+    endpoint = path.removeprefix("/api/")
+    ip = _client_ip(request)
     if ip and await run_in_threadpool(is_blocked, ip):
         return JSONResponse(status_code=403, content={"detail": "Access blocked"})
+
+    rule = RATE_LIMITS.get(endpoint)
+    if rule and ip:
+        limit, window = rule
+        used = await run_in_threadpool(recent_count, endpoint, ip, window)
+        if used is not None and used >= limit:
+            return JSONResponse(
+                status_code=429,
+                content={"detail": "Too many requests. Please slow down and try again in a bit."},
+            )
+
+    cap = DAILY_CAPS.get(endpoint)
+    if cap is not None:
+        total = await run_in_threadpool(daily_count, endpoint)
+        if total is not None and total >= cap:
+            return JSONResponse(
+                status_code=429,
+                content={"detail": "We're at capacity right now. Please try again tomorrow."},
+            )
 
     response = await call_next(request)
     # Log AFTER the response is sent (Starlette background tasks run once the
     # body has gone out, still inside this invocation) -- the caller never
     # waits on the usage INSERT.
     response.background = BackgroundTask(
-        log_request, path.removeprefix("/api/"), ip, request.headers.get("user-agent")
+        log_request, endpoint, ip, request.headers.get("user-agent")
     )
     return response
 
@@ -201,11 +297,24 @@ def profile(place_id: str):
     }
 
 
+# The exact resource shape Places returns: places/{place_id}/photos/{ref},
+# both segments alphanumeric with - and _. Anything else (slashes, dots,
+# ?/#/&) could steer the key-signed Google request at a different API path.
+_PHOTO_NAME_RE = re.compile(r"^places/[A-Za-z0-9_-]+/photos/[A-Za-z0-9_-]+$")
+
+
 @app.get("/api/photo")
 def photo(photo_name: str, max_width: int = 800):
     """Streams a Google Place photo's bytes. The key never leaves this
     server -- the browser only ever sees this proxied URL.
+
+    photo_name is interpolated into a Google URL that carries our API key,
+    so it's validated against the exact photo-resource shape first -- this
+    endpoint must proxy photos, not arbitrary key-signed API calls.
     """
+    if not _PHOTO_NAME_RE.match(photo_name):
+        raise HTTPException(status_code=400, detail="Invalid photo name")
+    max_width = max(1, min(max_width, 1600))
     client = _client()
     try:
         resp = client.session.get(

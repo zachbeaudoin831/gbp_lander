@@ -24,11 +24,15 @@ import time
 from typing import Optional
 
 BLOCKLIST_TTL_SECONDS = 60.0
+DAILY_TTL_SECONDS = 60.0
 
 _lock = threading.Lock()
 _conn = None
 _blocklist: set[str] = set()
 _blocklist_fetched_at = 0.0
+_daily: dict[str, int] = {}
+_daily_ok = False
+_daily_fetched_at = 0.0
 
 
 def _get_conn():
@@ -105,6 +109,47 @@ def log_ai(endpoint: str, resp) -> None:
         )
     except Exception:
         pass
+
+
+def recent_count(endpoint: str, ip: str, window_seconds: int) -> Optional[int]:
+    """How many requests this IP has made to this endpoint inside the window.
+
+    Backs the per-IP rate limit in the middleware. Counted from api_usage
+    rather than in-process memory because Vercel runs concurrent serverless
+    instances whose memory resets on cold start -- the table is the only
+    counter they all share. Returns None (caller fails open) if the store
+    is unconfigured or unreachable.
+    """
+    rows = _execute(
+        "SELECT count(*) FROM api_usage"
+        " WHERE endpoint = %s AND ip = %s"
+        " AND created_at >= now() - make_interval(secs => %s)",
+        (endpoint, ip, window_seconds),
+        fetch=True,
+    )
+    return rows[0][0] if rows else None
+
+
+def daily_count(endpoint: str) -> Optional[int]:
+    """Today's total calls to this endpoint across ALL IPs -- the global
+    circuit breaker against distributed abuse that per-IP limits can't see.
+    One GROUP BY refreshed at most once a minute, shared by every endpoint
+    check. Returns None (caller fails open) until a fetch has succeeded.
+    """
+    global _daily, _daily_ok, _daily_fetched_at
+    now = time.time()
+    if now - _daily_fetched_at > DAILY_TTL_SECONDS:
+        rows = _execute(
+            "SELECT endpoint, count(*) FROM api_usage"
+            " WHERE created_at >= date_trunc('day', now())"
+            " GROUP BY endpoint",
+            fetch=True,
+        )
+        if rows is not None:
+            _daily = {r[0]: r[1] for r in rows}
+            _daily_ok = True
+        _daily_fetched_at = now  # even on failure: don't hammer a dead DB
+    return _daily.get(endpoint, 0) if _daily_ok else None
 
 
 def is_blocked(ip: str) -> bool:
