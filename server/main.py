@@ -219,6 +219,11 @@ def photo(photo_name: str, max_width: int = 800):
     return StreamingResponse(
         io.BytesIO(resp.content),
         media_type=resp.headers.get("Content-Type", "image/jpeg"),
+        # Cache aggressively: a photo_name pins specific image bytes, and the
+        # homepage/landers hotlink the same handful of photos on every view.
+        # s-maxage lets Vercel's edge CDN absorb repeat requests so Google's
+        # (billable) Place Photos API is only hit on a cold cache.
+        headers={"Cache-Control": "public, max-age=86400, s-maxage=2592000, stale-while-revalidate=86400"},
     )
 
 
