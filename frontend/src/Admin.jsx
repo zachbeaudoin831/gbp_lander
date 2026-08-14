@@ -195,6 +195,145 @@ function LanderAssets({ lander }) {
   );
 }
 
+/* ─── Searches tab ───────────────────────────────────────────────────────
+   Every business searched in the funnel (from api_usage.detail, logged by
+   the backend middleware), grouped by query. Rows that turned into a
+   signup are highlighted green -- matched by comparing the search text to
+   saved lander names. Feeds the click→search and search→lead ratios. */
+
+const normName = s => String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+
+function mockSearches() {
+  const now = new Date();
+  const at = h => new Date(now.getTime() - h * 3600e3).toISOString();
+  return {
+    log: [
+      { query: "Duncan Plumbing Santa Cruz", ip: "198.51.100.4", created_at: at(2) },
+      { query: "duncan plumbing", ip: "198.51.100.4", created_at: at(3) },
+      { query: "Joe's HVAC Fresno", ip: "203.0.113.9", created_at: at(8) },
+      { query: "Sunrise Roofing Dallas", ip: "192.0.2.10", created_at: at(30) },
+      { query: "Joe's HVAC Fresno", ip: "203.0.113.9", created_at: at(31) },
+    ],
+    daily: [
+      { day: "2026-08-09", endpoint: "visit", calls: 38 },
+      { day: "2026-08-08", endpoint: "visit", calls: 24 },
+      { day: "2026-08-09", endpoint: "search", calls: 9 },
+      { day: "2026-08-08", endpoint: "search", calls: 5 },
+    ],
+  };
+}
+
+function SearchesTab({ leads }) {
+  const [data, setData] = useState(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    (async () => {
+      if (MOCK) { setData(mockSearches()); return; }
+      const [log, daily] = await Promise.all([
+        supabase.rpc("search_log", { days: 30 }),
+        supabase.rpc("usage_daily", { days: 30 }),
+      ]);
+      if (log.error || daily.error) { setError("Could not load searches — has db/005_searches.sql been run?"); return; }
+      setData({ log: log.data || [], daily: daily.data || [] });
+    })();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (error) return <p className="ap-meta" style={{ color: "#B3261E" }}>{error}</p>;
+  if (!data) return <p className="ap-meta">Loading searches…</p>;
+
+  // A search "became a lead" when its text matches a saved lander's business
+  // name (either contains the other, after normalizing). Short strings are
+  // excluded so e.g. "ac" can't match everything.
+  const landerNames = leads
+    .flatMap(l => l.landers.map(x => normName(x.name)))
+    .filter(n => n.length >= 4);
+  const becameLead = q => {
+    const n = normName(q);
+    if (n.length < 4) return false;
+    return landerNames.some(ln => n.includes(ln) || ln.includes(n));
+  };
+
+  // Group by normalized query; the log is newest-first, so the first row
+  // seen for a key supplies the display text and last-searched time.
+  const groups = new Map();
+  for (const r of data.log) {
+    const key = normName(r.query);
+    if (!key) continue;
+    const g = groups.get(key);
+    if (g) g.count += 1;
+    else groups.set(key, { query: r.query, count: 1, last: r.created_at, lead: becameLead(r.query) });
+  }
+  const rows = [...groups.values()];
+
+  const sum = ep => data.daily.filter(d => d.endpoint === ep).reduce((s, d) => s + Number(d.calls), 0);
+  const visits = sum("visit");
+  const searches = sum("search");
+  const cutoff = Date.now() - 30 * 864e5;
+  const leads30 = leads.filter(l => new Date(l.created_at).getTime() >= cutoff).length;
+  const pct = (a, b) => (b > 0 ? `${Math.round((a / b) * 100)}%` : "—");
+
+  return (
+    <>
+      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 20 }}>
+        <div className="ap-stat">
+          <div className="v">{num(visits)}</div>
+          <div className="l">Visits, last 30 days</div>
+          <div className="s">homepage loads</div>
+        </div>
+        <div className="ap-stat">
+          <div className="v">{num(searches)}</div>
+          <div className="l">Searches, last 30 days</div>
+          <div className="s">{num(rows.length)} unique businesses</div>
+        </div>
+        <div className="ap-stat">
+          <div className="v">{pct(searches, visits)}</div>
+          <div className="l">Click → search</div>
+          <div className="s">searches ÷ visits</div>
+        </div>
+        <div className="ap-stat">
+          <div className="v">{pct(leads30, rows.length)}</div>
+          <div className="l">Search → lead</div>
+          <div className="s">{num(leads30)} signup{leads30 === 1 ? "" : "s"} ÷ unique searches</div>
+        </div>
+      </div>
+
+      <div className="ap-card" style={{ cursor: "default" }}>
+        <div className="ap-name" style={{ marginBottom: 10 }}>Businesses searched, last 30 days</div>
+        <div style={{ overflowX: "auto" }}>
+          <table className="ap-table">
+            <thead><tr><th>Business searched</th><th>Times</th><th>Last searched</th><th /></tr></thead>
+            <tbody>
+              {rows.length === 0 && (
+                <tr><td colSpan={4} className="ap-meta">
+                  No searches logged yet — query capture starts from the day this feature shipped.
+                </td></tr>
+              )}
+              {rows.map(r => (
+                <tr key={normName(r.query)} style={r.lead ? { background: "#EAF6EC" } : undefined}>
+                  <td style={{ fontWeight: 600 }}>{r.query}</td>
+                  <td>{num(r.count)}</td>
+                  <td className="ap-meta">{fmtDate(r.last)}</td>
+                  <td style={{ textAlign: "right" }}>
+                    {r.lead && (
+                      <span className="ap-tag" style={{ color: "var(--success)", borderColor: "var(--success)", background: "#fff" }}>
+                        became a lead ✓
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="ap-meta" style={{ margin: "12px 0 0", fontSize: 12 }}>
+          Green rows match a saved lander's business name. Visits count homepage loads; both start from the day this shipped.
+        </p>
+      </div>
+    </>
+  );
+}
+
 /* ─── Usage tab ──────────────────────────────────────────────────────────
    Traffic + spend dashboard fed by the backend's request/token logs
    (db/004_usage.sql). Dollar figures are ESTIMATES computed client-side
@@ -536,10 +675,12 @@ export default function Admin() {
       <div style={{ display: "flex", alignItems: "center", gap: 16, margin: "6px 0 18px", flexWrap: "wrap" }}>
         <div className="ap-tabs">
           <button className={`ap-tab${tab === "leads" ? " active" : ""}`} onClick={() => setTab("leads")}>Leads</button>
+          <button className={`ap-tab${tab === "searches" ? " active" : ""}`} onClick={() => setTab("searches")}>Searches</button>
           <button className={`ap-tab${tab === "usage" ? " active" : ""}`} onClick={() => setTab("usage")}>Usage</button>
         </div>
         {tab === "leads" && <span className="ap-meta">{leads.length} signup{leads.length === 1 ? "" : "s"}</span>}
       </div>
+      {tab === "searches" && <SearchesTab leads={leads} />}
       {tab === "usage" && <UsageTab />}
       {tab === "leads" && <>
       <input

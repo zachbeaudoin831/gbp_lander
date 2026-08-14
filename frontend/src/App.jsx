@@ -1041,9 +1041,10 @@ export default function App() {
       document.head.appendChild(s);
     }
     initPixel();
-    // Warm the backend while the visitor is still reading the homepage --
+    // Warm the backend while the visitor is still reading the homepage AND
+    // count the visit (the denominator for the admin click→search ratio) --
     // Vercel's Python cold start would otherwise land on their first search.
-    apiGet('/api/health').catch(() => {});
+    apiGet('/api/visit').catch(() => {});
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, []);
 

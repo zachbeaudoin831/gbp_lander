@@ -94,6 +94,7 @@ BASE_URL = os.environ.get("PUBLIC_BASE_URL", "").rstrip("/")
 # in-process memory, because concurrent serverless instances don't share
 # memory and cold starts would reset any local counter.
 RATE_LIMITS: dict[str, tuple[int, int]] = {
+    "visit": (30, 600),
     "search": (30, 600),
     "profile": (12, 600),
     "photo": (200, 600),
@@ -112,6 +113,7 @@ RATE_LIMITS: dict[str, tuple[int, int]] = {
 # traffic -- tripping one means something is wrong, and a bounded bad day
 # beats an unbounded bill. Raise these as real traffic grows.
 DAILY_CAPS: dict[str, int] = {
+    "visit": 10000,
     "search": 2000,
     "profile": 500,
     "photo": 6000,
@@ -194,9 +196,12 @@ async def usage_and_blocklist(request: Request, call_next):
     response = await call_next(request)
     # Log AFTER the response is sent (Starlette background tasks run once the
     # body has gone out, still inside this invocation) -- the caller never
-    # waits on the usage INSERT.
+    # waits on the usage INSERT. Search queries ride along as `detail` so
+    # the admin Searches tab can show WHAT was searched, not just that a
+    # search happened.
+    detail = request.query_params.get("q") if endpoint == "search" else None
     response.background = BackgroundTask(
-        log_request, endpoint, ip, request.headers.get("user-agent")
+        log_request, endpoint, ip, request.headers.get("user-agent"), detail
     )
     return response
 
@@ -334,6 +339,16 @@ def photo(photo_name: str, max_width: int = 800):
         # (billable) Place Photos API is only hit on a cold cache.
         headers={"Cache-Control": "public, max-age=86400, s-maxage=2592000, stale-while-revalidate=86400"},
     )
+
+
+@app.get("/api/visit")
+def visit():
+    """Homepage beacon: warms this lambda on page load AND counts the visit
+    in the usage log (via the middleware) -- the denominator for the admin
+    dashboard's click-to-search funnel ratio. /api/health stays exempt from
+    logging so uptime monitors don't pollute the numbers.
+    """
+    return {"ok": True}
 
 
 @app.get("/api/health")

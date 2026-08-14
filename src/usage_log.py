@@ -77,12 +77,31 @@ def _execute(query: str, params: tuple = (), fetch: bool = False):
                     return None
 
 
-def log_request(endpoint: str, ip: Optional[str], user_agent: Optional[str]) -> None:
-    """Record one API request. Silent no-op on any failure."""
-    _execute(
-        "INSERT INTO api_usage (endpoint, ip, user_agent) VALUES (%s, %s, %s)",
-        (endpoint[:100], (ip or "")[:100] or None, (user_agent or "")[:300] or None),
-    )
+def log_request(
+    endpoint: str,
+    ip: Optional[str],
+    user_agent: Optional[str],
+    detail: Optional[str] = None,
+) -> None:
+    """Record one API request. Silent no-op on any failure.
+
+    `detail` carries the interesting request payload where one exists --
+    today that's the search query for /api/search, feeding the admin
+    Searches tab. The detail-less INSERT is kept as its own statement so
+    general logging keeps working even before the 005 migration adds the
+    column.
+    """
+    base = (endpoint[:100], (ip or "")[:100] or None, (user_agent or "")[:300] or None)
+    if detail:
+        _execute(
+            "INSERT INTO api_usage (endpoint, ip, user_agent, detail) VALUES (%s, %s, %s, %s)",
+            base + (detail[:200],),
+        )
+    else:
+        _execute(
+            "INSERT INTO api_usage (endpoint, ip, user_agent) VALUES (%s, %s, %s)",
+            base,
+        )
 
 
 def log_ai(endpoint: str, resp) -> None:
