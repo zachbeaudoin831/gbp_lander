@@ -214,33 +214,80 @@ function mockSearches() {
       { query: "Sunrise Roofing Dallas", ip: "192.0.2.10", created_at: at(30) },
       { query: "Joe's HVAC Fresno", ip: "203.0.113.9", created_at: at(31) },
     ],
-    daily: [
-      { day: "2026-08-09", endpoint: "visit", calls: 38 },
-      { day: "2026-08-08", endpoint: "visit", calls: 24 },
-      { day: "2026-08-09", endpoint: "search", calls: 9 },
-      { day: "2026-08-08", endpoint: "search", calls: 5 },
+    counts: [
+      { endpoint: "visit", calls: 62 },
+      { endpoint: "search", calls: 14 },
     ],
   };
 }
 
+const trailingRange = days => ({ from: new Date(Date.now() - days * 864e5), to: new Date() });
+
 function SearchesTab({ leads }) {
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
+  const [preset, setPreset] = useState("30d");       // '7d' | '30d' | 'custom'
+  const [range, setRange] = useState(() => trailingRange(30));
+  const [customFrom, setCustomFrom] = useState("");  // yyyy-mm-dd
+  const [customTo, setCustomTo] = useState("");
+
+  function applyCustom() {
+    if (!customFrom || !customTo) return;
+    const from = new Date(`${customFrom}T00:00:00`);
+    const to = new Date(`${customTo}T23:59:59.999`);
+    if (from > to) { setError("Start date is after end date."); return; }
+    setError("");
+    setRange({ from, to });
+  }
 
   useEffect(() => {
     (async () => {
-      if (MOCK) { setData(mockSearches()); return; }
-      const [log, daily] = await Promise.all([
-        supabase.rpc("search_log", { days: 30 }),
-        supabase.rpc("usage_daily", { days: 30 }),
+      setData(null);
+      if (MOCK) {
+        const m = mockSearches();
+        m.log = m.log.filter(r => { const t = new Date(r.created_at); return t >= range.from && t <= range.to; });
+        setData(m);
+        return;
+      }
+      const args = { from_ts: range.from.toISOString(), to_ts: range.to.toISOString() };
+      const [log, counts] = await Promise.all([
+        supabase.rpc("search_log_range", args),
+        supabase.rpc("usage_counts_range", args),
       ]);
-      if (log.error || daily.error) { setError("Could not load searches — has db/005_searches.sql been run?"); return; }
-      setData({ log: log.data || [], daily: daily.data || [] });
+      if (log.error || counts.error) { setError("Could not load searches — have db/005 and db/006 been run?"); return; }
+      setData({ log: log.data || [], counts: counts.data || [] });
     })();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [range]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (error) return <p className="ap-meta" style={{ color: "#B3261E" }}>{error}</p>;
-  if (!data) return <p className="ap-meta">Loading searches…</p>;
+  const rangeLabel = preset === "7d" ? "last 7 days"
+    : preset === "30d" ? "last 30 days"
+    : `${fmtDate(range.from)} – ${fmtDate(range.to)}`;
+
+  const rangeBar = (
+    <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 16 }}>
+      <div className="ap-tabs">
+        {[["7d", "Last 7 days"], ["30d", "Last 30 days"], ["custom", "Custom"]].map(([key, label]) => (
+          <button key={key} className={`ap-tab${preset === key ? " active" : ""}`}
+            onClick={() => { setPreset(key); setError(""); if (key === "7d") setRange(trailingRange(7)); if (key === "30d") setRange(trailingRange(30)); }}>
+            {label}
+          </button>
+        ))}
+      </div>
+      {preset === "custom" && (
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <input type="date" className="ap-search" style={{ width: "auto", padding: "8px 10px", fontSize: 13 }}
+            value={customFrom} onChange={e => setCustomFrom(e.target.value)} />
+          <span className="ap-meta">to</span>
+          <input type="date" className="ap-search" style={{ width: "auto", padding: "8px 10px", fontSize: 13 }}
+            value={customTo} onChange={e => setCustomTo(e.target.value)} />
+          <button className="ap-btn primary ap-mini" onClick={applyCustom} disabled={!customFrom || !customTo}>Apply</button>
+        </div>
+      )}
+    </div>
+  );
+
+  if (error) return <>{rangeBar}<p className="ap-meta" style={{ color: "#B3261E" }}>{error}</p></>;
+  if (!data) return <>{rangeBar}<p className="ap-meta">Loading searches…</p></>;
 
   // A search "became a lead" when its text matches a saved lander's business
   // name (either contains the other, after normalizing). Short strings are
@@ -266,24 +313,27 @@ function SearchesTab({ leads }) {
   }
   const rows = [...groups.values()];
 
-  const sum = ep => data.daily.filter(d => d.endpoint === ep).reduce((s, d) => s + Number(d.calls), 0);
-  const visits = sum("visit");
-  const searches = sum("search");
-  const cutoff = Date.now() - 30 * 864e5;
-  const leads30 = leads.filter(l => new Date(l.created_at).getTime() >= cutoff).length;
+  const count = ep => Number((data.counts.find(d => d.endpoint === ep) || {}).calls || 0);
+  const visits = count("visit");
+  const searches = count("search");
+  const leadsInRange = leads.filter(l => {
+    const t = new Date(l.created_at);
+    return t >= range.from && t <= range.to;
+  }).length;
   const pct = (a, b) => (b > 0 ? `${Math.round((a / b) * 100)}%` : "—");
 
   return (
     <>
+      {rangeBar}
       <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 20 }}>
         <div className="ap-stat">
           <div className="v">{num(visits)}</div>
-          <div className="l">Visits, last 30 days</div>
+          <div className="l">Visits, {rangeLabel}</div>
           <div className="s">homepage loads</div>
         </div>
         <div className="ap-stat">
           <div className="v">{num(searches)}</div>
-          <div className="l">Searches, last 30 days</div>
+          <div className="l">Searches, {rangeLabel}</div>
           <div className="s">{num(rows.length)} unique businesses</div>
         </div>
         <div className="ap-stat">
@@ -292,21 +342,21 @@ function SearchesTab({ leads }) {
           <div className="s">searches ÷ visits</div>
         </div>
         <div className="ap-stat">
-          <div className="v">{pct(leads30, rows.length)}</div>
+          <div className="v">{pct(leadsInRange, rows.length)}</div>
           <div className="l">Search → lead</div>
-          <div className="s">{num(leads30)} signup{leads30 === 1 ? "" : "s"} ÷ unique searches</div>
+          <div className="s">{num(leadsInRange)} signup{leadsInRange === 1 ? "" : "s"} ÷ unique searches</div>
         </div>
       </div>
 
       <div className="ap-card" style={{ cursor: "default" }}>
-        <div className="ap-name" style={{ marginBottom: 10 }}>Businesses searched, last 30 days</div>
+        <div className="ap-name" style={{ marginBottom: 10 }}>Businesses searched, {rangeLabel}</div>
         <div style={{ overflowX: "auto" }}>
           <table className="ap-table">
             <thead><tr><th>Business searched</th><th>Times</th><th>Last searched</th><th /></tr></thead>
             <tbody>
               {rows.length === 0 && (
                 <tr><td colSpan={4} className="ap-meta">
-                  No searches logged yet — query capture starts from the day this feature shipped.
+                  No searches logged in this period.
                 </td></tr>
               )}
               {rows.map(r => (
