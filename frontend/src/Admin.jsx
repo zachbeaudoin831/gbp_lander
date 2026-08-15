@@ -222,12 +222,17 @@ function mockSearches() {
 }
 
 const trailingRange = days => ({ from: new Date(Date.now() - days * 864e5), to: new Date() });
+const todayRange = () => {
+  const from = new Date(); from.setHours(0, 0, 0, 0);
+  const to = new Date(); to.setHours(23, 59, 59, 999);
+  return { from, to };
+};
 
 function SearchesTab({ leads }) {
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
-  const [preset, setPreset] = useState("30d");       // '7d' | '30d' | 'custom'
-  const [range, setRange] = useState(() => trailingRange(30));
+  const [preset, setPreset] = useState("today");     // 'today' | '7d' | '30d' | 'custom'
+  const [range, setRange] = useState(() => todayRange());
   const [customFrom, setCustomFrom] = useState("");  // yyyy-mm-dd
   const [customTo, setCustomTo] = useState("");
 
@@ -259,16 +264,17 @@ function SearchesTab({ leads }) {
     })();
   }, [range]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const rangeLabel = preset === "7d" ? "last 7 days"
+  const rangeLabel = preset === "today" ? "today"
+    : preset === "7d" ? "last 7 days"
     : preset === "30d" ? "last 30 days"
     : `${fmtDate(range.from)} – ${fmtDate(range.to)}`;
 
   const rangeBar = (
     <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 16 }}>
       <div className="ap-tabs">
-        {[["7d", "Last 7 days"], ["30d", "Last 30 days"], ["custom", "Custom"]].map(([key, label]) => (
+        {[["today", "Today"], ["7d", "Last 7 days"], ["30d", "Last 30 days"], ["custom", "Custom"]].map(([key, label]) => (
           <button key={key} className={`ap-tab${preset === key ? " active" : ""}`}
-            onClick={() => { setPreset(key); setError(""); if (key === "7d") setRange(trailingRange(7)); if (key === "30d") setRange(trailingRange(30)); }}>
+            onClick={() => { setPreset(key); setError(""); if (key === "today") setRange(todayRange()); if (key === "7d") setRange(trailingRange(7)); if (key === "30d") setRange(trailingRange(30)); }}>
             {label}
           </button>
         ))}
