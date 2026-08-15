@@ -104,6 +104,37 @@ def log_request(
         )
 
 
+def log_selection(
+    *,
+    place_id: str,
+    name: Optional[str],
+    phone: Optional[str],
+    address: Optional[str],
+    website: Optional[str],
+    ip: Optional[str],
+) -> None:
+    """Record which business a visitor SELECTED from the search results
+    (i.e. every /api/profile call). Unlike the raw search text this is a
+    real Google listing with a phone number -- it's how the admin Searches
+    tab lets Zach reach an owner who ran the funnel but never signed up.
+    Silent no-op on any failure.
+    """
+    _execute(
+        """
+        INSERT INTO selections (place_id, name, phone, address, website, ip)
+        VALUES (%s, %s, %s, %s, %s, %s)
+        """,
+        (
+            (place_id or "")[:200],
+            (name or "")[:200] or None,
+            (phone or "")[:50] or None,
+            (address or "")[:300] or None,
+            (website or "")[:300] or None,
+            (ip or "")[:100] or None,
+        ),
+    )
+
+
 def log_ai(endpoint: str, resp) -> None:
     """Record token usage from one Anthropic Messages response.
     Called from ai_copy.py right after each client.messages.create().

@@ -214,6 +214,12 @@ function mockSearches() {
       { query: "Sunrise Roofing Dallas", ip: "192.0.2.10", created_at: at(30) },
       { query: "Joe's HVAC Fresno", ip: "203.0.113.9", created_at: at(31) },
     ],
+    selections: [
+      { place_id: "p1", name: "Duncan Plumbing", phone: "(831) 555-0199", address: "1245 Thompson Ave, Santa Cruz, CA 95062", website: "https://duncanplumbing.us", ip: "198.51.100.4", created_at: at(2) },
+      { place_id: "p2", name: "Joe's HVAC", phone: "(559) 555-0142", address: "88 Blackstone Ave, Fresno, CA 93710", website: null, ip: "203.0.113.9", created_at: at(8) },
+      { place_id: "p2", name: "Joe's HVAC", phone: "(559) 555-0142", address: "88 Blackstone Ave, Fresno, CA 93710", website: null, ip: "203.0.113.9", created_at: at(31) },
+      { place_id: "p3", name: "Sunrise Roofing", phone: null, address: "410 Elm St, Dallas, TX 75201", website: "https://sunriseroofingtx.com", ip: "192.0.2.10", created_at: at(30) },
+    ],
     counts: [
       { endpoint: "visit", calls: 62 },
       { endpoint: "search", calls: 14 },
@@ -250,17 +256,20 @@ function SearchesTab({ leads }) {
       setData(null);
       if (MOCK) {
         const m = mockSearches();
-        m.log = m.log.filter(r => { const t = new Date(r.created_at); return t >= range.from && t <= range.to; });
+        const inRange = r => { const t = new Date(r.created_at); return t >= range.from && t <= range.to; };
+        m.log = m.log.filter(inRange);
+        m.selections = m.selections.filter(inRange);
         setData(m);
         return;
       }
       const args = { from_ts: range.from.toISOString(), to_ts: range.to.toISOString() };
-      const [log, counts] = await Promise.all([
+      const [log, counts, sel] = await Promise.all([
         supabase.rpc("search_log_range", args),
         supabase.rpc("usage_counts_range", args),
+        supabase.rpc("selections_range", args),
       ]);
-      if (log.error || counts.error) { setError("Could not load searches — have db/005 and db/006 been run?"); return; }
-      setData({ log: log.data || [], counts: counts.data || [] });
+      if (log.error || counts.error || sel.error) { setError("Could not load searches — have db/005, 006 and 007 been run?"); return; }
+      setData({ log: log.data || [], counts: counts.data || [], selections: sel.data || [] });
     })();
   }, [range]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -307,17 +316,28 @@ function SearchesTab({ leads }) {
     return landerNames.some(ln => n.includes(ln) || ln.includes(n));
   };
 
-  // Group by normalized query; the log is newest-first, so the first row
-  // seen for a key supplies the display text and last-searched time.
+  // Selected businesses, grouped by Google place_id (one row per business
+  // however many times it was picked); newest-first log means the first
+  // row seen supplies the details and last-picked time.
   const groups = new Map();
+  for (const r of data.selections) {
+    const g = groups.get(r.place_id);
+    if (g) g.count += 1;
+    else groups.set(r.place_id, { ...r, count: 1, last: r.created_at, lead: becameLead(r.name) });
+  }
+  const rows = [...groups.values()];
+
+  // Raw search text still has value: it shows searches that never got as
+  // far as picking a result (typos, businesses Google couldn't find).
+  const searchGroups = new Map();
   for (const r of data.log) {
     const key = normName(r.query);
     if (!key) continue;
-    const g = groups.get(key);
+    const g = searchGroups.get(key);
     if (g) g.count += 1;
-    else groups.set(key, { query: r.query, count: 1, last: r.created_at, lead: becameLead(r.query) });
+    else searchGroups.set(key, { query: r.query, count: 1, last: r.created_at });
   }
-  const rows = [...groups.values()];
+  const searchRows = [...searchGroups.values()];
 
   const count = ep => Number((data.counts.find(d => d.endpoint === ep) || {}).calls || 0);
   const visits = count("visit");
@@ -327,6 +347,7 @@ function SearchesTab({ leads }) {
     return t >= range.from && t <= range.to;
   }).length;
   const pct = (a, b) => (b > 0 ? `${Math.round((a / b) * 100)}%` : "—");
+  const telHref = p => `tel:${String(p || "").replace(/[^\d+]/g, "")}`;
 
   return (
     <>
@@ -340,7 +361,7 @@ function SearchesTab({ leads }) {
         <div className="ap-stat">
           <div className="v">{num(searches)}</div>
           <div className="l">Searches, {rangeLabel}</div>
-          <div className="s">{num(rows.length)} unique businesses</div>
+          <div className="s">{num(rows.length)} business{rows.length === 1 ? "" : "es"} selected</div>
         </div>
         <div className="ap-stat">
           <div className="v">{pct(searches, visits)}</div>
@@ -350,29 +371,43 @@ function SearchesTab({ leads }) {
         <div className="ap-stat">
           <div className="v">{pct(leadsInRange, rows.length)}</div>
           <div className="l">Search → lead</div>
-          <div className="s">{num(leadsInRange)} signup{leadsInRange === 1 ? "" : "s"} ÷ unique searches</div>
+          <div className="s">{num(leadsInRange)} signup{leadsInRange === 1 ? "" : "s"} ÷ businesses selected</div>
         </div>
       </div>
 
-      <div className="ap-card" style={{ cursor: "default" }}>
-        <div className="ap-name" style={{ marginBottom: 10 }}>Businesses searched, {rangeLabel}</div>
+      <div className="ap-card" style={{ cursor: "default", marginBottom: 20 }}>
+        <div className="ap-name" style={{ marginBottom: 4 }}>Businesses selected, {rangeLabel}</div>
+        <p className="ap-meta" style={{ margin: "0 0 10px" }}>
+          The listing each visitor picked from the results — straight from Google, phone included. Green rows became a lead; the rest are owners you can reach out to.
+        </p>
         <div style={{ overflowX: "auto" }}>
           <table className="ap-table">
-            <thead><tr><th>Business searched</th><th>Times</th><th>Last searched</th><th /></tr></thead>
+            <thead><tr><th>Business</th><th>Phone</th><th>Address</th><th>Times</th><th>Last picked</th><th /></tr></thead>
             <tbody>
               {rows.length === 0 && (
-                <tr><td colSpan={4} className="ap-meta">
-                  No searches logged in this period.
+                <tr><td colSpan={6} className="ap-meta">
+                  No businesses selected in this period.
                 </td></tr>
               )}
               {rows.map(r => (
-                <tr key={normName(r.query)} style={r.lead ? { background: "#EAF6EC" } : undefined}>
-                  <td style={{ fontWeight: 600 }}>{r.query}</td>
+                <tr key={r.place_id} style={r.lead ? { background: "#EAF6EC" } : undefined}>
+                  <td>
+                    <div style={{ fontWeight: 600 }}>{r.name || "(unnamed listing)"}</div>
+                    {r.website && (
+                      <a href={r.website} target="_blank" rel="noopener noreferrer" className="ap-meta" style={{ fontSize: 12 }}>
+                        {String(r.website).replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "")}
+                      </a>
+                    )}
+                  </td>
+                  <td style={{ whiteSpace: "nowrap" }}>
+                    {r.phone ? <a href={telHref(r.phone)} style={{ color: "inherit", fontWeight: 600 }}>{r.phone}</a> : <span className="ap-meta">—</span>}
+                  </td>
+                  <td className="ap-meta" style={{ maxWidth: 260 }}>{r.address || "—"}</td>
                   <td>{num(r.count)}</td>
-                  <td className="ap-meta">{fmtDate(r.last)}</td>
+                  <td className="ap-meta" style={{ whiteSpace: "nowrap" }}>{fmtDate(r.last)}</td>
                   <td style={{ textAlign: "right" }}>
                     {r.lead && (
-                      <span className="ap-tag" style={{ color: "var(--success)", borderColor: "var(--success)", background: "#fff" }}>
+                      <span className="ap-tag" style={{ color: "var(--success)", borderColor: "var(--success)", background: "#fff", whiteSpace: "nowrap" }}>
                         became a lead ✓
                       </span>
                     )}
@@ -382,10 +417,33 @@ function SearchesTab({ leads }) {
             </tbody>
           </table>
         </div>
-        <p className="ap-meta" style={{ margin: "12px 0 0", fontSize: 12 }}>
-          Green rows match a saved lander's business name. Visits count homepage loads; both start from the day this shipped.
-        </p>
       </div>
+
+      {searchRows.length > 0 && (
+        <div className="ap-card" style={{ cursor: "default" }}>
+          <div className="ap-name" style={{ marginBottom: 4 }}>Raw searches, {rangeLabel}</div>
+          <p className="ap-meta" style={{ margin: "0 0 10px" }}>
+            What people typed. Useful for spotting searches that never turned into a pick (typos, businesses Google couldn't find).
+          </p>
+          <div style={{ overflowX: "auto" }}>
+            <table className="ap-table">
+              <thead><tr><th>Search text</th><th>Times</th><th>Last searched</th></tr></thead>
+              <tbody>
+                {searchRows.map(r => (
+                  <tr key={normName(r.query)}>
+                    <td>{r.query}</td>
+                    <td>{num(r.count)}</td>
+                    <td className="ap-meta">{fmtDate(r.last)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+      <p className="ap-meta" style={{ margin: "16px 0 0", fontSize: 12 }}>
+        Visits count homepage loads. Selections, searches, and visits are all logged from the day each shipped.
+      </p>
     </>
   );
 }

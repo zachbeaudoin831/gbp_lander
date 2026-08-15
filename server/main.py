@@ -49,7 +49,7 @@ from src.lander_builder import build_profile
 from src.lead_store import LeadStoreError, insert_lead
 from src.meta_capi import MetaCapiError, send_event
 from src.places_client import GooglePlacesClient, PlacesApiError
-from src.usage_log import daily_count, is_blocked, log_request, recent_count
+from src.usage_log import daily_count, is_blocked, log_request, log_selection, recent_count
 from src.website_scraper import (
     ScrapeBlocked,
     scrape_about_page,
@@ -242,7 +242,7 @@ def search(q: str = Query(..., min_length=2, description="Business name + locati
 
 
 @app.get("/api/profile")
-def profile(place_id: str):
+def profile(place_id: str, request: Request):
     """Full profile for a single chosen business -- the pricier call.
     Returns the exact JSON shape the frontend's buildLanderHTML(d) expects.
     """
@@ -251,6 +251,21 @@ def profile(place_id: str):
         place = client.get_details(place_id)
     except PlacesApiError as e:
         raise HTTPException(status_code=502, detail=str(e))
+
+    # A profile fetch == the visitor picked this business. Record the
+    # listing (name/phone/address) for the admin Searches tab so an owner
+    # who bails before signing up is still reachable. Fire-and-forget.
+    try:
+        log_selection(
+            place_id=place_id,
+            name=place.name,
+            phone=place.phone_national or place.phone_international,
+            address=place.address,
+            website=place.website,
+            ip=_client_ip(request),
+        )
+    except Exception:
+        pass
 
     site = None
     if place.website:
