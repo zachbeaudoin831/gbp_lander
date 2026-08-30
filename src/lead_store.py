@@ -37,6 +37,7 @@ def insert_lead(
     business: Optional[str],
     name: str,
     phone: str,
+    email: Optional[str] = None,
     contact_pref: Optional[str],
     source: str,
     page_url: Optional[str],
@@ -57,12 +58,12 @@ def insert_lead(
             cur.execute(
                 """
                 INSERT INTO leads
-                    (business, name, phone, contact_pref, source,
+                    (business, name, phone, email, contact_pref, source,
                      page_url, fbclid, gclid)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING id
                 """,
-                (business, name, phone, contact_pref, source,
+                (business, name, phone, email, contact_pref, source,
                  page_url, fbclid, gclid),
             )
             row = cur.fetchone()

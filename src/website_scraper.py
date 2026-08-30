@@ -22,7 +22,15 @@ from bs4 import BeautifulSoup
 
 from .url_guard import assert_public_url, safe_get
 
-USER_AGENT = "GBPLanderBot/0.1 (+https://example.com/bot-info)"
+# Browser-like UA with an honest bot suffix: WAFs (WP Engine, Cloudflare)
+# serve bot-shaped UAs an empty shell or a block page, which is how we were
+# missing logos entirely on some sites. The owner initiated this scrape of
+# their own site, so presenting as a browser is fair; robots.txt is still
+# honored below.
+USER_AGENT = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 SendKPIBot/1.0"
+)
 
 # Tags whose text would pollute extracted copy (menus, scripts, embedded
 # widgets) rather than describe the business.
@@ -58,20 +66,44 @@ class ScrapeBlocked(RuntimeError):
 # containing "logo"), not a spec.
 _LOGO_HINT_RE = re.compile(r"logo", re.IGNORECASE)
 
+# Lazy-loading plugins (NitroPack, WP Rocket, generic data-src) park the real
+# image URL in one of these and leave a data: placeholder in src -- checked
+# in priority order, most-specific first.
+_IMG_SRC_ATTRS = ("nitro-lazy-src", "data-lazy-src", "data-src", "data-original", "content", "src")
+_IMG_SRCSET_ATTRS = ("nitro-lazy-srcset", "data-srcset", "srcset")
+
+
+def _img_real_src(img) -> Optional[str]:
+    """The image's actual URL, seeing through lazy-load placeholders."""
+    for attr in _IMG_SRC_ATTRS:
+        v = img.get(attr)
+        if v and not str(v).startswith("data:"):
+            return str(v)
+    for attr in _IMG_SRCSET_ATTRS:
+        v = img.get(attr)
+        if v:
+            first = str(v).split(",")[0].strip().split(" ")[0]
+            if first and not first.startswith("data:"):
+                return first
+    return None
+
 
 def _find_logo_url(soup: BeautifulSoup, base_url: str) -> Optional[str]:
     for img in soup.find_all("img"):
         haystack = " ".join(
-            str(img.get(attr, "")) for attr in ("class", "id", "alt", "src", "data-src")
+            str(img.get(attr, ""))
+            for attr in ("class", "id", "alt", "title", "src", "data-src", "nitro-lazy-src")
         )
         if _LOGO_HINT_RE.search(haystack):
-            src = img.get("src") or img.get("data-src")
+            src = _img_real_src(img)
             if src:
                 return urljoin(base_url, src)
 
+    # No logo-hinted <img>: the apple-touch-icon is usually the brand mark
+    # (and conveniently square, which suits the lander's logo tile).
     for rel in ("apple-touch-icon", "icon", "shortcut icon"):
         link = soup.find("link", attrs={"rel": rel})
-        if link and link.get("href"):
+        if link and link.get("href") and not str(link["href"]).startswith("data:"):
             return urljoin(base_url, link["href"])
 
     return None
@@ -105,7 +137,7 @@ def scrape_website(
     if respect_robots and not _allowed_by_robots(url):
         raise ScrapeBlocked(f"robots.txt disallows fetching {url}")
 
-    resp = safe_get(url, timeout=timeout)
+    resp = safe_get(url, timeout=timeout, headers={"User-Agent": USER_AGENT})
     resp.raise_for_status()
 
     soup = BeautifulSoup(resp.text, "lxml")
@@ -222,7 +254,7 @@ def _find_page_url(home_url: str, hints: tuple[str, ...], timeout: int = 12) -> 
     the result if you want its content.
     """
     try:
-        resp = safe_get(home_url, timeout=timeout)
+        resp = safe_get(home_url, timeout=timeout, headers={"User-Agent": USER_AGENT})
         resp.raise_for_status()
     except Exception:
         return None

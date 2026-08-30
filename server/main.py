@@ -108,6 +108,7 @@ RATE_LIMITS: dict[str, tuple[int, int]] = {
     "generate-google-ads": (8, 3600),
     "generate-ad-copy": (20, 3600),
     "lead": (10, 3600),
+    "signup-lead": (10, 3600),
     "ghl-contact": (8, 3600),
     "meta-event": (60, 3600),
 }
@@ -127,6 +128,7 @@ DAILY_CAPS: dict[str, int] = {
     "generate-google-ads": 300,
     "generate-ad-copy": 300,
     "lead": 300,
+    "signup-lead": 300,
     "ghl-contact": 300,
     "meta-event": 2000,
 }
@@ -423,6 +425,54 @@ def meta_event(req: MetaEventRequest, request: Request):
         return {"ok": True}
     except MetaCapiError:
         return {"ok": False}
+
+
+class SignupLeadRequest(BaseModel):
+    """A manual (non-Google) signup from the funnel's download gate: the
+    visitor chose the name/email/phone form over Google OAuth.
+    """
+    name: str = Field(min_length=1, max_length=200)
+    email: str = Field(min_length=5, max_length=320)
+    phone: str = Field(min_length=7, max_length=50)
+    business: Optional[str] = Field(default=None, max_length=200)
+    fbclid: Optional[str] = Field(default=None, max_length=500)
+    gclid: Optional[str] = Field(default=None, max_length=500)
+
+
+@app.post("/api/signup-lead")
+def signup_lead(req: SignupLeadRequest):
+    """Record a manual signup and sync it to GoHighLevel. Best-effort on
+    both stores -- the visitor already earned their download, so a storage
+    hiccup must never block the unlock. ok is true if at least one store
+    accepted the signup.
+    """
+    stored = False
+    try:
+        insert_lead(
+            business=req.business,
+            name=req.name.strip(),
+            phone=req.phone.strip(),
+            email=req.email.strip(),
+            contact_pref=None,
+            source="signup",
+            page_url=None,
+            fbclid=req.fbclid,
+            gclid=req.gclid,
+        )
+        stored = True
+    except Exception:
+        pass
+    try:
+        upsert_contact(
+            name=req.name.strip(),
+            email=req.email.strip(),
+            phone=req.phone.strip(),
+            business=req.business,
+        )
+        stored = True
+    except GhlError:
+        pass
+    return {"ok": stored}
 
 
 class GhlContactRequest(BaseModel):
