@@ -113,12 +113,18 @@ def _allowed_by_robots(url: str) -> bool:
     parsed = urlparse(url)
     robots_url = f"{parsed.scheme}://{parsed.netloc}/robots.txt"
     rp = urllib.robotparser.RobotFileParser()
-    rp.set_url(robots_url)
     try:
-        rp.read()
+        # Fetch robots.txt ourselves: RobotFileParser.read() uses the
+        # Python-urllib user agent, which WAFs commonly 403 -- and the parser
+        # treats 401/403 as "disallow everything", silently blocking whole
+        # sites (no logo, no offer copy) whose robots.txt actually says
+        # Allow: /. Missing/erroring robots defaults to allowed, matching
+        # the prior intent.
+        resp = safe_get(robots_url, timeout=8, headers={"User-Agent": USER_AGENT})
+        if resp.status_code >= 400:
+            return True
+        rp.parse(resp.text.splitlines())
     except Exception:
-        # robots.txt unreachable/missing -- default to allowed rather than
-        # blocking a legitimate fetch of a business's own public homepage.
         return True
     return rp.can_fetch(USER_AGENT, url)
 
