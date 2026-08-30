@@ -81,6 +81,10 @@ app.add_middleware(
         for o in os.environ.get("ALLOWED_ORIGINS", _DEFAULT_ORIGINS).split(",")
         if o.strip()
     ],
+    # Local dev runs on whatever port is free (launch.json uses 5183, autoPort
+    # can pick others) -- a localhost origin can only come from a browser on
+    # the developer's own machine, so any port is fine.
+    allow_origin_regex=r"http://localhost:\d+",
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
