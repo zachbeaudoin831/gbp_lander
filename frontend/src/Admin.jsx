@@ -11,7 +11,7 @@
    library. */
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "./supabaseClient";
-import { buildLanderHTML, slugify } from "./App.jsx";
+import { buildLander, buildLanderHTML, buildLanderHTMLV2, slugify } from "./App.jsx";
 
 const ADMIN_EMAILS = ["zkbmarketing@gmail.com"];
 
@@ -133,16 +133,20 @@ function LanderAssets({ lander }) {
     return () => { cancelled = true; };
   }, [lander.id, lander.user_id]);
 
-  function downloadRebuiltLander() {
+  function downloadRebuiltLander(version) {
+    const html = version === "v2" ? buildLanderHTMLV2(lander.profile) : buildLanderHTML(lander.profile);
     const a = document.createElement("a");
-    a.href = URL.createObjectURL(new Blob([buildLanderHTML(lander.profile)], { type: "text/html" }));
-    a.download = `${slugify(lander.name)}-lander.html`;
+    a.href = URL.createObjectURL(new Blob([html], { type: "text/html" }));
+    a.download = `${slugify(lander.name)}-lander-${version}.html`;
     a.click();
   }
 
-  const storedLander = assets?.find(f => f.name.endsWith(".html"));
+  // Newer signups have BOTH lander versions in storage; older ones have a
+  // single -lander.html (or nothing, rebuilt from the profile on demand).
+  const storedLanders = assets?.filter(f => f.name.endsWith(".html")) || [];
   const storedDocs = assets?.filter(f => !f.isImage && !f.name.endsWith(".html")) || [];
   const storedAds = assets?.filter(f => f.isImage) || [];
+  const landerLabel = n => n.includes("-v2") ? "Lander V2" : n.includes("-v1") ? "Lander V1" : "Lander";
 
   return (
     <div style={{ borderTop: "1px solid var(--border)", paddingTop: 14, marginTop: 14 }}>
@@ -158,9 +162,12 @@ function LanderAssets({ lander }) {
             {f.name.includes("google-ads") ? "Google ads" : f.name}
           </a>
         ))}
-        {storedLander
-          ? <a className="ap-btn primary" href={storedLander.downloadUrl}>Download lander</a>
-          : <button className="ap-btn primary" onClick={downloadRebuiltLander}>Download lander</button>}
+        {storedLanders.length > 0
+          ? storedLanders.map(f => <a key={f.name} className="ap-btn primary" href={f.downloadUrl}>{landerLabel(f.name)}</a>)
+          : <>
+              <button className="ap-btn primary" onClick={() => downloadRebuiltLander("v1")}>Lander V1</button>
+              <button className="ap-btn primary" onClick={() => downloadRebuiltLander("v2")}>Lander V2</button>
+            </>}
       </div>
 
       {showPreview && (
@@ -168,7 +175,7 @@ function LanderAssets({ lander }) {
           className="ap-frame"
           title={`${lander.name} preview`}
           sandbox="allow-scripts allow-same-origin"
-          srcDoc={buildLanderHTML(lander.profile)}
+          srcDoc={buildLander(lander.profile)}
           style={{ marginBottom: 12 }}
         />
       )}

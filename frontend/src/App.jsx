@@ -36,54 +36,13 @@ const contrastInk = hex => {
 };
 
 /* ─── lander HTML generator ("Soft Light" template) ─────────────────── */
-// Exported for the /admin asset portal, which regenerates any saved
-// lander from its profile jsonb -- same input, same file the user got.
-export function buildLanderHTML(d) {
-  // Em dashes never reach the end user: spaced ones read as a comma pause,
-  // anything left becomes a plain hyphen.
-  const noDash = s => s == null ? '' : String(s).replace(/\s*—\s*/g, ', ').replace(/—/g, '-');
-  const clean = s => esc(noDash(s));
-  const titleCaseWords = s => String(s || '')
-    .replace(/([^\s-]+)/g, w => w.charAt(0).toUpperCase() + w.slice(1));
-
-  const phone = d.phone_national || d.phone_international || '';
-  const href  = d.phone_international
-    ? `tel:${d.phone_international.replace(/[^\d+]/g,'')}`
-    : phone ? `tel:${phone.replace(/[^0-9+]/g,'')}` : null;
-  const city  = (d.address||'').split(',')[1]?.trim()||'';
-  const first = (d.name||'Us').split(' ')[0];
-  const today = todayName();
-  const initial = (d.name||'?').trim().charAt(0).toUpperCase();
-  // Trailing country makes the maps embed treat the query as an address
-  // search; without it Google resolves the business entity and shows the
-  // place card with the rating + review count on the map.
-  const mapAddr = (d.address||'').replace(/,\s*(USA|United States|Canada)\s*$/i,'');
-
-  const headline = esc(titleCaseWords(noDash(d.offer_headline || d.name || '')));
-  const sub = clean(d.offer_subhead || d.tagline);
-
-  const phoneSvg = w => `<svg width="${w}" height="${w}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>`;
-
-  // Stat tiles under the photo collage; each renders only when its data exists.
-  const alwaysOpen = (d.hours||[]).length === 7 && !(d.hours||[]).some(l => /closed/i.test(l));
-  const todayLine = (d.hours||[]).find(l => l.startsWith(today));
-  const todayTime = todayLine && todayLine.indexOf(':') > -1 ? todayLine.slice(todayLine.indexOf(':')+1).trim() : '';
-  const stats = [];
-  if (d.rating) stats.push({ n: `${Number(d.rating).toFixed(1)} ★`, l: `${d.review_count||0} Google reviews` });
-  if (alwaysOpen) stats.push({ n: '7 days', l: 'Open every week' });
-  else if (d.open_now != null) stats.push({ n: d.open_now ? 'Open now' : 'Closed now', l: todayTime ? `Today: ${esc(todayTime)}` : '' });
-  if (city) stats.push({ n: esc(city), l: clean(d.category) || 'Local service' });
-
-  const photos = (d.photos||[]).slice(0,5);
-
-  const revs = (d.reviews||[]).filter(r => r && r.text).slice(0,4);
-
-  // Multi-step "ask a question" modal, embedded as self-contained markup +
-  // vanilla JS so it works in the standalone downloaded lander too. On
-  // submit it POSTs the lead to the backend; the endpoint is a stub for now
-  // (fails silently and still confirms), so this is forward-compatible with
-  // the CRM lead store once that lands.
-  const askModal = `
+// Multi-step "ask a question" modal, embedded as self-contained markup +
+// vanilla JS so it works in the standalone downloaded lander too. On
+// submit it POSTs the lead to the backend. Shared by both lander
+// templates (V1 "Soft Light", V2 "Maps card").
+function buildAskModal(d) {
+  const first = (d.name || 'Us').split(' ')[0];
+  return `
 <div class="askm" id="askm" hidden>
   <div class="askm-backdrop" data-askm-close></div>
   <div class="askm-card" role="dialog" aria-modal="true" aria-labelledby="askm-title">
@@ -143,6 +102,54 @@ export function buildLanderHTML(d) {
   document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!modal.hidden){closeM();}});
 })();
 </script>`;
+}
+
+// Exported for the /admin asset portal, which regenerates any saved
+// lander from its profile jsonb -- same input, same file the user got.
+export function buildLanderHTML(d) {
+  // Em dashes never reach the end user: spaced ones read as a comma pause,
+  // anything left becomes a plain hyphen.
+  const noDash = s => s == null ? '' : String(s).replace(/\s*—\s*/g, ', ').replace(/—/g, '-');
+  const clean = s => esc(noDash(s));
+  const titleCaseWords = s => String(s || '')
+    .replace(/([^\s-]+)/g, w => w.charAt(0).toUpperCase() + w.slice(1));
+
+  const phone = d.phone_national || d.phone_international || '';
+  const href  = d.phone_international
+    ? `tel:${d.phone_international.replace(/[^\d+]/g,'')}`
+    : phone ? `tel:${phone.replace(/[^0-9+]/g,'')}` : null;
+  const city  = (d.address||'').split(',')[1]?.trim()||'';
+  const first = (d.name||'Us').split(' ')[0];
+  const today = todayName();
+  const initial = (d.name||'?').trim().charAt(0).toUpperCase();
+  // Trailing country makes the maps embed treat the query as an address
+  // search; without it Google resolves the business entity and shows the
+  // place card with the rating + review count on the map.
+  const mapAddr = (d.address||'').replace(/,\s*(USA|United States|Canada)\s*$/i,'');
+
+  const headline = esc(titleCaseWords(noDash(d.offer_headline || d.name || '')));
+  const sub = clean(d.offer_subhead || d.tagline);
+
+  const phoneSvg = w => `<svg width="${w}" height="${w}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>`;
+
+  // Stat tiles under the photo collage; each renders only when its data exists.
+  const alwaysOpen = (d.hours||[]).length === 7 && !(d.hours||[]).some(l => /closed/i.test(l));
+  const todayLine = (d.hours||[]).find(l => l.startsWith(today));
+  const todayTime = todayLine && todayLine.indexOf(':') > -1 ? todayLine.slice(todayLine.indexOf(':')+1).trim() : '';
+  const stats = [];
+  if (d.rating) stats.push({ n: `${Number(d.rating).toFixed(1)} ★`, l: `${d.review_count||0} Google reviews` });
+  if (alwaysOpen) stats.push({ n: '7 days', l: 'Open every week' });
+  else if (d.open_now != null) stats.push({ n: d.open_now ? 'Open now' : 'Closed now', l: todayTime ? `Today: ${esc(todayTime)}` : '' });
+  if (city) stats.push({ n: esc(city), l: clean(d.category) || 'Local service' });
+
+  const photos = (d.photos||[]).slice(0,5);
+
+  const revs = (d.reviews||[]).filter(r => r && r.text).slice(0,4);
+
+  // Multi-step "ask a question" modal -- shared with the V2 template.
+  const askModal = buildAskModal(d);
+
+
 
   const CSS = `:root{--bg:#FFFFFF;--bg2:#F7F8FA;--card:#FFFFFF;--line:#ECEDF0;--ink:#0B0C0E;--muted:#5C616B;--faint:#9AA0AA;--go:#16A34A;--go-soft:#EAF7EF;--gold:#F5A623;--display:'Sora',system-ui,sans-serif;--body:'Inter',system-ui,sans-serif;--r:18px;--r-lg:24px;--shadow:0 1px 2px rgba(11,12,14,.04),0 8px 24px rgba(11,12,14,.06)}*{box-sizing:border-box}html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}body{margin:0;font-family:var(--body);background:var(--bg);color:var(--ink);line-height:1.55;font-size:16px}img{max-width:100%;display:block}a{color:inherit}.wrap{max-width:1060px;margin:0 auto;padding:0 24px}.topbar{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}.topbar-inner{max-width:1060px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px}.brand{display:flex;align-items:center;gap:11px;font-family:var(--display);font-weight:700;font-size:17.5px;letter-spacing:-.01em;min-width:0}.brand-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.brand-mark{position:relative;flex-shrink:0;width:44px;height:44px;border-radius:12px;background:var(--ink);color:#fff;display:grid;place-items:center;font-size:17px;font-weight:800}.brand-mark.has-logo{background:#fff;border:1px solid var(--line)}.brand-mark.has-logo .bm-i{visibility:hidden}.brand-mark img{position:absolute;inset:3px;width:calc(100% - 6px);height:calc(100% - 6px);object-fit:contain;border-radius:8px}.topbar-actions{display:flex;align-items:center;gap:10px;flex-shrink:0}.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;font-weight:600;text-decoration:none;border-radius:12px;transition:transform .15s ease,box-shadow .15s ease;cursor:pointer;font-family:var(--body)}.btn:hover{transform:translateY(-1px)}.btn-primary{background:var(--ink);color:#fff;font-size:14px;padding:11px 18px;box-shadow:var(--shadow);white-space:nowrap}.btn-ghost{background:transparent;color:var(--muted);font-size:14px;padding:11px 14px;border:1px solid var(--line);white-space:nowrap}.hero{padding:64px 0 40px;text-align:center}.rating-pill{display:inline-flex;align-items:center;gap:9px;background:var(--bg2);border:1px solid var(--line);border-radius:999px;padding:8px 16px;font-size:13.5px;font-weight:500;color:var(--muted);margin-bottom:26px;flex-wrap:wrap;justify-content:center}.rating-pill .stars{color:var(--gold);letter-spacing:1px;font-size:13px}.rating-pill b{color:var(--ink);font-weight:700}.rating-pill .sep{width:1px;height:14px;background:var(--line)}.rating-pill .open{color:var(--go);font-weight:600}.rating-pill .open.closed{color:var(--faint)}.rating-pill .open::before{content:"●";margin-right:6px;font-size:9px;vertical-align:1px}h1{font-family:var(--display);font-weight:800;font-size:clamp(34px,6vw,58px);line-height:1.06;letter-spacing:-.03em;margin:0 auto 20px;max-width:20ch}.sub{font-size:clamp(16px,2.2vw,19px);color:var(--muted);margin:0 auto 34px;max-width:52ch}.cta-row{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap}.cta-main{background:var(--ink);color:#fff;font-family:var(--display);font-weight:700;font-size:17px;padding:17px 30px;border-radius:14px;box-shadow:0 12px 32px rgba(11,12,14,.18)}.cta-sec{background:#fff;border:1px solid var(--line);color:var(--ink);font-weight:600;font-size:15px;padding:16px 24px;border-radius:14px;box-shadow:var(--shadow)}.cta-note{margin:18px 0 0;font-size:13px;color:var(--faint)}.collage{padding:34px 0 10px}.collage-grid{display:grid;gap:12px}.collage-grid img{width:100%;height:100%;object-fit:cover;border-radius:var(--r);background:var(--bg2)}.cg-5{grid-template-columns:1.6fr 1fr 1fr;grid-template-rows:190px 190px}.cg-5 img:first-child{grid-row:span 2}.cg-4{grid-template-columns:1fr 1fr;grid-template-rows:180px 180px}.cg-3{grid-template-columns:1.6fr 1fr;grid-template-rows:150px 150px}.cg-3 img:first-child{grid-row:span 2}.cg-2{grid-template-columns:1fr 1fr;grid-template-rows:240px}.cg-1{grid-template-columns:1fr;grid-template-rows:300px}.stats{padding:26px 0 8px}.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.stats-row.n2{grid-template-columns:repeat(2,1fr)}.stats-row.n1{grid-template-columns:1fr}.stat{background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);padding:22px 24px;text-align:center}.stat .n{font-family:var(--display);font-weight:800;font-size:26px;letter-spacing:-.02em}.stat .l{font-size:13px;color:var(--muted);margin-top:4px}section{padding:52px 0}.sec-head{text-align:center;margin-bottom:34px}.sec-eyebrow{display:inline-block;font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin:0 0 10px}.sec-title{font-family:var(--display);font-weight:700;font-size:clamp(24px,3.6vw,34px);letter-spacing:-.02em;margin:0}.about-text{font-size:15.5px;line-height:1.7;color:var(--muted);max-width:68ch;margin:0 auto;text-align:center}.chips{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}.chips span{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:10px 20px;font-size:14px;font-weight:500;color:var(--muted);box-shadow:var(--shadow)}.rev-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}.rev{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:24px;box-shadow:var(--shadow)}.rev-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}.avatar{width:40px;height:40px;border-radius:999px;background:var(--go-soft);color:var(--go);display:grid;place-items:center;font-weight:700;font-size:15px;flex-shrink:0}.rev-author{font-weight:600;font-size:14.5px}.rev-time{font-size:12.5px;color:var(--faint)}.rev-stars{margin-left:auto;color:var(--gold);font-size:12px;letter-spacing:2px}.rev-text{font-size:14.5px;color:var(--muted);margin:0;line-height:1.65}.rev-cta{text-align:center;margin-top:26px}.rev-more{font-size:14px;font-weight:600;color:var(--ink);text-decoration:none;border-bottom:1.5px solid var(--line);padding-bottom:2px}.info-grid{display:grid;grid-template-columns:1fr 1.2fr;gap:14px;align-items:stretch}.info-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:28px;box-shadow:var(--shadow)}.info-card h3{font-family:var(--display);font-weight:700;font-size:18px;margin:0 0 18px}.hours{width:100%;border-collapse:collapse;font-size:14.5px}.hours td{padding:9px 0;border-bottom:1px solid var(--line)}.hours tr:last-child td{border-bottom:0}.hours td:last-child{text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}.hours .today td{font-weight:600}.hours .today td:last-child{color:var(--go)}.map-card{padding:0;overflow:hidden;display:flex;flex-direction:column}.map-embed{width:100%;flex:1;min-height:260px;border:0;background:var(--bg2)}.addr{padding:18px 24px;font-size:14px;color:var(--muted);display:flex;align-items:center;justify-content:space-between;gap:12px}.addr a{font-weight:600;color:var(--ink);text-decoration:none;white-space:nowrap}.band{background:var(--ink);border-radius:var(--r-lg);padding:56px 32px;text-align:center;color:#fff;margin:20px 0 56px}.band h2{font-family:var(--display);font-weight:800;font-size:clamp(26px,4vw,38px);letter-spacing:-.02em;margin:0 0 12px}.band p{color:rgba(255,255,255,.65);margin:0 0 28px;font-size:16px}.band .cta-main{background:#fff;color:var(--ink);box-shadow:none}footer{padding:0 0 55px}.fine{font-size:12.5px;color:var(--faint);text-align:center}.callbar{position:fixed;left:0;right:0;bottom:0;z-index:40;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:12px 18px calc(12px + env(safe-area-inset-bottom));display:none}.callbar a{display:flex;align-items:center;justify-content:center;gap:10px;background:var(--ink);color:#fff;font-family:var(--display);font-weight:700;font-size:16px;padding:15px;border-radius:14px;text-decoration:none}.askm{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}.askm[hidden]{display:none}.askm-backdrop{position:absolute;inset:0;background:rgba(11,12,14,.5)}.askm-card{position:relative;background:var(--card);color:var(--ink);border-radius:var(--r);max-width:380px;width:100%;padding:28px 24px;box-shadow:0 20px 60px rgba(11,12,14,.3)}.askm-x{position:absolute;top:10px;right:14px;background:none;border:0;font-size:26px;line-height:1;color:var(--faint);cursor:pointer}.askm-title{font-family:var(--display);font-weight:700;font-size:20px;letter-spacing:-.01em;margin:0 0 8px}.askm-sub{font-size:14px;color:var(--muted);margin:0 0 20px}.askm-btn{display:inline-flex;align-items:center;justify-content:center;width:100%;font-family:var(--body);font-weight:600;font-size:15px;padding:14px 16px;border-radius:12px;border:0;cursor:pointer}.askm-btn-primary{background:var(--ink);color:#fff}.askm-choices{display:flex;flex-direction:column;gap:10px}.askm-choice{background:#fff;color:var(--ink);border:1px solid var(--line);box-shadow:var(--shadow)}.askm-form{display:flex;flex-direction:column;gap:12px}.askm-input{width:100%;font-family:var(--body);font-size:16px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}.askm-input:focus{outline:2px solid var(--ink);outline-offset:1px}.askm-consent{font-size:11px;color:var(--faint);line-height:1.4;margin:0}@media(max-width:760px){.cg-5{grid-template-columns:1.4fr 1fr;grid-template-rows:150px 150px}.cg-5 img:nth-child(n+4){display:none}.stats-row,.stats-row.n2{grid-template-columns:1fr;gap:10px}.stat{display:flex;align-items:baseline;justify-content:space-between;text-align:left;padding:16px 20px}.stat .n{font-size:22px}.rev-grid,.info-grid{grid-template-columns:1fr}.callbar{display:block}.topbar .btn-primary{display:none}footer{padding-bottom:110px}section{padding:42px 0}}`;
 
@@ -232,6 +239,208 @@ ${phone?askModal:''}
 
 </body></html>`;
 }
+
+/* ─── lander HTML generator V2 ("Maps card" template) ────────────────
+   Modeled on the Apple Maps place card: photo fading into the page,
+   floating logo tile, centered identity, Call/Directions/Message actions,
+   and a proof strip -- then the offer, reviews, and info sections. One
+   responsive file: phone layout by default, wide-hero layout ≥760px. */
+export function buildLanderHTMLV2(d) {
+  const noDash = s => s == null ? '' : String(s).replace(/\s*—\s*/g, ', ').replace(/—/g, '-');
+  const clean = s => esc(noDash(s));
+  const titleCaseWords = s => String(s || '')
+    .replace(/([^\s-]+)/g, w => w.charAt(0).toUpperCase() + w.slice(1));
+
+  const phone = d.phone_national || d.phone_international || '';
+  const telDigits = (d.phone_international || phone).replace(/[^\d+]/g, '');
+  const href = phone ? `tel:${telDigits}` : null;
+  const smsHref = phone ? `sms:${telDigits}` : null;
+  const city = (d.address || '').split(',')[1]?.trim() || '';
+  const state = ((d.address || '').split(',')[2] || '').trim().split(' ')[0] || '';
+  const first = (d.name || 'Us').split(' ')[0];
+  const initial = (d.name || '?').trim().charAt(0).toUpperCase();
+  const heroPhoto = (d.photos || [])[0] || null;
+  const serving = (d.service_areas || [])[0] || city;
+  const brand = d.brand_color || '#0A84FF';
+
+  const headline = esc(titleCaseWords(noDash(d.offer_headline || d.name || '')));
+  const sub = clean(d.offer_subhead || d.tagline);
+  const revs = (d.reviews || []).filter(r => r && r.text).slice(0, 4);
+
+  const icoPhone = `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>`;
+  const icoCar = `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg>`;
+  const icoMsg = `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>`;
+
+  const statCells = [];
+  if (d.open_now != null) statCells.push(`<div class="cell"><div class="k">Hours</div><div class="v ${d.open_now ? 'open' : 'closed'}">${d.open_now ? 'Open' : 'Closed'}</div></div>`);
+  if (d.rating) statCells.push(`<div class="cell"><div class="k">Rating</div><div class="v">★ ${Number(d.rating).toFixed(1)}</div></div>`);
+  if (d.review_count) statCells.push(`<div class="cell"><div class="k">Reviews</div><div class="v">${d.review_count}</div></div>`);
+  if (serving) statCells.push(`<div class="cell"><div class="k">Serving</div><div class="v">${esc(serving)}</div></div>`);
+
+  const today = todayName();
+  const hoursRows = (d.hours || []).map(line => {
+    const ci = line.indexOf(':');
+    const day = ci > -1 ? line.slice(0, ci).trim() : line;
+    const time = ci > -1 ? line.slice(ci + 1).trim() : '';
+    return `<tr class="${day === today ? 'today' : ''}"><td>${esc(day)}</td><td>${esc(time)}</td></tr>`;
+  }).join('');
+  const mapAddr = (d.address || '').replace(/,\s*(USA|United States|Canada)\s*$/i, '');
+
+  const CSS = `:root{--paper:#F6F7F5;--ink:#181D24;--slate:#5B6B79;--line:#DDE1DE;--blue:#0A84FF;--blue-tint:#E1EBF8;--go:#1F8A5F;--gold:#F4B400;--display:'Sora',system-ui,sans-serif;--body:-apple-system,'Inter',system-ui,sans-serif}
+*{box-sizing:border-box;margin:0}html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}body{font-family:var(--body);background:var(--paper);color:var(--ink);line-height:1.5;font-size:16px}img{max-width:100%}a{color:inherit}
+.v2topbar{position:absolute;top:0;left:0;right:0;z-index:6;display:none;align-items:center;justify-content:space-between;padding:16px 28px}
+.v2topbar .brandchip{display:flex;align-items:center;gap:10px}.v2topbar .brandchip img{height:32px;background:#fff;border-radius:8px;padding:3px 7px}
+.v2topbar .brandchip .mono{width:38px;height:38px;border-radius:10px;background:#fff;display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:18px;color:${esc(brand)}}
+.v2topbar .callpill{display:inline-flex;align-items:center;gap:8px;background:var(--blue);color:#fff;font-weight:700;font-size:14.5px;padding:10px 20px;border-radius:12px;text-decoration:none;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.v2topbar .callpill svg{width:16px;height:16px}
+.hero{position:relative}
+.hero .bg{width:100%;height:320px;object-fit:cover;display:block;-webkit-mask-image:linear-gradient(to bottom,#000 55%,transparent 98%);mask-image:linear-gradient(to bottom,#000 55%,transparent 98%)}
+.hero .bg-fallback{width:100%;height:220px;background:linear-gradient(160deg,${esc(brand)}22,var(--paper))}
+.logo-tile{position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);width:96px;height:96px;border-radius:24px;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 28px rgba(24,29,36,.28);border:1px solid rgba(24,29,36,.06)}
+.logo-tile img{max-width:82px;max-height:82px;object-fit:contain}
+.logo-tile .mono{font-family:var(--display);font-weight:800;font-size:40px;color:${esc(brand)}}
+.idblock{text-align:center;padding:18px 22px 0}
+.idblock h1{font-size:30px;line-height:1.12;letter-spacing:-.02em;font-weight:700}
+.idblock .subline{margin-top:6px;color:var(--slate);font-size:15px}.idblock .subline b{color:var(--ink);font-weight:600}.idblock .subline a{text-decoration:none}
+.actions{display:flex;gap:10px;padding:18px 20px 0;max-width:640px;margin:0 auto}
+.actions a{flex:1;text-decoration:none;border-radius:16px;padding:11px 0 10px;text-align:center;display:block}
+.actions svg{width:21px;height:21px;display:block;margin:0 auto 3px}
+.actions .lbl{font-size:14.5px;font-weight:600}
+.actions .primary{background:var(--blue);color:#fff}.actions .tinted{background:var(--blue-tint);color:var(--blue)}
+.statsrow{display:flex;justify-content:center;padding:18px 8px 8px;max-width:680px;margin:0 auto}
+.statsrow .cell{flex:1;text-align:center;min-width:0}
+.statsrow .k{font-size:12.5px;color:var(--slate);margin-bottom:3px}.statsrow .v{font-size:15px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 6px}
+.statsrow .cell+.cell{border-left:1px solid var(--line)}.v.open{color:#30A14E}.v.closed{color:var(--slate)}
+.offer{margin:14px 16px 0;background:#fff;border:1px solid var(--line);border-radius:18px;padding:24px 20px;text-align:center;max-width:640px}
+.offer .eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--slate);font-weight:600}
+.offer h2{font-family:var(--display);font-size:23px;letter-spacing:-.01em;margin-top:8px;line-height:1.2;font-weight:700}
+.offer p{color:var(--slate);font-size:14.5px;margin-top:8px;line-height:1.55}
+.offer .cta{display:block;margin-top:16px;border-radius:12px;padding:15px 0;font-weight:700;font-size:16px;text-decoration:none;background:var(--blue);color:#fff}
+.offer .asklink{display:inline-block;margin-top:12px;font-size:14px;font-weight:600;color:var(--blue);background:none;border:none;cursor:pointer;font-family:var(--body)}
+section{padding:34px 16px 0;max-width:900px;margin:0 auto}
+.sec-title{font-family:var(--display);font-size:19px;text-align:center;font-weight:700}
+.sec-sub{color:var(--slate);font-size:13.5px;text-align:center;margin:5px 0 16px}
+.rev-grid{display:grid;grid-template-columns:1fr;gap:10px}
+.rcard{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px}
+.rcard .stars{color:var(--gold);font-size:13px;letter-spacing:2px}
+.rcard p{font-size:13.5px;line-height:1.55;margin-top:8px;color:#2a323b}
+.rcard .who{margin-top:10px;font-size:12.5px;color:var(--slate);font-weight:600}
+.rev-more{display:block;text-align:center;margin-top:16px;font-size:14px;font-weight:600;color:var(--ink)}
+.chips{display:flex;flex-wrap:wrap;gap:9px;justify-content:center}
+.chips span{background:#fff;border:1px solid var(--line);border-radius:999px;padding:9px 18px;font-size:13.5px;font-weight:500;color:var(--slate)}
+.infowrap{display:grid;grid-template-columns:1fr;gap:12px;max-width:680px;margin:0 auto}
+.icard{background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px}
+.icard h3{font-family:var(--display);font-size:16px;margin-bottom:12px;font-weight:700}
+.hours{width:100%;border-collapse:collapse;font-size:14px}.hours td{padding:8px 0;border-bottom:1px solid var(--paper)}.hours tr:last-child td{border-bottom:0}.hours td:last-child{text-align:right;color:var(--slate);font-variant-numeric:tabular-nums}.hours .today td{font-weight:700}.hours .today td:last-child{color:var(--go)}
+.addrline{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:14px;color:var(--slate)}
+.addrline a{font-weight:600;color:var(--blue);text-decoration:none;white-space:nowrap}
+.band{margin:40px 16px 0;background:var(--ink);border-radius:20px;padding:40px 24px;text-align:center;color:#fff;max-width:680px}
+.band h2{font-family:var(--display);font-size:24px;letter-spacing:-.01em;margin-bottom:8px;font-weight:800}
+.band p{color:rgba(255,255,255,.65);margin-bottom:22px;font-size:15px}
+.band a{display:inline-flex;align-items:center;gap:9px;background:var(--blue);color:#fff;font-weight:700;font-size:16px;padding:15px 34px;border-radius:13px;text-decoration:none}
+.band svg{width:18px;height:18px}
+footer{padding:34px 0 110px}.fine{font-size:12.5px;color:var(--slate);opacity:.7;text-align:center}
+.callbar{position:fixed;left:0;right:0;bottom:0;z-index:40;padding:12px 16px calc(14px + env(safe-area-inset-bottom));background:linear-gradient(to top,var(--paper) 72%,transparent)}
+.callbar a{display:flex;align-items:center;justify-content:center;gap:9px;border-radius:14px;padding:16px 0;color:#fff;font-weight:700;font-size:16.5px;text-decoration:none;box-shadow:0 8px 24px rgba(24,29,36,.25);background:var(--blue)}
+.callbar svg{width:19px;height:19px}
+.offer,.band{margin-left:auto;margin-right:auto}
+@media(min-width:760px){
+.v2topbar{display:flex}
+.hero .bg{height:400px;object-position:center 30%;-webkit-mask-image:linear-gradient(to bottom,#000 50%,transparent 97%);mask-image:linear-gradient(to bottom,#000 50%,transparent 97%)}
+.logo-tile{width:104px;height:104px;border-radius:26px;bottom:-10px}
+.idblock{padding-top:26px}.idblock h1{font-size:46px;line-height:1.08}.idblock .subline{font-size:17px;margin-top:8px}
+.actions{max-width:none;justify-content:center;padding-top:24px}
+.actions a{flex:0 0 190px;display:inline-flex;align-items:center;justify-content:center;gap:9px;padding:13px 0;font-size:15.5px;font-weight:600}
+.actions svg{display:inline-block;margin:0;width:19px;height:19px}
+.statsrow{padding-top:26px}.statsrow .cell{min-width:150px;flex:0 0 auto}.statsrow .k{font-size:13px}.statsrow .v{font-size:16.5px}
+.offer{padding:30px 36px}.offer h2{font-size:28px}.offer p{font-size:15.5px}.offer .cta{display:inline-block;padding:15px 44px}
+.sec-title{font-size:22px}.sec-sub{font-size:14px;margin-bottom:20px}
+.rev-grid{grid-template-columns:1fr 1fr;gap:14px}
+.infowrap{grid-template-columns:1fr 1fr}
+footer{padding-bottom:48px}.callbar{display:none}
+}
+.askm{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}.askm[hidden]{display:none}.askm-backdrop{position:absolute;inset:0;background:rgba(11,12,14,.5)}.askm-card{position:relative;background:#fff;color:var(--ink);border-radius:18px;max-width:380px;width:100%;padding:28px 24px;box-shadow:0 20px 60px rgba(11,12,14,.3)}.askm-x{position:absolute;top:10px;right:14px;background:none;border:0;font-size:26px;line-height:1;color:var(--slate);cursor:pointer}.askm-title{font-family:var(--display);font-weight:700;font-size:20px;letter-spacing:-.01em;margin:0 0 8px}.askm-sub{font-size:14px;color:var(--slate);margin:0 0 20px}.askm-btn{display:inline-flex;align-items:center;justify-content:center;width:100%;font-family:var(--body);font-weight:600;font-size:15px;padding:14px 16px;border-radius:12px;border:0;cursor:pointer}.askm-btn-primary{background:var(--blue);color:#fff}.askm-choices{display:flex;flex-direction:column;gap:10px}.askm-choice{background:#fff;color:var(--ink);border:1px solid var(--line)}.askm-form{display:flex;flex-direction:column;gap:12px}.askm-input{width:100%;font-family:var(--body);font-size:16px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}.askm-input:focus{outline:2px solid var(--blue);outline-offset:1px}.askm-consent{font-size:11px;color:var(--slate);line-height:1.4;margin:0}`;
+
+  return `<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>${esc(d.name)}${d.category ? ` · ${clean(d.category)}` : ''}</title>
+${d.tagline ? `<meta name="description" content="${clean(d.tagline)}">` : ``}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+<style>${CSS}</style></head><body>
+
+<div class="hero">
+  <div class="v2topbar">
+    <span class="brandchip">${d.logo_url ? `<img src="${esc(d.logo_url)}" alt="${esc(d.name)}" onerror="this.outerHTML='<span class=mono>${esc(initial)}</span>'">` : `<span class="mono">${esc(initial)}</span>`}</span>
+    ${href ? `<a class="callpill" href="${href}">${icoPhone} ${esc(phone)}</a>` : ''}
+  </div>
+  ${heroPhoto ? `<img class="bg" src="${esc(heroPhoto)}" alt="${esc(d.name)}" onerror="this.outerHTML='<div class=bg-fallback></div>'">` : `<div class="bg-fallback"></div>`}
+  <div class="logo-tile">${d.logo_url ? `<img src="${esc(d.logo_url)}" alt="${esc(d.name)} logo" onerror="this.outerHTML='<span class=mono>${esc(initial)}</span>'">` : `<span class="mono">${esc(initial)}</span>`}</div>
+</div>
+
+<div class="idblock">
+  <h1>${esc(d.name)}</h1>
+  <div class="subline">${clean(d.category) || 'Local service'}${city ? ` · ${d.maps_url ? `<a href="${esc(d.maps_url)}" target="_blank" rel="noopener"><b>${esc(city)}${state ? `, ${esc(state)}` : ''}</b> ›</a>` : `<b>${esc(city)}${state ? `, ${esc(state)}` : ''}</b>`}` : ''}</div>
+</div>
+
+<div class="actions">
+  ${href ? `<a class="primary" href="${href}">${icoPhone}<span class="lbl">Call</span></a>` : ''}
+  ${d.maps_url ? `<a class="tinted" href="${esc(d.maps_url)}" target="_blank" rel="noopener">${icoCar}<span class="lbl">Directions</span></a>` : ''}
+  ${smsHref ? `<a class="tinted" href="${smsHref}">${icoMsg}<span class="lbl">Message</span></a>` : ''}
+</div>
+
+${statCells.length ? `<div class="statsrow">${statCells.join('')}</div>` : ''}
+
+<div class="offer">
+  <div class="eyebrow">${clean(d.offer_guarantee || d.category || 'Local service')}</div>
+  <h2>${headline}</h2>
+  ${sub ? `<p>${sub}</p>` : ''}
+  ${href ? `<a class="cta" href="${href}">Call ${esc(phone)}</a>` : ''}
+  ${phone ? `<button type="button" class="asklink js-ask-open">or send a question instead</button>` : ''}
+</div>
+
+${revs.length ? `<section>
+  <h3 class="sec-title">What neighbors say</h3>
+  <div class="sec-sub">${d.rating ? `${Number(d.rating).toFixed(1)} ★ from ${d.review_count || 0} Google reviews` : 'From Google reviews'}</div>
+  <div class="rev-grid">${revs.map(r => `<div class="rcard"><div class="stars">${starsStr(r.rating != null ? r.rating : 5)}</div><p>"${clean(r.text)}"</p><div class="who">${esc(r.author || 'Google user')}${r.relative_time ? ` · ${esc(r.relative_time)}` : ''}</div></div>`).join('')}</div>
+  ${d.maps_url ? `<a class="rev-more" href="${esc(d.maps_url)}" target="_blank" rel="noopener">See all ${d.review_count || ''} reviews on Google →</a>` : ''}
+</section>` : ''}
+
+${(d.services || []).length ? `<section>
+  <h3 class="sec-title">What we do</h3>
+  <div class="sec-sub">&nbsp;</div>
+  <div class="chips">${(d.services || []).map(s => `<span>${clean(s)}</span>`).join('')}</div>
+</section>` : ''}
+
+${(hoursRows || d.address) ? `<section>
+  <h3 class="sec-title">Hours &amp; location</h3>
+  <div class="sec-sub">&nbsp;</div>
+  <div class="infowrap">
+    ${hoursRows ? `<div class="icard"><h3>Hours</h3><table class="hours">${hoursRows}</table></div>` : ''}
+    ${d.address ? `<div class="icard"><h3>Find us</h3><div class="addrline"><span>${esc(mapAddr)}</span>${d.maps_url ? `<a href="${esc(d.maps_url)}" target="_blank" rel="noopener">Directions →</a>` : ''}</div>${(d.service_areas || []).length ? `<p style="margin-top:14px;font-size:13.5px;color:var(--slate)">Serving ${(d.service_areas || []).slice(0, 6).map(a => clean(a)).join(', ')}</p>` : ''}</div>` : ''}
+  </div>
+</section>` : ''}
+
+${href ? `<div class="band">
+  <h2>Call for quick assistance</h2>
+  <p>${esc(d.name)} is ready to help.</p>
+  <a href="${href}">${icoPhone} Call ${esc(phone)}</a>
+</div>` : ''}
+
+<footer><p class="fine">${esc(d.name)}</p></footer>
+
+${href ? `<div class="callbar"><a href="${href}">${icoPhone} Call ${esc(first)}</a></div>` : ''}
+
+${phone ? buildAskModal(d) : ''}
+
+</body></html>`;
+}
+
+// Template dispatcher: the chosen version rides in the profile itself
+// (`template: 'v2'`), so the stash, the Supabase save, the download, and
+// the admin portal all rebuild the exact page the user picked.
+export const buildLander = d => (d && d.template === 'v2' ? buildLanderHTMLV2(d) : buildLanderHTML(d));
 
 /* ─── backend API ───────────────────────────────────────────────────
    Talks to the FastAPI service in /server, which holds the Google
@@ -1029,6 +1238,10 @@ export default function App() {
   const adsStateRef = useRef(null);     // AdsTab's current {photoUrls, copy}, for the pre-redirect stash
   const adsDrawnRef = useRef(false);    // all selected ad canvases have rendered
   const pendingDownloadRef = useRef(null); // {biz, wantAds} queued until canvases are ready
+  const pendingPreviewRef = useRef(false); // locked kit preview queued until canvases are ready
+  const [manualForm, setManualForm] = useState({ name: '', email: '', phone: '' });
+  const [manualBusy, setManualBusy] = useState(false);
+  const [manualError, setManualError] = useState('');
   const savedOnceRef = useRef(false);   // guard against duplicate lander inserts on repeat Step 3 clicks
   const savedLanderRef = useRef(null);  // {landerId, userId} of this session's save, for the asset upload
 
@@ -1063,7 +1276,7 @@ export default function App() {
     }
 
     setBusiness(pending.business);
-    setHtml(buildLanderHTML(pending.business));
+    setHtml(buildLander(pending.business));
     setLanders([{
       id: 'local',
       name: pending.business.name || 'My lander',
@@ -1297,7 +1510,7 @@ export default function App() {
 
   function finishBuild(profile) {
     setBusiness(profile);
-    setHtml(buildLanderHTML(profile));
+    setHtml(buildLander(profile));
     setShowPage(false);
     setBuiltPhase('building');
     setBuildIndex(1); // row 0 ("Finding best ad angles") arrives already checked
@@ -1316,6 +1529,17 @@ export default function App() {
       }
       setBuildIndex(i);
     }, 700);
+  }
+
+  // Open the page popup on a specific template version. The choice is
+  // stamped into the profile itself so the save, download, stash, and
+  // admin portal all rebuild the version the user picked (last one viewed
+  // wins; V1 is the default when they never touch the buttons).
+  function viewVersion(v) {
+    const biz = { ...business, template: v };
+    setBusiness(biz);
+    setHtml(buildLander(biz));
+    setShowPage(true);
   }
 
   // Closing the page popup is what kicks off the ads handoff: the trace
@@ -1398,25 +1622,28 @@ export default function App() {
      each file has its own download button. Capturing happens here, while
      the canvases are still mounted -- they unmount when we leave the
      dashboard. */
-  function maybeDownload() {
-    const pend = pendingDownloadRef.current;
-    if (!pend) return;
-    if (pend.wantAds && !adsDrawnRef.current) return; // canvases still rendering
-    pendingDownloadRef.current = null;
-    const slug = slugify(pend.biz?.name);
+  // The full campaign kit: BOTH lander versions, the Google ads text, and
+  // every rendered ad PNG. Shared by the locked pre-auth preview and the
+  // post-auth download/upload path so they always show the same files.
+  function buildDeliverables(biz) {
+    const slug = slugify(biz?.name);
     const files = [];
     const uploads = []; // exact copies of the deliverables, for the admin asset portal
-    if (pend.biz) {
-      const landerHtml = buildLanderHTML(pend.biz);
-      const htmlBlob = new Blob([landerHtml], { type: 'text/html' });
-      files.push({ href: URL.createObjectURL(htmlBlob), name: `${slug}-lander.html`, label: 'Landing page', detail: 'Single HTML file. Host it on any subdomain', kind: 'html', previewHtml: landerHtml });
-      uploads.push({ name: `${slug}-lander.html`, blob: htmlBlob, contentType: 'text/html' });
-    }
-    const gAds = adsStateRef.current?.googleAds;
-    if (pend.biz && gAds?.headlines?.length) {
-      const gBlob = new Blob([buildGoogleAdsText(pend.biz, gAds)], { type: 'text/plain' });
-      files.push({ href: URL.createObjectURL(gBlob), name: `${slug}-google-ads.txt`, label: 'Google Search ads', detail: 'Headlines and descriptions, ready to paste into a Responsive Search Ad', kind: 'gads', previewHeadline: gAds.headlines[0], previewDesc: gAds.descriptions?.[0] });
-      uploads.push({ name: `${slug}-google-ads.txt`, blob: gBlob, contentType: 'text/plain' });
+    if (biz) {
+      const v1Html = buildLanderHTML(biz);
+      const v2Html = buildLanderHTMLV2(biz);
+      const v1Blob = new Blob([v1Html], { type: 'text/html' });
+      const v2Blob = new Blob([v2Html], { type: 'text/html' });
+      files.push({ href: URL.createObjectURL(v1Blob), name: `${slug}-lander-v1.html`, label: 'Landing page · Version 1', detail: 'Single HTML file. Host it on any subdomain', kind: 'html', previewHtml: v1Html });
+      files.push({ href: URL.createObjectURL(v2Blob), name: `${slug}-lander-v2.html`, label: 'Landing page · Version 2', detail: 'Maps-card layout. Same info, different look', kind: 'html', previewHtml: v2Html });
+      uploads.push({ name: `${slug}-lander-v1.html`, blob: v1Blob, contentType: 'text/html' });
+      uploads.push({ name: `${slug}-lander-v2.html`, blob: v2Blob, contentType: 'text/html' });
+      const gAds = adsStateRef.current?.googleAds;
+      if (gAds?.headlines?.length) {
+        const gBlob = new Blob([buildGoogleAdsText(biz, gAds)], { type: 'text/plain' });
+        files.push({ href: URL.createObjectURL(gBlob), name: `${slug}-google-ads.txt`, label: 'Google Search ads', detail: 'Headlines and descriptions, ready to paste into a Responsive Search Ad', kind: 'gads', previewHeadline: gAds.headlines[0], previewDesc: gAds.descriptions?.[0] });
+        uploads.push({ name: `${slug}-google-ads.txt`, blob: gBlob, contentType: 'text/plain' });
+      }
     }
     (adCanvasesRef.current || []).filter(Boolean).forEach((canvas, i) => {
       try {
@@ -1424,9 +1651,31 @@ export default function App() {
         uploads.push({ name: `${slug}-ad-${i + 1}.png`, canvas, contentType: 'image/png' });
       } catch { /* tainted canvas -- skip this ad rather than fail the batch */ }
     });
+    return { files, uploads };
+  }
+
+  function maybeDownload() {
+    const pend = pendingDownloadRef.current;
+    if (!pend) return;
+    if (pend.wantAds && !adsDrawnRef.current) return; // canvases still rendering
+    pendingDownloadRef.current = null;
+    const { files, uploads } = buildDeliverables(pend.biz);
     uploadAssets(uploads);
     setDeliverables(files);
     setStep('thankyou');
+    window.scrollTo(0, 0);
+  }
+
+  // Pre-auth version of the same capture: the visitor sees their whole kit
+  // (locked) before we ask for anything. Waits for the canvases like
+  // maybeDownload does.
+  function maybePreview() {
+    if (!pendingPreviewRef.current) return;
+    if (!adsDrawnRef.current) return;
+    pendingPreviewRef.current = false;
+    const { files } = buildDeliverables(business);
+    setDeliverables(files);
+    setStep('preview');
     window.scrollTo(0, 0);
   }
 
@@ -1452,6 +1701,7 @@ export default function App() {
   function handleAdsDrawn() {
     adsDrawnRef.current = true;
     maybeDownload();
+    maybePreview();
   }
 
   function downloadDeliverable(f) {
@@ -1468,22 +1718,49 @@ export default function App() {
   }
 
   function handleStep3() {
-    if (!supabase) {
-      setAccountError('Account creation isn’t configured yet. Check back soon.');
-      setAccountModal('auth');
-      return;
-    }
+    const toPreview = () => {
+      setAccountError('');
+      pendingPreviewRef.current = true;
+      maybePreview();
+    };
+    if (!supabase) { toPreview(); return; }
     // Already signed in (e.g. downloading a second time this session)?
-    // Skip the modal entirely.
+    // Straight to save + downloads. Otherwise: show the whole kit, locked,
+    // with the account ask underneath -- see the 'preview' step.
     supabase.auth.getSession().then(({ data }) => {
       const user = data?.session?.user;
-      if (user) {
-        finishAuthedSave(user, business);
-      } else {
-        setAccountError('');
-        setAccountModal('auth');
-      }
+      if (user) finishAuthedSave(user, business);
+      else toPreview();
     });
+  }
+
+  // The no-Google path: name/email/phone unlocks the same downloads. The
+  // signup lands in the leads table + GoHighLevel server-side; there's no
+  // Supabase account, so nothing is saved to a dashboard -- the files
+  // themselves are the deliverable.
+  async function submitManualSignup(e) {
+    if (e?.preventDefault) e.preventDefault();
+    const name = manualForm.name.trim();
+    const email = manualForm.email.trim();
+    const phone = manualForm.phone.trim();
+    if (!name || !/.+@.+\..+/.test(email) || phone.replace(/\D/g, '').length < 7) {
+      setManualError('Add your name, a valid email, and a phone number.');
+      return;
+    }
+    setManualBusy(true);
+    setManualError('');
+    try {
+      const qs = new URLSearchParams(window.location.search);
+      await apiPost('/api/signup-lead', {
+        name, email, phone,
+        business: business?.name || null,
+        fbclid: qs.get('fbclid'), gclid: qs.get('gclid'),
+      });
+    } catch { /* storage hiccup must never block the unlock */ }
+    try { trackSignup({ email, phone }); } catch { /* pixel optional */ }
+    setManualBusy(false);
+    setStep('thankyou');
+    window.scrollTo(0, 0);
   }
 
   async function startGoogleAuth() {
@@ -1812,18 +2089,31 @@ export default function App() {
         </div>
 
         {builtPhase === 'ready' && (
-          <button className="lb-btn-signal" onClick={() => setShowPage(true)} style={{display:'flex',alignItems:'center',gap:8}}>
-            View my page <i className="ti ti-eye" aria-hidden="true" />
-          </button>
+          <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:12}}>
+            <div style={{display:'flex',gap:12,flexWrap:'wrap',justifyContent:'center'}}>
+              <button className="lb-btn-signal" onClick={() => viewVersion('v1')} style={{display:'flex',alignItems:'center',gap:8}}>
+                View Page Version 1 <i className="ti ti-eye" aria-hidden="true" />
+              </button>
+              <button className="lb-btn-signal" onClick={() => viewVersion('v2')} style={{display:'flex',alignItems:'center',gap:8}}>
+                View Page Version 2 <i className="ti ti-eye" aria-hidden="true" />
+              </button>
+            </div>
+            <p style={{color:'var(--text-secondary)',fontSize:13,margin:0}}>Two designs, same info. Both come with your download.</p>
+          </div>
         )}
         {builtPhase === 'adsReady' && (
           <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:12}}>
             <button className="lb-btn-signal" onClick={goToAds} style={{display:'flex',alignItems:'center',gap:8}}>
               Step 2: Build my ads <i className="ti ti-arrow-right" aria-hidden="true" />
             </button>
-            <button className="lb-back" onClick={() => setShowPage(true)}>
-              <i className="ti ti-eye" aria-hidden="true" /> View my page again
-            </button>
+            <div style={{display:'flex',gap:16}}>
+              <button className="lb-back" onClick={() => viewVersion('v1')}>
+                <i className="ti ti-eye" aria-hidden="true" /> View Version 1
+              </button>
+              <button className="lb-back" onClick={() => viewVersion('v2')}>
+                <i className="ti ti-eye" aria-hidden="true" /> View Version 2
+              </button>
+            </div>
           </div>
         )}
 
@@ -1835,6 +2125,18 @@ export default function App() {
                   <i className="ti ti-arrow-left" aria-hidden="true" /> Back
                 </button>
                 <span style={{color:'#C7CDD2',fontSize:13,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>Your landing page · desktop preview</span>
+                <span style={{marginLeft:'auto',display:'flex',gap:6,flexShrink:0}}>
+                  {[['v1','Version 1'],['v2','Version 2']].map(([v,label]) => {
+                    const active = (business?.template === 'v2' ? 'v2' : 'v1') === v;
+                    return (
+                      <button key={v} onClick={() => viewVersion(v)} style={{
+                        background: active ? '#fff' : 'transparent', color: active ? '#181D24' : '#C7CDD2',
+                        border: '1px solid ' + (active ? '#fff' : '#3A424D'), borderRadius: 8,
+                        padding: '7px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                      }}>{label}</button>
+                    );
+                  })}
+                </span>
               </div>
               {!previewNoteHidden && (
                 <div style={{flexShrink:0,background:'#FFF4DC',color:'#8A6100',fontSize:13,padding:'9px 16px',display:'flex',alignItems:'center',justifyContent:'center',gap:8,borderBottom:'1px solid #F2E3B8',fontWeight:600}}>
@@ -1852,6 +2154,93 @@ export default function App() {
   }
 
   /* ── thank-you (post-save: VSL + gated downloads + call offer) ────── */
+  /* ── locked kit preview (pre-auth): see everything, sign up to get it ── */
+  if (step === 'preview') {
+    const first = (business?.name || 'your business').split(',')[0];
+    return (
+      <div style={{minHeight:'100dvh',background:'var(--surface-1)'}}>
+        <div style={{background:'#181D24',padding:'12px 20px',display:'flex',alignItems:'center',gap:10}}>
+          <LogoMark size={26} ring="#181D24" />
+          <span style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:14,color:'#fff',letterSpacing:'-.01em',marginLeft:-5}}>SendKPI</span>
+        </div>
+
+        <div style={{padding:'40px 20px 64px',maxWidth:680,margin:'0 auto'}}>
+          <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:12,letterSpacing:'.1em',textTransform:'uppercase',color:'#0D57D0',margin:'0 0 12px'}}>Campaign kit ready</p>
+          <h1 style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:'clamp(26px,5vw,36px)',letterSpacing:'-.01em',color:'var(--text-primary)',margin:'0 0 10px',lineHeight:1.15}}>Everything for {first} is built</h1>
+          <p style={{fontSize:15,color:'var(--text-secondary)',margin:'0 0 28px',lineHeight:1.6}}>Two landing pages, {deliverables.filter(f=>f.kind==='png').length || 'your'} ad graphics, and Google Search ad copy. Create your free account below to download it all.</p>
+
+          <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,letterSpacing:'.1em',textTransform:'uppercase',color:'var(--text-muted)',margin:'0 0 12px'}}>Your files</p>
+          <div style={{display:'flex',flexDirection:'column',gap:10,marginBottom:32}}>
+            {deliverables.map(f => (
+              <div key={f.name} className="lb-card" style={{cursor:'default'}}>
+                {f.kind && (
+                  <div aria-hidden="true" style={{width:64,height:64,borderRadius:10,border:'1px solid var(--border)',overflow:'hidden',flexShrink:0,background:'#fff'}}>
+                    {f.kind === 'png' && <img src={f.href} alt="" style={{width:'100%',height:'100%',objectFit:'cover',display:'block'}} />}
+                    {f.kind === 'html' && (
+                      <iframe srcDoc={f.previewHtml} sandbox="" scrolling="no" tabIndex={-1} title=""
+                        style={{width:480,height:480,border:0,transform:'scale(0.1334)',transformOrigin:'0 0',pointerEvents:'none',display:'block'}} />
+                    )}
+                    {f.kind === 'gads' && (
+                      <div style={{width:220,height:220,transform:'scale(0.291)',transformOrigin:'0 0',padding:'14px 12px',boxSizing:'border-box',fontFamily:'arial,sans-serif',textAlign:'left'}}>
+                        <div style={{fontSize:11,fontWeight:700,color:'#202124',marginBottom:6}}>Sponsored</div>
+                        <div style={{fontSize:16,color:'#1a0dab',lineHeight:1.25,marginBottom:5}}>{f.previewHeadline}</div>
+                        <div style={{fontSize:12,color:'#4d5156',lineHeight:1.4}}>{f.previewDesc || ''}</div>
+                      </div>
+                    )}
+                  </div>
+                )}
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:14,color:'var(--text-primary)'}}>{f.label}</div>
+                  <div style={{fontSize:12,color:'var(--text-secondary)',marginTop:2}}>{f.detail}</div>
+                </div>
+                <span style={{display:'flex',alignItems:'center',gap:6,fontSize:12.5,fontWeight:600,color:'var(--text-muted)',background:'var(--surface-1)',border:'1px solid var(--border)',borderRadius:999,padding:'7px 13px',flexShrink:0}}>
+                  <i className="ti ti-lock" aria-hidden="true" /> Locked
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <div style={{background:'#fff',border:'1px solid var(--border)',borderRadius:14,padding:'26px 24px',boxShadow:'0 8px 30px rgba(24,29,36,.06)'}}>
+            <h3 style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:20,letterSpacing:'-.01em',margin:'0 0 6px',color:'var(--text-primary)'}}>Create your free account to download</h3>
+            <p style={{fontSize:14,color:'var(--text-secondary)',margin:'0 0 18px',lineHeight:1.5}}>Your kit gets saved so you can come back for it anytime.</p>
+            {accountError && <div className="lb-error" style={{marginBottom:12}}>{accountError}</div>}
+            <button className="lb-btn-signal" onClick={startGoogleAuth} disabled={accountBusy || !supabase} style={{width:'100%',display:'flex',alignItems:'center',justifyContent:'center',gap:10}}>
+              <span style={{display:'flex',alignItems:'center',justifyContent:'center',width:22,height:22,borderRadius:6,background:'#fff',flexShrink:0}} aria-hidden="true">
+                <svg width="14" height="14" viewBox="0 0 48 48">
+                  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                  <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                  <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                  <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                </svg>
+              </span>
+              {accountBusy ? 'Working…' : 'Continue with Google'}
+            </button>
+
+            <div style={{display:'flex',alignItems:'center',gap:12,margin:'18px 0'}}>
+              <span style={{flex:1,height:1,background:'var(--border)'}} />
+              <span style={{fontSize:12,fontWeight:600,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'.08em'}}>or</span>
+              <span style={{flex:1,height:1,background:'var(--border)'}} />
+            </div>
+
+            <form onSubmit={submitManualSignup} noValidate style={{display:'flex',flexDirection:'column',gap:10}}>
+              <input className="lb-input" placeholder="Your name" autoComplete="name" value={manualForm.name}
+                onChange={e => setManualForm({ ...manualForm, name: e.target.value })} />
+              <input className="lb-input" type="email" placeholder="Email" autoComplete="email" value={manualForm.email}
+                onChange={e => setManualForm({ ...manualForm, email: e.target.value })} />
+              <input className="lb-input" type="tel" placeholder="Phone number" autoComplete="tel" value={manualForm.phone}
+                onChange={e => setManualForm({ ...manualForm, phone: e.target.value })} />
+              {manualError && <div className="lb-error">{manualError}</div>}
+              <button type="submit" className="lb-btn-dark" disabled={manualBusy} style={{width:'100%',height:48,fontSize:15}}>
+                {manualBusy ? 'Unlocking…' : <>Unlock my downloads <i className="ti ti-lock-open" aria-hidden="true" /></>}
+              </button>
+            </form>
+            <p style={{fontSize:11.5,color:'var(--text-muted)',margin:'12px 0 0',lineHeight:1.5}}>We'll use this to send your files and follow up about your campaign. No spam.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (step === 'thankyou') {
     const first = (business?.name || landers[0]?.name || 'your business').split(',')[0];
     return (
@@ -1865,7 +2254,7 @@ export default function App() {
         <div style={{padding:'40px 20px 64px',maxWidth:680,margin:'0 auto'}}>
           <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:12,letterSpacing:'.1em',textTransform:'uppercase',color:'#0D57D0',margin:'0 0 12px'}}>You're all set</p>
           <h1 style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:'clamp(26px,5vw,36px)',letterSpacing:'-.01em',color:'var(--text-primary)',margin:'0 0 10px',lineHeight:1.15}}>Your lander and ads for {first} are ready</h1>
-          <p style={{fontSize:15,color:'var(--text-secondary)',margin:'0 0 32px',lineHeight:1.6}}>They're saved to your account, and the files are below.{VSL_EMBED_URL ? ' First, two minutes on how to get them live and making the phone ring:' : ''}</p>
+          <p style={{fontSize:15,color:'var(--text-secondary)',margin:'0 0 32px',lineHeight:1.6}}>{savedOnceRef.current ? "They're saved to your account, and the files are below." : 'Your files are below. Download them now and keep them somewhere safe.'}{VSL_EMBED_URL ? ' First, two minutes on how to get them live and making the phone ring:' : ''}</p>
 
           {VSL_EMBED_URL && (
             <div style={{position:'relative',paddingTop:'56.25%',borderRadius:12,overflow:'hidden',background:'#181D24',marginBottom:32}}>
