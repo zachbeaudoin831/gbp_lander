@@ -112,10 +112,16 @@ def storage_configured() -> bool:
 
 def _storage() -> tuple[str, dict]:
     url = os.environ.get("SUPABASE_URL", "").rstrip("/")
-    key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+    key = (os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or "").strip()
     if not url or not key:
         raise KitStoreError("SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY not set")
-    return f"{url}/storage/v1", {"Authorization": f"Bearer {key}", "apikey": key}
+    # Legacy service_role keys are JWTs and go in both headers. The newer
+    # sb_secret_* keys are opaque -- Storage rejects them as a Bearer token
+    # ("Invalid Compact JWS"), so those ride in `apikey` alone.
+    headers = {"apikey": key}
+    if not key.startswith("sb_"):
+        headers["Authorization"] = f"Bearer {key}"
+    return f"{url}/storage/v1", headers
 
 
 def content_type_for(name: str) -> Optional[str]:
@@ -136,7 +142,7 @@ def upload_file(lead_id: str, name: str, data: bytes, content_type: str) -> None
         timeout=30,
     )
     if resp.status_code >= 400:
-        raise KitStoreError(f"Storage upload rejected (HTTP {resp.status_code})")
+        raise KitStoreError(f"Storage upload rejected (HTTP {resp.status_code}: {resp.text[:120]})")
 
 
 def list_files(lead_id: str) -> list[dict]:

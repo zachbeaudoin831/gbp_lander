@@ -596,8 +596,10 @@ async def kit_file(request: Request, kit_id: str, t: str, name: str):
         raise HTTPException(status_code=413, detail="File too large")
     try:
         await run_in_threadpool(kit_upload_file, kit_id, name, body, content_type)
-    except KitStoreError:
-        raise HTTPException(status_code=502, detail="Could not store file")
+    except KitStoreError as e:
+        # The message carries only the storage status + a snippet of its
+        # error body (never the key), and it's what makes this debuggable.
+        raise HTTPException(status_code=502, detail=f"Could not store file: {e}")
     return {"ok": True}
 
 
