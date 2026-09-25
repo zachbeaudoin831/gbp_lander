@@ -55,6 +55,9 @@ export default function Kit() {
             }
           } catch { /* skip unreadable file */ }
         }
+        // Storage lists alphabetically; show the kit in its natural order.
+        const rank = f => /-split-test-lander-|-lander-v\d\.html$/.test(f.name) ? 0 : /-google-ads/.test(f.name) ? 1 : /-meta-ads-copy/.test(f.name) ? 2 : 3;
+        files.sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name));
         if (!cancelled) setState({ status: "ready", business: data.business, files });
       } catch {
         if (!cancelled) setState({ status: "error" });
