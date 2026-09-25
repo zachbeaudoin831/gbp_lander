@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { supabase } from "./supabaseClient";
 import Home, { LogoMark } from "./Home";
 import { initPixel, trackSignup } from "./metaPixel";
@@ -516,16 +516,6 @@ async function generateGoogleAdsCopy(payload) {
   return apiPost('/api/generate-google-ads', payload);
 }
 
-/* ─── built-step trace rows shown while the lander is assembled. Row 0
-   mirrors the angle-research trace's first line and starts pre-completed,
-   so the two loading screens read as one continuous checklist. ───────── */
-const BUILD_ROWS = [
-  'Finding best ad angles',
-  'Writing your headline from the chosen angle',
-  'Assembling photos, reviews & hours',
-  'Polishing the design',
-];
-
 /* ─── app styles (injected once) ────────────────────────────────────── */
 const GLOBAL_CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&family=Plus+Jakarta+Sans:wght@700&display=swap');
@@ -559,6 +549,7 @@ body{margin:0;padding:0;font-family:'Instrument Sans',system-ui,sans-serif}
 .lb-trace-icon{width:20px;height:20px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff}
 .lb-trace-icon.spin{border:2.5px solid #E7EEFB;border-top-color:#0D57D0;animation:lb-spin .7s linear infinite}
 .lb-trace-icon.done{background:#0E8A5F}
+.kit-spin{width:22px;height:22px;flex:none;border-radius:50%;border:2.5px solid #E7EEFB;border-top-color:#0D57D0;animation:lb-spin .7s linear infinite}
 .lb-trace-text{font-size:14px;color:#5C544C}
 .lb-trace-row.active .lb-trace-text{color:#181310;font-weight:600}
 .lb-trace-row.done .lb-trace-text{color:#8A8178}
@@ -602,10 +593,10 @@ export const slugify = s => (String(s || '').toLowerCase().replace(/[^a-z0-9]+/g
 
 // The Google Search ads deliverable: a plain-text file the owner pastes into
 // a Responsive Search Ad. Kept deliberately simple so it opens anywhere.
-function buildGoogleAdsText(biz, g) {
+function buildGoogleAdsText(biz, g, variant) {
   const head = g.headlines.map((h, i) => `${i + 1}. ${h}`).join('\n');
   const desc = g.descriptions.map((d, i) => `${i + 1}. ${d}`).join('\n');
-  return `GOOGLE SEARCH ADS: ${biz?.name || 'your business'}
+  return `GOOGLE SEARCH ADS${variant ? ` V${variant}` : ''}: ${biz?.name || 'your business'}
 
 How to use: in Google Ads, create a Search campaign, add a Responsive Search
 Ad, and paste these in. Turn on call assets so the ad can ring your phone
@@ -751,7 +742,7 @@ function drawAd(canvas, img, copy, biz) {
   }
 }
 
-const MAX_ADS = 5; // photos on the lander collage = ads in the campaign kit
+const MAX_ADS = 4; // photos picked = graphic ads per split-test lander
 
 function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn, onDownload }) {
   const [lander, setLander] = useState(null);
@@ -1218,6 +1209,11 @@ function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn, onDo
 // Label/detail/kind for a stored file name, so the /kit page can describe
 // files it only knows by name. Mirrors the names buildDeliverables emits.
 export function describeKitFile(name) {
+  let m;
+  if ((m = name.match(/-split-test-lander-(\d)\.html$/))) return { label: `Split Test Lander #${m[1]}`, detail: m[1] === '2' ? 'Maps-card layout. Same offer, different look' : 'Single HTML file. Host it on any subdomain', kind: 'html' };
+  if ((m = name.match(/-google-ads-v(\d)\.txt$/))) return { label: `Google Search ads · V${m[1]}`, detail: '15 headlines and 4 descriptions for a Responsive Search Ad', kind: 'gads' };
+  if (/-meta-ads-copy\.txt$/.test(name)) return { label: 'Meta ad copy', detail: '3 headlines and 3 primary texts per lander, ready to paste', kind: 'gads' };
+  if ((m = name.match(/-lander-(\d)-ad-(\d)\.(png|jpe?g)$/))) return { label: `Lander #${m[1]} · Graphic ad V${m[2]}`, detail: '1080×1080, ready for Meta', kind: 'png' };
   if (/-lander-v1\.html$/.test(name)) return { label: 'Landing page · Version 1', detail: 'Single HTML file. Host it on any subdomain', kind: 'html' };
   if (/-lander-v2\.html$/.test(name)) return { label: 'Landing page · Version 2', detail: 'Maps-card layout. Same info, different look', kind: 'html' };
   if (/-google-ads\.txt$/.test(name)) return { label: 'Google Search ads', detail: 'Headlines and descriptions, ready to paste into a Responsive Search Ad', kind: 'gads' };
@@ -1231,15 +1227,19 @@ const KIT_README = (biz) => `YOUR CAMPAIGN KIT: ${biz || 'your business'}
 Built with SendKPI (sendkpi.com)
 
 WHAT'S IN HERE
-- *-lander-v1.html / *-lander-v2.html
-    Two versions of your call-focused landing page. Each is one file --
-    upload it to any web host or subdomain (e.g. calls.yourdomain.com).
-- *-ad-N.png
-    Square ad graphics for Meta (Facebook/Instagram). Upload as the image
-    on a Calls or Leads campaign and point the ad at your landing page.
-- *-google-ads.txt
-    Headlines and descriptions for a Google Search Responsive Search Ad.
-    Paste them in and turn on call assets.
+- *-split-test-lander-1.html / *-split-test-lander-2.html
+    Two versions of your call-focused landing page to split test. Each is
+    one file -- upload it to any web host or subdomain
+    (e.g. calls.yourdomain.com). Send half your traffic to each.
+- *-lander-1-ad-N.png / *-lander-2-ad-N.png
+    Four square ad graphics per lander for Meta (Facebook/Instagram).
+    Upload as the image on a Calls or Leads campaign and point each set at
+    its landing page.
+- *-meta-ads-copy.txt
+    3 headlines + 3 primary texts per lander, to paste next to the images.
+- *-google-ads-v1.txt / *-google-ads-v2.txt
+    Two Responsive Search Ad sets (15 headlines / 4 descriptions each) for
+    Google Search. Paste them in and turn on call assets.
 
 NEED A HAND?
 Not sure how to put these live, or want different photos / wording?
@@ -1383,7 +1383,7 @@ export function KitDelivery({ bizName, files, emailedTo, headerRight }) {
         <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:12,letterSpacing:'.1em',textTransform:'uppercase',color:'#0D57D0',margin:'0 0 12px'}}>You're all set</p>
         <h1 style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:'clamp(26px,5vw,36px)',letterSpacing:'-.01em',color:'var(--text-primary)',margin:'0 0 10px',lineHeight:1.15}}>Your website and ads for {first} are ready</h1>
         <p style={{fontSize:15,color:'var(--text-secondary)',margin:'0 0 24px',lineHeight:1.6}}>
-          Two landing pages, {pngCount || 'your'} ad graphics, and Google Search ad copy. Grab everything as one folder, or each file below.
+          Two split-test landing pages, {pngCount || 'your'} graphic ads with Meta copy, and two Google Search ad sets. Grab everything as one folder, or each file below.
           {emailedTo ? <> A copy is on its way to <b style={{color:'var(--text-primary)'}}>{emailedTo}</b>.</> : null}
         </p>
 
@@ -1398,37 +1398,346 @@ export function KitDelivery({ bizName, files, emailedTo, headerRight }) {
           </button>
         </div>
 
-        {VSL_EMBED_URL && (
-          <>
-            <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,letterSpacing:'.1em',textTransform:'uppercase',color:'var(--text-muted)',margin:'0 0 12px'}}>Two minutes on what to do next</p>
-            <div style={{position:'relative',paddingTop:'56.25%',borderRadius:12,overflow:'hidden',background:'#181D24',marginBottom:32}}>
-              <iframe src={VSL_EMBED_URL} title="How to launch your lander and ads" allow="autoplay; fullscreen; picture-in-picture" allowFullScreen style={{position:'absolute',inset:0,width:'100%',height:'100%',border:0}} />
-            </div>
-          </>
-        )}
-
         <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,letterSpacing:'.1em',textTransform:'uppercase',color:'var(--text-muted)',margin:'0 0 12px'}}>Your files</p>
-        <div style={{marginBottom:40}}>
+        <div style={{marginBottom:48}}>
           <KitFileList files={files} />
         </div>
 
-        {hasBooking && (
-          <div id="implementation" style={{background:'#181D24',borderRadius:14,padding:'26px 24px'}}>
-            <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,letterSpacing:'.1em',textTransform:'uppercase',color:'#8FE3B8',margin:'0 0 10px'}}>Free implementation meeting</p>
-            <p style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:22,color:'#fff',margin:'0 0 8px',letterSpacing:'-.01em',lineHeight:1.2}}>Not sure how to put this live? Let's do it together.</p>
-            <p style={{fontSize:14,color:'#C7CDD2',margin:'0 0 20px',lineHeight:1.6}}>If you're not familiar with testing landing pages and ads, book a time below. On the call we'll swap in the photos you want, tweak the wording, get the page live on your domain, and load the ads into your ad account. No charge.</p>
-            {BOOKING_EMBED_URL ? (
-              <div style={{background:'#fff',borderRadius:12,overflow:'hidden'}}>
-                <iframe src={BOOKING_EMBED_URL} title="Book your implementation meeting" style={{width:'100%',height:720,border:0,display:'block'}} />
+        {/* ── the pitch: run your marketing with AI ── */}
+        <div style={{borderTop:'1px solid var(--border)',paddingTop:40}}>
+          <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:12,letterSpacing:'.1em',textTransform:'uppercase',color:'#0D57D0',margin:'0 0 12px'}}>Run your marketing with AI</p>
+          <h2 style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:'clamp(24px,4.5vw,32px)',letterSpacing:'-.01em',color:'var(--text-primary)',margin:'0 0 12px',lineHeight:1.15}}>Spend less on marketing. Get more customers. Be crystal clear on your numbers.</h2>
+          <p style={{fontSize:15,color:'var(--text-secondary)',margin:'0 0 24px',lineHeight:1.6}}>What just happened for {first} is the first step. I teach business owners to run the whole thing with AI: agents that research your best hooks, build the pages and ads while you sleep, and tune them while you're out handling customers. You see every number that matters.</p>
+
+          {VSL_EMBED_URL && (
+            <div style={{position:'relative',paddingTop:'56.25%',borderRadius:12,overflow:'hidden',background:'#181D24',marginBottom:24}}>
+              <iframe src={VSL_EMBED_URL} title="How to run your marketing with AI" allow="autoplay; fullscreen; picture-in-picture" allowFullScreen style={{position:'absolute',inset:0,width:'100%',height:'100%',border:0}} />
+            </div>
+          )}
+
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))',gap:12,marginBottom:32}}>
+            {[
+              ['ti-chart-bar', 'Crystal clear marketing numbers', 'Know what every call costs and which ad made the phone ring. No guessing, no agency report you can\'t read.'],
+              ['ti-search', 'AI agents research your best hooks', 'They read your reviews, your market, and what already works in your trade to find the angle worth paying for.'],
+              ['ti-moon-stars', 'Built while you sleep, tuned while you work', 'Landing pages and ads get created and optimized on their own while you\'re busy with customers.'],
+            ].map(([icon, title, body]) => (
+              <div key={title} style={{background:'#fff',border:'1px solid var(--border)',borderRadius:14,padding:'18px 18px 20px'}}>
+                <div style={{width:38,height:38,borderRadius:10,background:'#E7EEFB',color:'#0D57D0',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,marginBottom:12}} aria-hidden="true"><i className={`ti ${icon}`} /></div>
+                <div style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:15,color:'var(--text-primary)',marginBottom:6,lineHeight:1.3}}>{title}</div>
+                <div style={{fontSize:13.5,color:'var(--text-secondary)',lineHeight:1.55}}>{body}</div>
               </div>
-            ) : (
-              <a className="lb-btn-signal" href={BOOKING_URL} target="_blank" rel="noopener" style={{display:'inline-flex',alignItems:'center',gap:8,textDecoration:'none',lineHeight:'48px'}}>
-                Book my implementation meeting <i className="ti ti-arrow-right" aria-hidden="true" />
-              </a>
-            )}
+            ))}
           </div>
-        )}
+
+          {hasBooking && (
+            <div id="book" style={{background:'#181D24',borderRadius:14,padding:'26px 24px'}}>
+              <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,letterSpacing:'.1em',textTransform:'uppercase',color:'#8FE3B8',margin:'0 0 10px'}}>Book a call</p>
+              <p style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:22,color:'#fff',margin:'0 0 8px',letterSpacing:'-.01em',lineHeight:1.2}}>Let's put your kit live and I'll show you how the rest runs on its own.</p>
+              <p style={{fontSize:14,color:'#C7CDD2',margin:'0 0 20px',lineHeight:1.6}}>Free call, no pitch deck. We'll get your landing pages and ads live together, then I'll walk you through running your marketing with AI: the numbers to watch, what the agents do, and what it costs versus what you're spending now.</p>
+              {BOOKING_EMBED_URL ? (
+                <div style={{background:'#fff',borderRadius:12,overflow:'hidden'}}>
+                  <iframe src={BOOKING_EMBED_URL} title="Book your call" style={{width:'100%',height:720,border:0,display:'block'}} />
+                </div>
+              ) : (
+                <a className="lb-btn-signal" href={BOOKING_URL} target="_blank" rel="noopener" style={{display:'inline-flex',alignItems:'center',gap:8,textDecoration:'none',lineHeight:'48px'}}>
+                  Book my call <i className="ti ti-arrow-right" aria-hidden="true" />
+                </a>
+              )}
+            </div>
+          )}
+        </div>
       </div>
+    </div>
+  );
+}
+
+/* ─── campaign kit builder: the one page where everything gets made ────
+   Replaces the old built-step trace + ads dashboard. Landers render at
+   once; Google ads V1/V2 and the two graphic-ad sets fill in as their AI
+   calls and photo loads land. Once every piece is settled it hands the
+   file list up (onFiles) and the account CTA unlocks. */
+const KIT_ADS_PER_LANDER = 4;
+const KIT_FAILSAFE_MS = 45000; // never trap the visitor here
+
+function KitSpinner({ text }) {
+  return (
+    <div style={{display:'flex',alignItems:'center',gap:12,color:'var(--text-secondary)',fontSize:14}}>
+      <span className="kit-spin" aria-hidden="true" /> {text}
+    </div>
+  );
+}
+
+function landerCopyFor(business, v) {
+  return {
+    headline: v?.headline || business.offer_headline || business.tagline || business.name || '',
+    subline: v?.subline || business.offer_subhead || '',
+    cta: v?.cta || business.chosen_angle?.cta_label || 'Call Today',
+    primary_text: v?.primary_text || '',
+  };
+}
+
+function buildMetaCopyText(biz, sets) {
+  const block = (title, list) => `${title}\n${list.map((x, i) => `${i + 1}. ${x}`).join('\n')}`;
+  return `META AD COPY: ${biz?.name || 'your business'}
+
+How to use: in Meta Ads Manager, upload the graphic ads for a lander, then
+paste these as the ad's headlines and primary text. Meta rotates them.
+Send each set's traffic to its own landing page.
+
+${sets.map((set, i) => `=== LANDER #${i + 1} ===
+${block('HEADLINES', set.headlines)}
+
+${block('PRIMARY TEXT', set.primaryTexts)}`).join('\n\n')}
+`;
+}
+
+function KitBuilder({ business, onFiles, cta }) {
+  const first = (business?.name || 'your business').split(',')[0];
+  const photos = useMemo(() => (business.lander_photos || []).slice(0, KIT_ADS_PER_LANDER), [business]);
+  const v1Html = useMemo(() => buildLanderHTML(business), [business]);
+  const v2Html = useMemo(() => buildLanderHTMLV2(business), [business]);
+  const [variations, setVariations] = useState(null);      // null = writing; [] = failed
+  const [google, setGoogle] = useState({ 1: null, 2: null }); // null = writing; {headlines, descriptions} (empty = failed)
+  const [imgs, setImgs] = useState({});
+  const [drawn, setDrawn] = useState(false);
+  const [preview, setPreview] = useState(null);
+  const [forced, setForced] = useState(false);
+  const canvasesRef = useRef([]); // index = landerIdx * KIT_ADS_PER_LANDER + photoIdx
+  const startedRef = useRef(false);
+  const deliveredRef = useRef(false);
+  const slug = slugify(business?.name);
+
+  const payload = () => ({
+    name: business.name || '', category: business.category || '',
+    services: business.services || [], service_areas: business.service_areas || [],
+    rating: business.rating, review_count: business.review_count,
+    summary: business.site_summary || business.about_summary || null,
+    main_service: business.main_service || '', angle: business.chosen_angle,
+  });
+
+  // Fire every AI call at once on mount.
+  useEffect(() => {
+    if (startedRef.current) return;
+    startedRef.current = true;
+    generateAngleAds({ ...payload(), count: 6 })
+      .then(res => setVariations((Array.isArray(res.variations) ? res.variations : []).filter(v => v && v.headline)))
+      .catch(() => setVariations([]));
+    [1, 2].forEach(variant => {
+      generateGoogleAdsCopy({ ...payload(), variant })
+        .then(res => setGoogle(g => ({ ...g, [variant]: { headlines: res.headlines || [], descriptions: res.descriptions || [] } })))
+        .catch(() => setGoogle(g => ({ ...g, [variant]: { headlines: [], descriptions: [] } })));
+    });
+    const t = setTimeout(() => setForced(true), KIT_FAILSAFE_MS);
+    return () => clearTimeout(t);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    let cancelled = false;
+    photos.forEach(url => {
+      const im = new Image();
+      im.crossOrigin = 'anonymous';
+      im.onload = () => { if (!cancelled) setImgs(prev => ({ ...prev, [url]: im })); };
+      im.onerror = () => { if (!cancelled) setImgs(prev => ({ ...prev, [url]: 'failed' })); };
+      im.src = hiResPhoto(url);
+    });
+    return () => { cancelled = true; };
+  }, [photos]);
+
+  // Copy sets: lander #1 runs variations 1-3, lander #2 runs 4-6. Short
+  // lists fall back so both sets always have something to show.
+  const sets = useMemo(() => {
+    const v = variations || [];
+    const pick = (from) => [0, 1, 2].map(i => v[from + i] || v[i] || v[0] || null).filter(Boolean);
+    const a = pick(0), b = pick(3);
+    const mk = list => ({
+      headlines: list.map(x => x.headline).filter(Boolean),
+      primaryTexts: list.map(x => x.primary_text).filter(Boolean),
+      lead: list[0] || null,
+    });
+    return [mk(a), mk(b.length ? b : a)];
+  }, [variations]);
+
+  const allLoaded = photos.length > 0 && photos.every(u => imgs[u]);
+  const copySettled = variations !== null;
+
+  // Draw all eight once the photos are in and the copy has settled (or the
+  // failsafe fired -- then the offer copy stands in).
+  useEffect(() => {
+    if (!allLoaded || (!copySettled && !forced)) return;
+    let cancelled = false;
+    (async () => {
+      try { await Promise.all(AD_FONTS.map(f => document.fonts.load(f))); } catch { /* system fonts */ }
+      if (cancelled) return;
+      [0, 1].forEach(li => {
+        const copy = landerCopyFor(business, sets[li].lead);
+        photos.forEach((url, pi) => {
+          const canvas = canvasesRef.current[li * KIT_ADS_PER_LANDER + pi];
+          const img = imgs[url];
+          if (canvas && img && img !== 'failed') drawAd(canvas, img, copy, business);
+        });
+      });
+      setDrawn(true);
+    })();
+    return () => { cancelled = true; };
+  }, [allLoaded, copySettled, forced, sets, imgs, photos, business]);
+
+  const googleSettled = google[1] !== null && google[2] !== null;
+  const complete = drawn && (googleSettled || forced) && (copySettled || forced);
+
+  // Everything's in: hand the file list up, once.
+  useEffect(() => {
+    if (!complete || deliveredRef.current) return;
+    deliveredRef.current = true;
+    const files = [];
+    const put = (name, text, type, extra) => {
+      files.push({ href: URL.createObjectURL(new Blob([text], { type })), name, ...extra });
+    };
+    put(`${slug}-split-test-lander-1.html`, v1Html, 'text/html', { ...describeKitFile(`${slug}-split-test-lander-1.html`), previewHtml: v1Html });
+    put(`${slug}-split-test-lander-2.html`, v2Html, 'text/html', { ...describeKitFile(`${slug}-split-test-lander-2.html`), previewHtml: v2Html });
+    [1, 2].forEach(v => {
+      const g = google[v];
+      if (!g?.headlines?.length) return;
+      const text = buildGoogleAdsText(business, g, v);
+      put(`${slug}-google-ads-v${v}.txt`, text, 'text/plain', { ...describeKitFile(`${slug}-google-ads-v${v}.txt`), text, previewHeadline: g.headlines[0], previewDesc: g.descriptions?.[0] });
+    });
+    if (sets[0].headlines.length) {
+      const text = buildMetaCopyText(business, sets);
+      put(`${slug}-meta-ads-copy.txt`, text, 'text/plain', { ...describeKitFile(`${slug}-meta-ads-copy.txt`), text, previewHeadline: sets[0].headlines[0], previewDesc: sets[0].primaryTexts[0] });
+    }
+    [0, 1].forEach(li => photos.forEach((url, pi) => {
+      const canvas = canvasesRef.current[li * KIT_ADS_PER_LANDER + pi];
+      if (!canvas || imgs[url] === 'failed') return;
+      try {
+        const name = `${slug}-lander-${li + 1}-ad-${pi + 1}.png`;
+        files.push({ href: canvas.toDataURL('image/png'), name, ...describeKitFile(name) });
+      } catch { /* tainted canvas -- skip */ }
+    }));
+    onFiles(files);
+  }, [complete]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const eyebrow = { fontFamily: "'IBM Plex Mono',monospace", fontSize: 11, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 12px' };
+  const h2 = { fontFamily: "'Plus Jakarta Sans',system-ui,sans-serif", fontWeight: 700, fontSize: 20, letterSpacing: '-.01em', color: 'var(--text-primary)', margin: '0 0 4px' };
+  const card = { background: '#fff', border: '1px solid var(--border)', borderRadius: 14, padding: 16, boxShadow: '0 8px 30px rgba(24,29,36,.05)' };
+  const landerFile = (n, html) => ({ kind: 'html', label: `Split Test Lander #${n}`, previewHtml: html });
+  const gadsFile = (v, g) => ({ kind: 'gads', label: `Google Search ads · V${v}`, text: buildGoogleAdsText(business, g, v) });
+
+  return (
+    <div style={{minHeight:'100dvh',background:'var(--surface-1)'}}>
+      <div style={{background:'#181D24',padding:'12px 20px',display:'flex',alignItems:'center',gap:10}}>
+        <LogoMark size={26} ring="#181D24" />
+        <span style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:14,color:'#fff',letterSpacing:'-.01em',marginLeft:-5}}>SendKPI</span>
+      </div>
+
+      <div style={{padding:'40px 20px 64px',maxWidth:820,margin:'0 auto'}}>
+        <p style={{...eyebrow,color:'#0D57D0',fontSize:12}}>{complete ? 'Campaign kit ready' : 'Building your campaign kit'}</p>
+        <h1 style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:'clamp(26px,5vw,36px)',letterSpacing:'-.01em',color:'var(--text-primary)',margin:'0 0 10px',lineHeight:1.15}}>Everything for {first}</h1>
+        <p style={{fontSize:15,color:'var(--text-secondary)',margin:'0 0 28px',lineHeight:1.6}}>Two split-test landing pages, Google Search ads V1 and V2, and four graphic ads for each page with Meta ad copy. It all builds right here.</p>
+
+        {complete && <div style={{marginBottom:32}}>{cta}</div>}
+
+        {/* Split-test landers */}
+        <p style={eyebrow}>Split test landers</p>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(280px,1fr))',gap:14,marginBottom:36}}>
+          {[[1, v1Html], [2, v2Html]].map(([n, html]) => (
+            <div key={n} style={card}>
+              <div style={{position:'relative',height:220,borderRadius:10,border:'1px solid var(--border)',overflow:'hidden',background:'#fff',marginBottom:12}}>
+                <iframe srcDoc={html} sandbox="" scrolling="no" tabIndex={-1} title=""
+                  style={{width:1000,height:750,border:0,transform:'scale(0.293)',transformOrigin:'0 0',pointerEvents:'none',display:'block'}} />
+              </div>
+              <div style={{display:'flex',alignItems:'center',gap:12}}>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={h2}>Split Test Lander #{n}</div>
+                  <div style={{fontSize:12.5,color:'var(--text-secondary)'}}>{n === 1 ? 'Soft-light layout' : 'Maps-card layout'} · same offer</div>
+                </div>
+                <button className="lb-btn-ghost" style={{height:38,display:'flex',alignItems:'center',gap:6,fontSize:13,fontFamily:'inherit',fontWeight:600}} onClick={() => setPreview(landerFile(n, html))}>
+                  <i className="ti ti-eye" aria-hidden="true" /> Preview
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Google Search ads V1 / V2 */}
+        <p style={eyebrow}>Google Search ads</p>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(280px,1fr))',gap:14,marginBottom:36}}>
+          {[1, 2].map(v => {
+            const g = google[v];
+            return (
+              <div key={v} style={card}>
+                <div style={h2}>Google ads V{v}</div>
+                <div style={{fontSize:12.5,color:'var(--text-secondary)',marginBottom:12}}>{v === 1 ? 'Service + city, straight offer' : 'Hook, urgency and proof'}</div>
+                {g === null && <KitSpinner text="Writing 15 headlines and 4 descriptions…" />}
+                {g && !g.headlines.length && <p style={{fontSize:13,color:'var(--text-secondary)',margin:0}}>Couldn't write this set right now. Everything else still comes with the kit.</p>}
+                {g && g.headlines.length > 0 && (
+                  <>
+                    <div style={{border:'1px solid var(--border)',borderRadius:10,padding:'12px 14px',fontFamily:'arial,sans-serif',background:'#fff',marginBottom:12}}>
+                      <div style={{fontSize:11,fontWeight:700,color:'#202124',marginBottom:4}}>Sponsored</div>
+                      <div style={{fontSize:17,color:'#1a0dab',lineHeight:1.3,marginBottom:4}}>{g.headlines.slice(0, 3).join(' | ')}</div>
+                      <div style={{fontSize:13,color:'#4d5156',lineHeight:1.45}}>{g.descriptions?.[0]}</div>
+                    </div>
+                    <div style={{display:'flex',alignItems:'center',gap:12}}>
+                      <span style={{fontSize:12.5,color:'var(--text-secondary)',flex:1}}>{g.headlines.length} headlines · {g.descriptions.length} descriptions</span>
+                      <button className="lb-btn-ghost" style={{height:38,display:'flex',alignItems:'center',gap:6,fontSize:13,fontFamily:'inherit',fontWeight:600}} onClick={() => setPreview(gadsFile(v, g))}>
+                        <i className="ti ti-eye" aria-hidden="true" /> See all
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Graphic ads + Meta copy, one set per lander */}
+        {[0, 1].map(li => (
+          <div key={li} style={{marginBottom:36}}>
+            <p style={eyebrow}>Graphic ads · Lander #{li + 1}</p>
+            <div style={card}>
+              {!photos.length && <p style={{fontSize:13,color:'var(--text-secondary)',margin:0}}>No photos were picked, so there are no graphic ads in this kit.</p>}
+              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(150px,1fr))',gap:10,marginBottom:photos.length ? 16 : 0}}>
+                {photos.map((url, pi) => (
+                  <div key={url} style={{position:'relative',aspectRatio:'1',borderRadius:10,overflow:'hidden',border:'1px solid var(--border)',background:'var(--surface-1)'}}>
+                    <canvas ref={el => { canvasesRef.current[li * KIT_ADS_PER_LANDER + pi] = el; }} width={AD_SIZE} height={AD_SIZE}
+                      style={{width:'100%',height:'100%',display:'block',opacity:drawn ? 1 : 0,transition:'opacity .3s'}} />
+                    {!drawn && (
+                      <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:8}}>
+                        <span className="kit-spin" aria-hidden="true" />
+                        <span style={{fontSize:11,color:'var(--text-muted)',fontFamily:"'IBM Plex Mono',monospace",letterSpacing:'.06em'}}>V{pi + 1}</span>
+                      </div>
+                    )}
+                    {drawn && <span style={{position:'absolute',top:8,left:8,fontSize:11,fontWeight:700,fontFamily:"'IBM Plex Mono',monospace",letterSpacing:'.06em',color:'#fff',background:'rgba(14,19,24,.65)',borderRadius:999,padding:'3px 9px'}}>V{pi + 1}</span>}
+                  </div>
+                ))}
+              </div>
+              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,letterSpacing:'.1em',textTransform:'uppercase',color:'var(--text-muted)',margin:'0 0 8px'}}>Meta ad copy</div>
+              {variations === null && !forced && <KitSpinner text="Writing 3 headlines and 3 primary texts…" />}
+              {(variations !== null || forced) && !sets[li].headlines.length && <p style={{fontSize:13,color:'var(--text-secondary)',margin:0}}>Couldn't write the copy right now. The graphics use your landing page's headline instead.</p>}
+              {sets[li].headlines.length > 0 && (
+                <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(260px,1fr))',gap:14}}>
+                  <div>
+                    <div style={{fontSize:12,fontWeight:700,color:'var(--text-primary)',marginBottom:6}}>Headlines</div>
+                    <ol style={{margin:0,paddingLeft:18,fontSize:13.5,color:'var(--text-primary)',lineHeight:1.5,display:'flex',flexDirection:'column',gap:4}}>
+                      {sets[li].headlines.map((h, i) => <li key={i}>{h}</li>)}
+                    </ol>
+                  </div>
+                  <div>
+                    <div style={{fontSize:12,fontWeight:700,color:'var(--text-primary)',marginBottom:6}}>Primary text</div>
+                    <ol style={{margin:0,paddingLeft:18,fontSize:13.5,color:'var(--text-secondary)',lineHeight:1.5,display:'flex',flexDirection:'column',gap:6}}>
+                      {sets[li].primaryTexts.map((t, i) => <li key={i}>{t}</li>)}
+                    </ol>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+
+        {complete
+          ? cta
+          : <KitSpinner text="Finishing the last pieces… the download unlocks as soon as everything is in." />}
+      </div>
+
+      {preview && <KitPreviewModal f={preview} onClose={() => setPreview(null)} />}
     </div>
   );
 }
@@ -1457,10 +1766,6 @@ export default function App() {
   const offerPromiseRef = useRef(null); // in-flight website-scan/offer call, started once the profile lands
   const profilePromiseRef = useRef(null); // in-flight profile fetch, started the moment a business is selected
   const anglesPromiseRef = useRef(null); // in-flight angle research, runs behind the photo-picking step
-  const [builtPhase, setBuiltPhase] = useState('building'); // 'built' step: building → ready → adsSpin → adsReady
-  const [buildIndex, setBuildIndex] = useState(0);          // active row in the built-step trace
-  const [showPage,   setShowPage]   = useState(false);      // desktop page popup over the built step
-  const [previewNoteHidden, setPreviewNoteHidden] = useState(false); // "everything can change" banner dismissed
   const timerRef  = useRef(null);
   const adCanvasesRef = useRef([]);     // canvases drawn by AdsTab, exported at Step 3
   const adsStateRef = useRef(null);     // AdsTab's current {photoUrls, copy}, for the pre-redirect stash
@@ -1738,56 +2043,20 @@ export default function App() {
     });
   }
 
+  // The chosen angle is stamped; both landers render instantly, so go
+  // straight to the kit page where the ads fill in around them.
   function finishBuild(profile) {
     setBusiness(profile);
     setHtml(buildLander(profile));
-    setShowPage(false);
-    setBuiltPhase('building');
-    setBuildIndex(1); // row 0 ("Finding best ad angles") arrives already checked
-    setStep('built');
-    // Short scripted trace while the (instant) build "runs" -- ends in the
-    // completed state with the View button instead of holding forever.
-    // 700ms/row: quick enough to feel snappy, slow enough to read.
-    if (timerRef.current) clearInterval(timerRef.current);
-    let i = 1;
-    timerRef.current = setInterval(() => {
-      i++;
-      if (i >= BUILD_ROWS.length) {
-        clearInterval(timerRef.current); timerRef.current = null;
-        setBuiltPhase('ready');
-        return;
-      }
-      setBuildIndex(i);
-    }, 700);
-  }
-
-  // Open the page popup on a specific template version. The choice is
-  // stamped into the profile itself so the save, download, stash, and
-  // admin portal all rebuild the version the user picked (last one viewed
-  // wins; V1 is the default when they never touch the buttons).
-  function viewVersion(v) {
-    const biz = { ...business, template: v };
-    setBusiness(biz);
-    setHtml(buildLander(biz));
-    setShowPage(true);
-  }
-
-  // Closing the page popup is what kicks off the ads handoff: the trace
-  // grows a "creating matching ads" spinner, then flips green with the
-  // button into Step 2.
-  function closePageModal() {
-    setShowPage(false);
-    if (builtPhase === 'ready') {
-      setBuiltPhase('adsSpin');
-      setTimeout(() => setBuiltPhase('adsReady'), 1300);
-    }
+    setDeliverables([]);
+    setStep('kit');
+    window.scrollTo(0, 0);
   }
 
   function reset() {
     setStep('search'); setQuery(''); setCandidates([]); setHtml(''); setBusiness(null); setError('');
     setPendingProfile(null); setMainService(''); setAngles([]); setScanDone(false);
     setPickedPhotos([]);
-    setBuiltPhase('building'); setBuildIndex(0); setShowPage(false);
     setDeliverables([]); setKit(null); setKitModal(false);
     offerPromiseRef.current = null;
     profilePromiseRef.current = null;
@@ -1831,21 +2100,6 @@ export default function App() {
   }
 
   /* ── Step 2: straight to ads, no account required ─────────────────── */
-  function goToAds() {
-    // The lander only lives in React state until Step 3 saves it -- that's
-    // deliberate: let people build their ads first, capture the lead when
-    // they want the files.
-    setLanders([{
-      id: 'local',
-      name: business?.name || 'My lander',
-      created_at: new Date().toISOString(),
-      profile: business,
-      local: true,
-    }]);
-    setDashboardTab('ads');
-    setStep('dashboard');
-  }
-
   /* ── Step 3: hand over the files (runs after the lead is captured) ──
      Nothing auto-downloads. Once the save lands (and, after the OAuth
      redirect, once the ad canvases have re-rendered) the files are
@@ -2308,95 +2562,51 @@ export default function App() {
   }
 
   /* ── built: trace completion → desktop page popup → ads handoff ────── */
-  if (step === 'built') {
-    const rows = BUILD_ROWS
-      .map((s, i) => ({
-        text: s,
-        state: builtPhase !== 'building' || i < buildIndex ? 'done' : i === buildIndex ? 'active' : 'hidden',
-      }))
-      .filter(r => r.state !== 'hidden');
-    if (builtPhase !== 'building') rows.push({ text: 'Landing page completed', state: 'done' });
-    if (builtPhase === 'adsSpin')  rows.push({ text: 'Creating your matching ads', state: 'active' });
-    if (builtPhase === 'adsReady') rows.push({ text: 'Matching ads ready', state: 'done' });
-    return (
-      <div style={{minHeight:'100dvh',background:'#fff',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:34,padding:32}}>
-        <div style={{display:'flex',alignItems:'center',gap:8}}>
-          <LogoMark size={26} />
-          <span style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:15,color:'#181310',letterSpacing:'-.01em'}}>SendKPI</span>
-        </div>
-        <div className="lb-trace">
-          {rows.map(r => (
-            <div key={r.text} className={`lb-trace-row${r.state === 'active' ? ' active' : ' done'}`}>
-              <span className={`lb-trace-icon ${r.state === 'active' ? 'spin' : 'done'}`} aria-hidden="true">
-                {r.state === 'done' && <i className="ti ti-check" style={{fontSize:12}} />}
-              </span>
-              <span className="lb-trace-text">{r.text}</span>
-            </div>
-          ))}
-        </div>
-
-        {builtPhase === 'ready' && (
-          <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:12}}>
-            <div style={{display:'flex',gap:12,flexWrap:'wrap',justifyContent:'center'}}>
-              <button className="lb-btn-signal" onClick={() => viewVersion('v1')} style={{display:'flex',alignItems:'center',gap:8}}>
-                View Page Version 1 <i className="ti ti-eye" aria-hidden="true" />
-              </button>
-              <button className="lb-btn-signal" onClick={() => viewVersion('v2')} style={{display:'flex',alignItems:'center',gap:8}}>
-                View Page Version 2 <i className="ti ti-eye" aria-hidden="true" />
-              </button>
-            </div>
-            <p style={{color:'var(--text-secondary)',fontSize:13,margin:0}}>Two designs, same info. Both come with your download.</p>
-          </div>
-        )}
-        {builtPhase === 'adsReady' && (
-          <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:12}}>
-            <button className="lb-btn-signal" onClick={goToAds} style={{display:'flex',alignItems:'center',gap:8}}>
-              Step 2: Build my ads <i className="ti ti-arrow-right" aria-hidden="true" />
-            </button>
-            <div style={{display:'flex',gap:16}}>
-              <button className="lb-back" onClick={() => viewVersion('v1')}>
-                <i className="ti ti-eye" aria-hidden="true" /> View Version 1
-              </button>
-              <button className="lb-back" onClick={() => viewVersion('v2')}>
-                <i className="ti ti-eye" aria-hidden="true" /> View Version 2
-              </button>
-            </div>
-          </div>
-        )}
-
-        {showPage && (
-          <div style={{position:'fixed',inset:0,zIndex:100,background:'rgba(14,19,24,.72)',padding:'clamp(8px,2vw,28px)'}}>
-            <div style={{width:'100%',height:'100%',maxWidth:1280,margin:'0 auto',background:'#fff',borderRadius:16,overflow:'hidden',display:'flex',flexDirection:'column',boxShadow:'0 30px 80px rgba(0,0,0,.45)'}}>
-              <div style={{flexShrink:0,background:'#181D24',padding:'10px 14px',display:'flex',alignItems:'center',gap:14}}>
-                <button onClick={closePageModal} style={{display:'flex',alignItems:'center',gap:8,background:'#fff',color:'#181D24',border:'none',borderRadius:10,padding:'11px 22px',fontSize:15,fontWeight:700,cursor:'pointer',fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif"}}>
-                  <i className="ti ti-arrow-left" aria-hidden="true" /> Back
-                </button>
-                <span style={{color:'#C7CDD2',fontSize:13,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>Your landing page · desktop preview</span>
-                <span style={{marginLeft:'auto',display:'flex',gap:6,flexShrink:0}}>
-                  {[['v1','Version 1'],['v2','Version 2']].map(([v,label]) => {
-                    const active = (business?.template === 'v2' ? 'v2' : 'v1') === v;
-                    return (
-                      <button key={v} onClick={() => viewVersion(v)} style={{
-                        background: active ? '#fff' : 'transparent', color: active ? '#181D24' : '#C7CDD2',
-                        border: '1px solid ' + (active ? '#fff' : '#3A424D'), borderRadius: 8,
-                        padding: '7px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                      }}>{label}</button>
-                    );
-                  })}
-                </span>
-              </div>
-              {!previewNoteHidden && (
-                <div style={{flexShrink:0,background:'#FFF4DC',color:'#8A6100',fontSize:13,padding:'9px 16px',display:'flex',alignItems:'center',justifyContent:'center',gap:8,borderBottom:'1px solid #F2E3B8',fontWeight:600}}>
-                  <i className="ti ti-pencil" aria-hidden="true" />
-                  <span>This is your first draft. Images, services, service areas, and wording can all be customized.</span>
-                  <button onClick={() => setPreviewNoteHidden(true)} aria-label="Dismiss" style={{marginLeft:10,background:'none',border:'none',color:'#B99B4A',fontWeight:700,cursor:'pointer',fontSize:14,padding:0}}>✕</button>
-                </div>
-              )}
-              <iframe srcDoc={html} title="Landing page preview (desktop)" style={{flex:1,width:'100%',border:'none',background:'#fff'}} />
-            </div>
-          </div>
-        )}
+  /* ── "create your free account" popup: name/email/phone → the files ── */
+  const signupModal = kitModal && (
+    <div style={{position:'fixed',inset:0,zIndex:200,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
+      <div style={{position:'absolute',inset:0,background:'rgba(14,19,24,.7)'}} onClick={() => !manualBusy && setKitModal(false)} />
+      <div style={{position:'relative',background:'#fff',borderRadius:14,maxWidth:400,width:'100%',padding:'28px 24px',boxShadow:'0 20px 60px rgba(0,0,0,.4)'}}>
+        <button onClick={() => setKitModal(false)} disabled={manualBusy} aria-label="Close" style={{position:'absolute',top:10,right:14,background:'none',border:0,fontSize:26,lineHeight:1,color:'var(--text-secondary)',cursor:'pointer'}}>&times;</button>
+        <h3 style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:20,letterSpacing:'-.01em',margin:'0 0 6px',color:'var(--text-primary)'}}>Create your free SendKPI account</h3>
+        <p style={{fontSize:14,color:'var(--text-secondary)',margin:'0 0 18px',lineHeight:1.5}}>Your whole kit unlocks on the next page, and we'll email you a link so you can grab it again anytime.</p>
+        <form onSubmit={submitKit} noValidate style={{display:'flex',flexDirection:'column',gap:10}}>
+          <input className="lb-input" placeholder="Your name" autoComplete="name" autoFocus value={manualForm.name}
+            onChange={e => setManualForm({ ...manualForm, name: e.target.value })} />
+          <input className="lb-input" type="email" placeholder="Email" autoComplete="email" value={manualForm.email}
+            onChange={e => setManualForm({ ...manualForm, email: e.target.value })} />
+          <input className="lb-input" type="tel" placeholder="Phone number" autoComplete="tel" value={manualForm.phone}
+            onChange={e => setManualForm({ ...manualForm, phone: e.target.value })} />
+          {manualError && <div className="lb-error">{manualError}</div>}
+          <button type="submit" className="lb-btn-signal" disabled={manualBusy} style={{width:'100%',display:'flex',alignItems:'center',justifyContent:'center',gap:8}}>
+            {manualBusy ? 'Creating your account…' : <>Create my account &amp; download <i className="ti ti-download" aria-hidden="true" /></>}
+          </button>
+        </form>
+        <p style={{fontSize:11.5,color:'var(--text-muted)',margin:'12px 0 0',lineHeight:1.5}}>Free, no card. We'll use this to send your files and follow up about your campaign. No spam.</p>
       </div>
+    </div>
+  );
+
+  /* ── kit page: landers + ads build in place; account CTA when complete ── */
+  if (step === 'kit') {
+    const ready = deliverables.length > 0;
+    const cta = (
+      <div style={{background:'#fff',border:'1px solid var(--border)',borderRadius:14,padding:'20px 22px',display:'flex',alignItems:'center',gap:16,flexWrap:'wrap',boxShadow:'0 8px 30px rgba(24,29,36,.06)'}}>
+        <div style={{width:48,height:48,borderRadius:12,background:'#E7EEFB',color:'#0D57D0',display:'flex',alignItems:'center',justifyContent:'center',fontSize:24,flexShrink:0}} aria-hidden="true"><i className="ti ti-folder-down" /></div>
+        <div style={{flex:1,minWidth:160}}>
+          <div style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:16,color:'var(--text-primary)'}}>Download the whole kit</div>
+          <div style={{fontSize:13,color:'var(--text-secondary)',marginTop:2}}>{deliverables.length} files. Create a free SendKPI account to download them all.</div>
+        </div>
+        <button className="lb-btn-signal" disabled={!ready} onClick={() => { setManualError(''); setKitModal(true); }} style={{display:'flex',alignItems:'center',gap:8}}>
+          Create free account &amp; download <i className="ti ti-download" aria-hidden="true" />
+        </button>
+      </div>
+    );
+    return (
+      <>
+        <KitBuilder business={business} onFiles={setDeliverables} cta={cta} />
+        {signupModal}
+      </>
     );
   }
 
@@ -2410,11 +2620,11 @@ export default function App() {
       <div style={{background:'#fff',border:'1px solid var(--border)',borderRadius:14,padding:'20px 22px',display:'flex',alignItems:'center',gap:16,flexWrap:'wrap',boxShadow:'0 8px 30px rgba(24,29,36,.06)'}}>
         <div style={{width:48,height:48,borderRadius:12,background:'#E7EEFB',color:'#0D57D0',display:'flex',alignItems:'center',justifyContent:'center',fontSize:24,flexShrink:0}} aria-hidden="true"><i className="ti ti-folder-down" /></div>
         <div style={{flex:1,minWidth:160}}>
-          <div style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:16,color:'var(--text-primary)'}}>Get the whole folder</div>
-          <div style={{fontSize:13,color:'var(--text-secondary)',marginTop:2}}>{deliverables.length} files, yours to keep. Free.</div>
+          <div style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:16,color:'var(--text-primary)'}}>Download the whole kit</div>
+          <div style={{fontSize:13,color:'var(--text-secondary)',marginTop:2}}>{deliverables.length} files. Create a free SendKPI account to download them all.</div>
         </div>
         <button className="lb-btn-signal" onClick={() => { setManualError(''); setKitModal(true); }} style={{display:'flex',alignItems:'center',gap:8}}>
-          Send me my website &amp; ads <i className="ti ti-send" aria-hidden="true" />
+          Create free account &amp; download <i className="ti ti-download" aria-hidden="true" />
         </button>
       </div>
     );
@@ -2440,29 +2650,7 @@ export default function App() {
           {sendCard}
         </div>
 
-        {kitModal && (
-          <div style={{position:'fixed',inset:0,zIndex:200,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
-            <div style={{position:'absolute',inset:0,background:'rgba(14,19,24,.7)'}} onClick={() => !manualBusy && setKitModal(false)} />
-            <div style={{position:'relative',background:'#fff',borderRadius:14,maxWidth:400,width:'100%',padding:'28px 24px',boxShadow:'0 20px 60px rgba(0,0,0,.4)'}}>
-              <button onClick={() => setKitModal(false)} disabled={manualBusy} aria-label="Close" style={{position:'absolute',top:10,right:14,background:'none',border:0,fontSize:26,lineHeight:1,color:'var(--text-secondary)',cursor:'pointer'}}>&times;</button>
-              <h3 style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:20,letterSpacing:'-.01em',margin:'0 0 6px',color:'var(--text-primary)'}}>Where should we send it?</h3>
-              <p style={{fontSize:14,color:'var(--text-secondary)',margin:'0 0 18px',lineHeight:1.5}}>Your website and ads unlock on the next page, and we'll email you a link so you can grab them again anytime.</p>
-              <form onSubmit={submitKit} noValidate style={{display:'flex',flexDirection:'column',gap:10}}>
-                <input className="lb-input" placeholder="Your name" autoComplete="name" autoFocus value={manualForm.name}
-                  onChange={e => setManualForm({ ...manualForm, name: e.target.value })} />
-                <input className="lb-input" type="email" placeholder="Email" autoComplete="email" value={manualForm.email}
-                  onChange={e => setManualForm({ ...manualForm, email: e.target.value })} />
-                <input className="lb-input" type="tel" placeholder="Phone number" autoComplete="tel" value={manualForm.phone}
-                  onChange={e => setManualForm({ ...manualForm, phone: e.target.value })} />
-                {manualError && <div className="lb-error">{manualError}</div>}
-                <button type="submit" className="lb-btn-signal" disabled={manualBusy} style={{width:'100%',display:'flex',alignItems:'center',justifyContent:'center',gap:8}}>
-                  {manualBusy ? 'Sending…' : <>Send my website &amp; ads <i className="ti ti-send" aria-hidden="true" /></>}
-                </button>
-              </form>
-              <p style={{fontSize:11.5,color:'var(--text-muted)',margin:'12px 0 0',lineHeight:1.5}}>We'll use this to send your files and follow up about your campaign. No spam.</p>
-            </div>
-          </div>
-        )}
+        {signupModal}
       </div>
     );
   }

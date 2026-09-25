@@ -552,9 +552,11 @@ def generate_angle_ad_variations(
     summary: Optional[str],
     main_service: str,
     angle: dict,
+    count: int = 4,
 ) -> dict:
-    """One Claude call turning the chosen angle into 4 distinct ad executions
-    (one per auto-selected photo)."""
+    """One Claude call turning the chosen angle into `count` distinct ad
+    executions (the kit splits them across its two split-test landers)."""
+    count = max(2, min(int(count or 4), 8))
     user_content = _profile_block(
         name=name, category=category, services=services,
         service_areas=service_areas, rating=rating, review_count=review_count,
@@ -574,12 +576,15 @@ Landing page subhead: {angle.get("lander_subhead") or "(none)"}
 Call button: {angle.get("cta_label") or "(none)"}"""
 
     client = _client()
+    system = _ANGLE_ADS_SYSTEM.replace("Write 4 distinct", f"Write {count} distinct")
+    system = system.replace("Exactly 4 variations", f"Exactly {count} variations")
+    system = system.replace("not in all four variations", "not in every variation")
     resp = client.messages.create(
         model=MODEL,
-        # 4 variations x 4 fields, primary_text runs longest -- same
-        # truncation risk as the angles call, so matching headroom here.
-        max_tokens=2400,
-        system=_ANGLE_ADS_SYSTEM + _STYLE_RULES,
+        # N variations x 4 fields, primary_text runs longest -- same
+        # truncation risk as the angles call, so headroom scales with count.
+        max_tokens=600 * count,
+        system=system + _STYLE_RULES,
         messages=[{"role": "user", "content": user_content}],
     )
     log_ai("generate-angle-ads", resp)
@@ -624,6 +629,7 @@ def generate_google_rsa(
     summary: Optional[str],
     main_service: str,
     angle: dict,
+    variant: int = 1,
 ) -> dict:
     """One Claude call producing Responsive Search Ad assets (15 headlines /
     4 descriptions) for the owner's chosen main service + angle. Returned as
@@ -646,6 +652,16 @@ Label: {angle.get("label") or "(unnamed)"}
 Hook: {angle.get("hook") or "(none)"}
 Landing page headline: {angle.get("lander_headline") or "(none)"}
 Call button: {angle.get("cta_label") or "(none)"}"""
+    if variant == 2:
+        user_content += """
+
+SPLIT-TEST VARIANT B
+This is the second ad set for the same campaign; set A already covers the
+plain "service + city" phrasing. Make this set clearly different: lead the
+headlines with the angle's hook, the urgency of the problem, and proof
+(rating/reviews if strong), and write descriptions that read like a
+promise rather than a listing. No line should read like a generic
+service-plus-city headline."""
 
     client = _client()
 

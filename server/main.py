@@ -122,7 +122,7 @@ RATE_LIMITS: dict[str, tuple[int, int]] = {
     "generate-offer": (8, 3600),
     "generate-angles": (8, 3600),
     "generate-angle-ads": (8, 3600),
-    "generate-google-ads": (8, 3600),
+    "generate-google-ads": (16, 3600),
     "generate-ad-copy": (20, 3600),
     "lead": (10, 3600),
     "signup-lead": (10, 3600),
@@ -146,7 +146,7 @@ DAILY_CAPS: dict[str, int] = {
     "generate-offer": 300,
     "generate-angles": 300,
     "generate-angle-ads": 300,
-    "generate-google-ads": 300,
+    "generate-google-ads": 600,
     "generate-ad-copy": 300,
     "lead": 300,
     "signup-lead": 300,
@@ -878,6 +878,7 @@ class AngleAdsRequest(BaseModel):
     summary: Optional[str] = None
     main_service: str = ""
     angle: ChosenAngle
+    count: int = Field(default=4, ge=2, le=8)
 
 
 @app.post("/api/generate-angle-ads")
@@ -896,6 +897,7 @@ def generate_angle_ads_route(req: AngleAdsRequest):
             summary=req.summary,
             main_service=req.main_service,
             angle=req.angle.model_dump(),
+            count=req.count,
         )
     except RuntimeError as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -915,6 +917,7 @@ class GoogleAdsRequest(BaseModel):
     summary: Optional[str] = None
     main_service: str = ""
     angle: ChosenAngle
+    variant: int = Field(default=1, ge=1, le=2)  # 2 = split-test set B
 
 
 @app.post("/api/generate-google-ads")
@@ -934,6 +937,7 @@ def generate_google_ads_route(req: GoogleAdsRequest):
             summary=req.summary,
             main_service=req.main_service,
             angle=req.angle.model_dump(),
+            variant=req.variant,
         )
     except RuntimeError as e:
         raise HTTPException(status_code=500, detail=str(e))
