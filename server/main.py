@@ -408,6 +408,14 @@ def health():
         "anthropic_key_configured": has_anthropic_key,
         "lead_store_configured": bool(os.environ.get("DATABASE_URL")),
         "kit_storage_configured": kit_storage_configured(),
+        # Which kind of Supabase key is deployed (never the key itself):
+        # only "sb_secret" and the legacy service_role JWT can write storage.
+        "kit_key_kind": (
+            "sb_secret" if (os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or "").startswith("sb_secret_")
+            else "sb_publishable" if (os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or "").startswith("sb_publishable_")
+            else "legacy_jwt" if (os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or "").startswith("eyJ")
+            else "unset" if not os.environ.get("SUPABASE_SERVICE_ROLE_KEY") else "unknown"
+        ),
         "kit_email_configured": kit_email_configured(),
         "meta_capi_configured": bool(os.environ.get("META_PIXEL_ID") and os.environ.get("META_CAPI_ACCESS_TOKEN")),
         "ghl_configured": ghl_is_configured(),
