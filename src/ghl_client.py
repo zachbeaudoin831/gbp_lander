@@ -41,6 +41,7 @@ def upsert_contact(
     email: Optional[str],
     phone: Optional[str],
     business: Optional[str],
+    tags: Optional[list[str]] = None,
 ) -> dict:
     """Upsert one contact into the configured GHL sub-account.
 
@@ -61,7 +62,7 @@ def upsert_contact(
     payload: dict = {
         "locationId": location_id,
         "source": SOURCE,
-        "tags": [SIGNUP_TAG],
+        "tags": [SIGNUP_TAG, *(tags or [])],
     }
     if name:
         payload["name"] = name.strip()
@@ -99,3 +100,28 @@ def upsert_contact(
 
 def is_configured() -> bool:
     return bool(os.environ.get("GHL_API_TOKEN") and os.environ.get("GHL_LOCATION_ID"))
+
+
+def add_note(contact_id: str, body: str) -> None:
+    """Attach a note to an existing contact (e.g. the link to their campaign
+    kit). Notes need no custom-field setup in the sub-account, which is why
+    the kit link travels this way instead of as a custom field."""
+    token = os.environ.get("GHL_API_TOKEN")
+    if not token or not contact_id:
+        raise GhlError("GHL_API_TOKEN not set or no contact id")
+    import requests
+    try:
+        resp = requests.post(
+            f"https://services.leadconnectorhq.com/contacts/{contact_id}/notes",
+            json={"body": body},
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Version": API_VERSION,
+                "Content-Type": "application/json",
+            },
+            timeout=10,
+        )
+    except Exception as e:
+        raise GhlError(f"GHL request failed: {e}")
+    if resp.status_code >= 400:
+        raise GhlError(f"GHL note rejected (HTTP {resp.status_code})")

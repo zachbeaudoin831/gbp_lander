@@ -44,7 +44,24 @@ from src.ai_copy import (
     generate_google_rsa,
 )
 from src.brand_color import fetch_brand_color
-from src.ghl_client import GhlError, is_configured as ghl_is_configured, upsert_contact
+from src.ghl_client import GhlError, add_note as ghl_add_note, is_configured as ghl_is_configured, upsert_contact
+from src.kit_store import (
+    KitStoreError,
+    content_type_for as kit_content_type,
+    email_configured as kit_email_configured,
+    get_kit,
+    kit_url,
+    list_files as kit_list_files,
+    mark_emailed,
+    new_token as new_kit_token,
+    send_kit_email,
+    set_kit_files,
+    set_kit_token,
+    sign_files as kit_sign_files,
+    storage_configured as kit_storage_configured,
+    upload_file as kit_upload_file,
+    MAX_FILE_BYTES as KIT_MAX_FILE_BYTES,
+)
 from src.lander_builder import build_profile
 from src.lead_store import LeadStoreError, insert_lead
 from src.meta_capi import MetaCapiError, send_event
@@ -109,6 +126,10 @@ RATE_LIMITS: dict[str, tuple[int, int]] = {
     "generate-ad-copy": (20, 3600),
     "lead": (10, 3600),
     "signup-lead": (10, 3600),
+    "kit-signup": (10, 3600),
+    "kit-file": (80, 3600),
+    "kit-finish": (10, 3600),
+    "kit": (60, 600),
     "ghl-contact": (8, 3600),
     "meta-event": (60, 3600),
 }
@@ -129,6 +150,10 @@ DAILY_CAPS: dict[str, int] = {
     "generate-ad-copy": 300,
     "lead": 300,
     "signup-lead": 300,
+    "kit-signup": 300,
+    "kit-file": 3000,
+    "kit-finish": 300,
+    "kit": 2000,
     "ghl-contact": 300,
     "meta-event": 2000,
 }
@@ -382,6 +407,8 @@ def health():
         "api_key_configured": has_places_key,
         "anthropic_key_configured": has_anthropic_key,
         "lead_store_configured": bool(os.environ.get("DATABASE_URL")),
+        "kit_storage_configured": kit_storage_configured(),
+        "kit_email_configured": kit_email_configured(),
         "meta_capi_configured": bool(os.environ.get("META_PIXEL_ID") and os.environ.get("META_CAPI_ACCESS_TOKEN")),
         "ghl_configured": ghl_is_configured(),
     }
@@ -473,6 +500,165 @@ def signup_lead(req: SignupLeadRequest):
     except GhlError:
         pass
     return {"ok": stored}
+
+
+# ── campaign kits: the no-account funnel ────────────────────────────────────
+# A visitor builds their lander + ads, then trades name/email/phone for the
+# files. Three calls from the browser, in order:
+#   1. kit-signup  -- the lead itself (leads row + GHL). Returns the kit id
+#                     and a secret token. The thank-you page opens on this.
+#   2. kit-file    -- one call per file, raw body, so the kit lives in
+#                     storage for the emailed /kit page and the admin portal.
+#   3. kit-finish  -- once uploads are done: GHL note with the link + email.
+# Every step after 1 is best-effort: the browser already has the files.
+
+KIT_ID_RE = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
+KIT_TOKEN_RE = re.compile(r"^[A-Za-z0-9_-]{16,64}$")
+
+
+def _kit_or_404(kit_id: str, token: str) -> dict:
+    if not KIT_ID_RE.match(kit_id or "") or not KIT_TOKEN_RE.match(token or ""):
+        raise HTTPException(status_code=404, detail="Kit not found")
+    try:
+        kit = get_kit(kit_id, token)
+    except Exception:
+        raise HTTPException(status_code=503, detail="Kit store unavailable")
+    if not kit:
+        raise HTTPException(status_code=404, detail="Kit not found")
+    return kit
+
+
+class KitSignupRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=200)
+    email: str = Field(min_length=5, max_length=320)
+    phone: str = Field(min_length=7, max_length=50)
+    business: Optional[str] = Field(default=None, max_length=200)
+    fbclid: Optional[str] = Field(default=None, max_length=500)
+    gclid: Optional[str] = Field(default=None, max_length=500)
+
+
+@app.post("/api/kit-signup")
+def kit_signup(req: KitSignupRequest):
+    """Record the signup. ok is true if the leads table or GHL took it; the
+    kit id/token are null when the leads table isn't reachable (then there's
+    nowhere to store files, and the browser just skips the uploads)."""
+    kit_id = None
+    token = None
+    stored = False
+    try:
+        kit_id = insert_lead(
+            business=req.business,
+            name=req.name.strip(),
+            phone=req.phone.strip(),
+            email=req.email.strip(),
+            contact_pref=None,
+            source="kit",
+            page_url=None,
+            fbclid=req.fbclid,
+            gclid=req.gclid,
+        )
+        token = new_kit_token()
+        set_kit_token(kit_id, token)
+        stored = True
+    except Exception:
+        kit_id, token = None, None
+    try:
+        upsert_contact(
+            name=req.name.strip(),
+            email=req.email.strip(),
+            phone=req.phone.strip(),
+            business=req.business,
+            tags=["sendkpi-kit"],
+        )
+        stored = True
+    except GhlError:
+        pass
+    return {
+        "ok": stored,
+        "kit_id": kit_id,
+        "kit_token": token,
+        "storage": bool(kit_id) and kit_storage_configured(),
+    }
+
+
+@app.post("/api/kit-file")
+async def kit_file(request: Request, kit_id: str, t: str, name: str):
+    """Store one kit file (raw request body) under {kit_id}/{name}. The file
+    name doubles as the content type (allow-listed extensions only)."""
+    _kit_or_404(kit_id, t)
+    content_type = kit_content_type(name)
+    if not content_type:
+        raise HTTPException(status_code=400, detail="File type not allowed")
+    if not kit_storage_configured():
+        raise HTTPException(status_code=503, detail="Kit storage not configured")
+    body = await request.body()
+    if not body or len(body) > KIT_MAX_FILE_BYTES:
+        raise HTTPException(status_code=413, detail="File too large")
+    try:
+        await run_in_threadpool(kit_upload_file, kit_id, name, body, content_type)
+    except KitStoreError:
+        raise HTTPException(status_code=502, detail="Could not store file")
+    return {"ok": True}
+
+
+class KitFinishRequest(BaseModel):
+    kit_id: str = Field(max_length=64)
+    t: str = Field(max_length=64)
+
+
+@app.post("/api/kit-finish")
+def kit_finish(req: KitFinishRequest):
+    """Uploads are done: remember the file list, drop the /kit link on the
+    GHL contact as a note, and email it. Each piece is independent."""
+    kit = _kit_or_404(req.kit_id, req.t)
+    link = kit_url(kit["id"], req.t)
+    files: list[dict] = []
+    if kit_storage_configured():
+        try:
+            files = kit_list_files(kit["id"])
+            set_kit_files(kit["id"], files)
+        except Exception:
+            files = []
+    try:
+        contact = upsert_contact(
+            name=kit["name"], email=kit["email"], phone=kit["phone"],
+            business=kit["business"], tags=["sendkpi-kit"],
+        )
+        contact_id = (contact.get("contact") or {}).get("id")
+        if contact_id:
+            ghl_add_note(contact_id, f"SendKPI campaign kit ({len(files)} files): {link}")
+    except GhlError:
+        pass
+    emailed = False
+    if kit["email"] and kit_email_configured() and not kit.get("emailed_at"):
+        try:
+            send_kit_email(to=kit["email"], name=kit["name"], business=kit["business"], link=link)
+            mark_emailed(kit["id"])
+            emailed = True
+        except Exception:
+            emailed = False
+    return {"ok": True, "emailed": emailed or bool(kit.get("emailed_at")), "kit_url": link, "files": len(files)}
+
+
+@app.get("/api/kit")
+def kit_page(id: str, t: str):
+    """Everything the /kit page needs: who it's for and signed URLs (1h) for
+    each stored file. The token in the emailed link is the only auth."""
+    kit = _kit_or_404(id, t)
+    files = []
+    if kit_storage_configured():
+        try:
+            stored = kit_list_files(kit["id"])
+            signed = kit_sign_files(kit["id"], [f["name"] for f in stored])
+            files = [{"name": f["name"], "size": f.get("size"), "url": signed.get(f["name"])} for f in stored if signed.get(f["name"])]
+        except KitStoreError:
+            files = []
+    return {
+        "name": kit["name"],
+        "business": kit["business"],
+        "email": kit["email"],
+        "files": files,
+    }
 
 
 class GhlContactRequest(BaseModel):

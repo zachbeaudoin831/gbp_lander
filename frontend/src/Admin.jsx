@@ -35,6 +35,7 @@ const MOCK_LEADS = !MOCK ? [] : [
     }],
   },
   { id: "mock-2", name: "Rosa Alvarez", email: "rosa@example.com", phone: null, created_at: "2026-08-05T12:00:00Z", landers: [] },
+  { id: "mock-3", kind: "kit", name: "Sam Ortiz", email: "sam@example.com", phone: "(831) 555-0142", business: "Ortiz Electric", created_at: "2026-08-08T09:30:00Z", kit_token: "mock-token", kit_files: [{ name: "a" }, { name: "b" }], emailed_at: "2026-08-08T09:31:00Z", landers: [] },
 ];
 
 // Deterministic fake usage for /admin?mock=1 (no Date.now/random in render —
@@ -727,9 +728,12 @@ export default function Admin() {
     if (!session || !isAdmin) return;
     if (MOCK) { setLeads(MOCK_LEADS); return; }
     (async () => {
-      const [{ data: profiles, error: pErr }, { data: landers, error: lErr }] = await Promise.all([
+      const [{ data: profiles, error: pErr }, { data: landers, error: lErr }, { data: kits }] = await Promise.all([
         supabase.from("profiles").select("*").order("created_at", { ascending: false }),
         supabase.from("landers").select("*").order("created_at", { ascending: false }),
+        // No-account signups (the name/email/phone form): a leads row each,
+        // with their files in the `kits` bucket behind the /kit link.
+        supabase.from("leads").select("*").in("source", ["kit", "signup"]).order("created_at", { ascending: false }),
       ]);
       if (pErr || lErr) { setLoadError("Could not load signups — has db/003_admin_portal.sql been run?"); return; }
       const byUser = new Map();
@@ -737,7 +741,9 @@ export default function Admin() {
         if (!byUser.has(l.user_id)) byUser.set(l.user_id, []);
         byUser.get(l.user_id).push(l);
       });
-      setLeads((profiles || []).map(p => ({ ...p, landers: byUser.get(p.id) || [] })));
+      const accounts = (profiles || []).map(p => ({ ...p, landers: byUser.get(p.id) || [] }));
+      const kitLeads = (kits || []).map(k => ({ ...k, kind: "kit", landers: [] }));
+      setLeads([...accounts, ...kitLeads].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
     })();
   }, [session, isAdmin]);
 
@@ -745,7 +751,7 @@ export default function Admin() {
     const q = query.trim().toLowerCase();
     if (!q) return leads;
     return leads.filter(l =>
-      [l.name, l.email, l.phone, ...l.landers.map(x => x.name), ...l.landers.map(x => x.profile?.main_service)]
+      [l.name, l.email, l.phone, l.business, ...l.landers.map(x => x.name), ...l.landers.map(x => x.profile?.main_service)]
         .some(v => String(v || "").toLowerCase().includes(q))
     );
   }, [leads, query]);
@@ -824,8 +830,9 @@ export default function Admin() {
                 <div style={{ minWidth: 200 }}>
                   <div className="ap-name">{lead.name}</div>
                   <div className="ap-meta">
-                    {lead.landers[0]?.name || "No lander saved"}
+                    {lead.landers[0]?.name || lead.business || "No lander saved"}
                     {lead.landers.length > 1 ? ` +${lead.landers.length - 1} more` : ""}
+                    {lead.kind === "kit" ? " · kit signup" : ""}
                   </div>
                   {lead.landers[0]?.profile?.main_service && (
                     <div className="ap-tag" style={{ marginTop: 4 }}>wants calls for: {lead.landers[0].profile.main_service}</div>
@@ -843,7 +850,14 @@ export default function Admin() {
                   <button className="ap-btn" onClick={e => { e.stopPropagation(); setOpenId(null); }}>Close</button>
                 )}
               </div>
-              {open && lead.landers.length === 0 && (
+              {open && lead.kind === "kit" && (
+                <p className="ap-meta" style={{ borderTop: "1px solid var(--border)", paddingTop: 14, marginTop: 14, marginBottom: 0 }}>
+                  {lead.kit_token
+                    ? <>{(lead.kit_files || []).length} file{(lead.kit_files || []).length === 1 ? "" : "s"} in storage{lead.emailed_at ? `, emailed ${fmtDate(lead.emailed_at)}` : ", not emailed"} · <a href={`/kit?id=${lead.id}&t=${lead.kit_token}`} target="_blank" rel="noopener" onClick={e => e.stopPropagation()} style={{ color: "#0D57D0" }}>Open their kit</a></>
+                    : "Signed up before kits were stored — no files for this one."}
+                </p>
+              )}
+              {open && lead.kind !== "kit" && lead.landers.length === 0 && (
                 <p className="ap-meta" style={{ borderTop: "1px solid var(--border)", paddingTop: 14, marginTop: 14, marginBottom: 0 }}>
                   This account signed in but never saved a lander.
                 </p>

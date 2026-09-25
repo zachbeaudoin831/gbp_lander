@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { supabase } from "./supabaseClient";
 import Home, { LogoMark } from "./Home";
 import { initPixel, trackSignup } from "./metaPixel";
+import { zipSync, strToU8 } from "fflate";
 
 /* ─── html helpers ─────────────────────────────────────────────────── */
 const esc = s => s == null ? '' : String(s)
@@ -453,13 +454,17 @@ export const buildLander = d => (d && d.template === 'v2' ? buildLanderHTMLV2(d)
 const API_BASE = "https://gbp-lander.vercel.app";
 
 /* ─── thank-you page config ─────────────────────────────────────────
-   VSL_EMBED_URL: paste a YouTube/Vimeo/Loom embed URL once the video is
-   recorded (e.g. https://www.youtube.com/embed/XXXX). Until then the page
-   shows a written launch guide in its place.
-   BOOKING_URL: your $100 setup-call booking link (Calendly etc.). The
-   booking section hides itself while this is empty. */
-const VSL_EMBED_URL = "";
-const BOOKING_URL = "";
+   Set these as Vercel env vars on the frontend project (then redeploy), or
+   paste them into the fallbacks here.
+   VSL_EMBED_URL: a YouTube/Vimeo/Loom EMBED URL (e.g.
+     https://www.youtube.com/embed/XXXX). The video block hides while empty.
+   BOOKING_EMBED_URL: the calendar's embed/iframe URL (GHL calendar embed,
+     Calendly inline link, etc.) for the free implementation meeting.
+   BOOKING_URL: the same calendar as a plain link -- used for the button
+     fallback when there's no embed URL, and in the kit email (backend). */
+const VSL_EMBED_URL     = import.meta.env.VITE_VSL_EMBED_URL     || "";
+const BOOKING_EMBED_URL = import.meta.env.VITE_BOOKING_EMBED_URL || "";
+const BOOKING_URL       = import.meta.env.VITE_BOOKING_URL       || "";
 
 async function apiGet(path) {
   const res = await fetch(`${API_BASE}${path}`);
@@ -1205,6 +1210,229 @@ function AdsTab({ landers, canvasesRef, initialAds, onAdsState, onAllDrawn, onDo
 }
 
 /* ─── main app ──────────────────────────────────────────────────────── */
+/* ─── campaign kit: shared "download folder" UI ──────────────────────
+   Used three times: the pre-signup preview (files viewable, not
+   downloadable), the thank-you page, and the emailed /kit page (Kit.jsx),
+   which rebuilds the same file list from storage. */
+
+// Label/detail/kind for a stored file name, so the /kit page can describe
+// files it only knows by name. Mirrors the names buildDeliverables emits.
+export function describeKitFile(name) {
+  if (/-lander-v1\.html$/.test(name)) return { label: 'Landing page · Version 1', detail: 'Single HTML file. Host it on any subdomain', kind: 'html' };
+  if (/-lander-v2\.html$/.test(name)) return { label: 'Landing page · Version 2', detail: 'Maps-card layout. Same info, different look', kind: 'html' };
+  if (/-google-ads\.txt$/.test(name)) return { label: 'Google Search ads', detail: 'Headlines and descriptions, ready to paste into a Responsive Search Ad', kind: 'gads' };
+  const ad = name.match(/-ad-(\d+)\.(png|jpe?g)$/);
+  if (ad) return { label: `Ad graphic ${ad[1]}`, detail: '1080×1080, ready for Meta', kind: 'png' };
+  if (/\.html$/.test(name)) return { label: 'Landing page', detail: 'Single HTML file', kind: 'html' };
+  return { label: name, detail: '', kind: null };
+}
+
+const KIT_README = (biz) => `YOUR CAMPAIGN KIT: ${biz || 'your business'}
+Built with SendKPI (sendkpi.com)
+
+WHAT'S IN HERE
+- *-lander-v1.html / *-lander-v2.html
+    Two versions of your call-focused landing page. Each is one file --
+    upload it to any web host or subdomain (e.g. calls.yourdomain.com).
+- *-ad-N.png
+    Square ad graphics for Meta (Facebook/Instagram). Upload as the image
+    on a Calls or Leads campaign and point the ad at your landing page.
+- *-google-ads.txt
+    Headlines and descriptions for a Google Search Responsive Search Ad.
+    Paste them in and turn on call assets.
+
+NEED A HAND?
+Not sure how to put these live, or want different photos / wording?
+Book a free implementation meeting and we'll do it together:
+${BOOKING_URL || 'sendkpi.com'}
+`;
+
+// One .zip of every file in the kit. href can be a data:, blob:, or https
+// URL -- fetch() reads all three, so the thank-you page and the /kit page
+// share this without caring where the bytes live.
+export async function buildKitZip(files, bizName) {
+  const entries = {};
+  for (const f of files) {
+    try {
+      if (f.text != null) { entries[f.name] = strToU8(f.text); continue; }
+      if (f.previewHtml != null) { entries[f.name] = strToU8(f.previewHtml); continue; }
+      const buf = await fetch(f.href).then(r => r.arrayBuffer());
+      entries[f.name] = [new Uint8Array(buf), { level: 0 }]; // PNGs are already compressed
+    } catch { /* skip a file we can't read rather than fail the whole zip */ }
+  }
+  entries['README.txt'] = strToU8(KIT_README(bizName));
+  return new Blob([zipSync(entries)], { type: 'application/zip' });
+}
+
+function saveBlob(blob, name) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 60_000);
+}
+
+function KitThumb({ f }) {
+  if (!f.kind) return null;
+  return (
+    <div aria-hidden="true" style={{width:64,height:64,borderRadius:10,border:'1px solid var(--border)',overflow:'hidden',flexShrink:0,background:'#fff'}}>
+      {f.kind === 'png' && <img src={f.href} alt="" style={{width:'100%',height:'100%',objectFit:'cover',display:'block'}} />}
+      {f.kind === 'html' && (
+        <iframe srcDoc={f.previewHtml} sandbox="" scrolling="no" tabIndex={-1} title=""
+          style={{width:480,height:480,border:0,transform:'scale(0.1334)',transformOrigin:'0 0',pointerEvents:'none',display:'block'}} />
+      )}
+      {f.kind === 'gads' && (
+        <div style={{width:220,height:220,transform:'scale(0.291)',transformOrigin:'0 0',padding:'14px 12px',boxSizing:'border-box',fontFamily:'arial,sans-serif',textAlign:'left'}}>
+          <div style={{fontSize:11,fontWeight:700,color:'#202124',marginBottom:6}}>Sponsored</div>
+          <div style={{fontSize:16,color:'#1a0dab',lineHeight:1.25,marginBottom:5,display:'-webkit-box',WebkitLineClamp:3,WebkitBoxOrient:'vertical',overflow:'hidden'}}>{f.previewHeadline}</div>
+          <div style={{fontSize:12,color:'#4d5156',lineHeight:1.4,display:'-webkit-box',WebkitLineClamp:3,WebkitBoxOrient:'vertical',overflow:'hidden'}}>{f.previewDesc || ''}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Full-size look at one file: the lander in a frame, the ad as an image,
+// the Google ads text as text.
+function KitPreviewModal({ f, onClose }) {
+  useEffect(() => {
+    const onKey = e => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+  if (!f) return null;
+  return (
+    <div style={{position:'fixed',inset:0,zIndex:300,background:'rgba(14,19,24,.78)',padding:'clamp(8px,2vw,28px)'}} onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} style={{width:'100%',height:'100%',maxWidth:f.kind === 'html' ? 1280 : 720,margin:'0 auto',background:'#fff',borderRadius:16,overflow:'hidden',display:'flex',flexDirection:'column',boxShadow:'0 30px 80px rgba(0,0,0,.45)'}}>
+        <div style={{flexShrink:0,background:'#181D24',padding:'10px 14px',display:'flex',alignItems:'center',gap:14}}>
+          <button onClick={onClose} style={{display:'flex',alignItems:'center',gap:8,background:'#fff',color:'#181D24',border:'none',borderRadius:10,padding:'11px 22px',fontSize:15,fontWeight:700,cursor:'pointer',fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif"}}>
+            <i className="ti ti-arrow-left" aria-hidden="true" /> Back
+          </button>
+          <span style={{color:'#C7CDD2',fontSize:13,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{f.label}</span>
+        </div>
+        {f.kind === 'html' && <iframe srcDoc={f.previewHtml} title={f.label} style={{flex:1,width:'100%',border:'none',background:'#fff'}} />}
+        {f.kind === 'png' && (
+          <div style={{flex:1,minHeight:0,display:'flex',alignItems:'center',justifyContent:'center',background:'#0E1318',padding:16}}>
+            <img src={f.href} alt={f.label} style={{maxWidth:'100%',maxHeight:'100%',borderRadius:8}} />
+          </div>
+        )}
+        {f.kind === 'gads' && (
+          <pre style={{flex:1,minHeight:0,overflow:'auto',margin:0,padding:'20px 24px',fontFamily:"'IBM Plex Mono',monospace",fontSize:13,lineHeight:1.6,color:'var(--text-primary)',whiteSpace:'pre-wrap'}}>{f.text}</pre>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// The file list itself. `locked` swaps each row's Download for a Preview
+// only (pre-signup); otherwise both buttons show.
+function KitFileList({ files, locked }) {
+  const [open, setOpen] = useState(null);
+  if (!files.length) return <p style={{color:'var(--text-secondary)',fontSize:14}}>No files here yet.</p>;
+  return (
+    <>
+      <div style={{display:'flex',flexDirection:'column',gap:10}}>
+        {files.map(f => (
+          <div key={f.name} className="lb-card" style={{cursor:'default',flexWrap:'wrap'}}>
+            <KitThumb f={f} />
+            <div style={{flex:1,minWidth:160}}>
+              <div style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:14,color:'var(--text-primary)'}}>{f.label}</div>
+              <div style={{fontSize:12,color:'var(--text-secondary)',marginTop:2}}>{f.detail}</div>
+            </div>
+            <div style={{display:'flex',gap:8,flexShrink:0}}>
+              {f.kind && (
+                <button className="lb-btn-ghost" style={{height:40,display:'flex',alignItems:'center',gap:6,fontSize:13,fontFamily:'inherit',fontWeight:600}} onClick={() => setOpen(f)}>
+                  <i className="ti ti-eye" aria-hidden="true" /> Preview
+                </button>
+              )}
+              {!locked && (
+                <a className="lb-btn-signal" href={f.href} download={f.name} style={{height:40,display:'flex',alignItems:'center',gap:8,textDecoration:'none',lineHeight:'40px'}}>
+                  Download <i className="ti ti-download" aria-hidden="true" />
+                </a>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+      {open && <KitPreviewModal f={open} onClose={() => setOpen(null)} />}
+    </>
+  );
+}
+
+// Video + "Download everything" + files + the free implementation-meeting
+// calendar. The thank-you page and the emailed /kit page are both this.
+export function KitDelivery({ bizName, files, emailedTo, headerRight }) {
+  const first = (bizName || 'your business').split(',')[0];
+  const [zipping, setZipping] = useState(false);
+  const pngCount = files.filter(f => f.kind === 'png').length;
+  async function downloadAll() {
+    setZipping(true);
+    try { saveBlob(await buildKitZip(files, bizName), `${slugify(bizName) || 'campaign'}-kit.zip`); }
+    finally { setZipping(false); }
+  }
+  const hasBooking = Boolean(BOOKING_EMBED_URL || BOOKING_URL);
+  return (
+    <div style={{minHeight:'100dvh',background:'var(--surface-1)'}}>
+      <div style={{background:'#181D24',padding:'12px 20px',display:'flex',alignItems:'center',gap:10}}>
+        <LogoMark size={26} ring="#181D24" />
+        <span style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:14,color:'#fff',letterSpacing:'-.01em',marginLeft:-5}}>SendKPI</span>
+        {headerRight}
+      </div>
+
+      <div style={{padding:'40px 20px 64px',maxWidth:680,margin:'0 auto'}}>
+        <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:12,letterSpacing:'.1em',textTransform:'uppercase',color:'#0D57D0',margin:'0 0 12px'}}>You're all set</p>
+        <h1 style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:'clamp(26px,5vw,36px)',letterSpacing:'-.01em',color:'var(--text-primary)',margin:'0 0 10px',lineHeight:1.15}}>Your website and ads for {first} are ready</h1>
+        <p style={{fontSize:15,color:'var(--text-secondary)',margin:'0 0 24px',lineHeight:1.6}}>
+          Two landing pages, {pngCount || 'your'} ad graphics, and Google Search ad copy. Grab everything as one folder, or each file below.
+          {emailedTo ? <> A copy is on its way to <b style={{color:'var(--text-primary)'}}>{emailedTo}</b>.</> : null}
+        </p>
+
+        <div style={{background:'#fff',border:'1px solid var(--border)',borderRadius:14,padding:'20px 22px',display:'flex',alignItems:'center',gap:16,flexWrap:'wrap',boxShadow:'0 8px 30px rgba(24,29,36,.06)',marginBottom:32}}>
+          <div style={{width:48,height:48,borderRadius:12,background:'#E7EEFB',color:'#0D57D0',display:'flex',alignItems:'center',justifyContent:'center',fontSize:24,flexShrink:0}} aria-hidden="true"><i className="ti ti-folder-down" /></div>
+          <div style={{flex:1,minWidth:160}}>
+            <div style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:16,color:'var(--text-primary)'}}>Everything in one folder</div>
+            <div style={{fontSize:13,color:'var(--text-secondary)',marginTop:2}}>{files.length} files plus a short README on where each one goes</div>
+          </div>
+          <button className="lb-btn-signal" onClick={downloadAll} disabled={zipping || !files.length} style={{display:'flex',alignItems:'center',gap:8}}>
+            {zipping ? 'Packing…' : <>Download everything (.zip) <i className="ti ti-download" aria-hidden="true" /></>}
+          </button>
+        </div>
+
+        {VSL_EMBED_URL && (
+          <>
+            <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,letterSpacing:'.1em',textTransform:'uppercase',color:'var(--text-muted)',margin:'0 0 12px'}}>Two minutes on what to do next</p>
+            <div style={{position:'relative',paddingTop:'56.25%',borderRadius:12,overflow:'hidden',background:'#181D24',marginBottom:32}}>
+              <iframe src={VSL_EMBED_URL} title="How to launch your lander and ads" allow="autoplay; fullscreen; picture-in-picture" allowFullScreen style={{position:'absolute',inset:0,width:'100%',height:'100%',border:0}} />
+            </div>
+          </>
+        )}
+
+        <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,letterSpacing:'.1em',textTransform:'uppercase',color:'var(--text-muted)',margin:'0 0 12px'}}>Your files</p>
+        <div style={{marginBottom:40}}>
+          <KitFileList files={files} />
+        </div>
+
+        {hasBooking && (
+          <div id="implementation" style={{background:'#181D24',borderRadius:14,padding:'26px 24px'}}>
+            <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,letterSpacing:'.1em',textTransform:'uppercase',color:'#8FE3B8',margin:'0 0 10px'}}>Free implementation meeting</p>
+            <p style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:22,color:'#fff',margin:'0 0 8px',letterSpacing:'-.01em',lineHeight:1.2}}>Not sure how to put this live? Let's do it together.</p>
+            <p style={{fontSize:14,color:'#C7CDD2',margin:'0 0 20px',lineHeight:1.6}}>If you're not familiar with testing landing pages and ads, book a time below. On the call we'll swap in the photos you want, tweak the wording, get the page live on your domain, and load the ads into your ad account. No charge.</p>
+            {BOOKING_EMBED_URL ? (
+              <div style={{background:'#fff',borderRadius:12,overflow:'hidden'}}>
+                <iframe src={BOOKING_EMBED_URL} title="Book your implementation meeting" style={{width:'100%',height:720,border:0,display:'block'}} />
+              </div>
+            ) : (
+              <a className="lb-btn-signal" href={BOOKING_URL} target="_blank" rel="noopener" style={{display:'inline-flex',alignItems:'center',gap:8,textDecoration:'none',lineHeight:'48px'}}>
+                Book my implementation meeting <i className="ti ti-arrow-right" aria-hidden="true" />
+              </a>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [step,       setStep]       = useState('search');
   const [query,      setQuery]      = useState('');
@@ -1242,6 +1470,8 @@ export default function App() {
   const [manualForm, setManualForm] = useState({ name: '', email: '', phone: '' });
   const [manualBusy, setManualBusy] = useState(false);
   const [manualError, setManualError] = useState('');
+  const [kitModal, setKitModal] = useState(false);       // "send me my website & ads" form popup
+  const [kit, setKit] = useState(null);                  // {id, token, email, emailed} after the kit signup
   const savedOnceRef = useRef(false);   // guard against duplicate lander inserts on repeat Step 3 clicks
   const savedLanderRef = useRef(null);  // {landerId, userId} of this session's save, for the asset upload
 
@@ -1558,6 +1788,7 @@ export default function App() {
     setPendingProfile(null); setMainService(''); setAngles([]); setScanDone(false);
     setPickedPhotos([]);
     setBuiltPhase('building'); setBuildIndex(0); setShowPage(false);
+    setDeliverables([]); setKit(null); setKitModal(false);
     offerPromiseRef.current = null;
     profilePromiseRef.current = null;
     anglesPromiseRef.current = null;
@@ -1640,8 +1871,9 @@ export default function App() {
       uploads.push({ name: `${slug}-lander-v2.html`, blob: v2Blob, contentType: 'text/html' });
       const gAds = adsStateRef.current?.googleAds;
       if (gAds?.headlines?.length) {
-        const gBlob = new Blob([buildGoogleAdsText(biz, gAds)], { type: 'text/plain' });
-        files.push({ href: URL.createObjectURL(gBlob), name: `${slug}-google-ads.txt`, label: 'Google Search ads', detail: 'Headlines and descriptions, ready to paste into a Responsive Search Ad', kind: 'gads', previewHeadline: gAds.headlines[0], previewDesc: gAds.descriptions?.[0] });
+        const gText = buildGoogleAdsText(biz, gAds);
+        const gBlob = new Blob([gText], { type: 'text/plain' });
+        files.push({ href: URL.createObjectURL(gBlob), name: `${slug}-google-ads.txt`, label: 'Google Search ads', detail: 'Headlines and descriptions, ready to paste into a Responsive Search Ad', kind: 'gads', text: gText, previewHeadline: gAds.headlines[0], previewDesc: gAds.descriptions?.[0] });
         uploads.push({ name: `${slug}-google-ads.txt`, blob: gBlob, contentType: 'text/plain' });
       }
     }
@@ -1704,13 +1936,6 @@ export default function App() {
     maybePreview();
   }
 
-  function downloadDeliverable(f) {
-    const a = document.createElement('a');
-    a.href = f.href;
-    a.download = f.name;
-    a.click();
-  }
-
   /* ── Step 3 auth: Google sign-in, then save + download ────────────── */
   function closeAccountModal() {
     setAccountModal('closed');
@@ -1718,27 +1943,20 @@ export default function App() {
   }
 
   function handleStep3() {
-    const toPreview = () => {
-      setAccountError('');
-      pendingPreviewRef.current = true;
-      maybePreview();
-    };
-    if (!supabase) { toPreview(); return; }
-    // Already signed in (e.g. downloading a second time this session)?
-    // Straight to save + downloads. Otherwise: show the whole kit, locked,
-    // with the account ask underneath -- see the 'preview' step.
-    supabase.auth.getSession().then(({ data }) => {
-      const user = data?.session?.user;
-      if (user) finishAuthedSave(user, business);
-      else toPreview();
-    });
+    // No account step any more: the whole kit is shown as a download folder
+    // and a name/email/phone form sends it -- see the 'preview' step. The
+    // Google path only survives for the homepage Login redirect.
+    setAccountError('');
+    pendingPreviewRef.current = true;
+    maybePreview();
   }
 
-  // The no-Google path: name/email/phone unlocks the same downloads. The
-  // signup lands in the leads table + GoHighLevel server-side; there's no
-  // Supabase account, so nothing is saved to a dashboard -- the files
-  // themselves are the deliverable.
-  async function submitManualSignup(e) {
+  /* ── kit signup: name/email/phone → files ──────────────────────────── */
+  // One lead, three backend calls (see server/main.py "campaign kits"):
+  // the signup itself gates nothing beyond the thank-you page; the file
+  // uploads + email run afterwards, in the background, and only surface as
+  // a "we emailed it" line when they succeed.
+  async function submitKit(e) {
     if (e?.preventDefault) e.preventDefault();
     const name = manualForm.name.trim();
     const email = manualForm.email.trim();
@@ -1749,18 +1967,47 @@ export default function App() {
     }
     setManualBusy(true);
     setManualError('');
+    let signup = null;
     try {
       const qs = new URLSearchParams(window.location.search);
-      await apiPost('/api/signup-lead', {
+      signup = await apiPost('/api/kit-signup', {
         name, email, phone,
         business: business?.name || null,
         fbclid: qs.get('fbclid'), gclid: qs.get('gclid'),
       });
-    } catch { /* storage hiccup must never block the unlock */ }
+    } catch { /* storage hiccup must never block the files */ }
     try { trackSignup({ email, phone }); } catch { /* pixel optional */ }
     setManualBusy(false);
+    setKitModal(false);
+    setKit({ id: signup?.kit_id || null, token: signup?.kit_token || null, email, emailed: false });
     setStep('thankyou');
     window.scrollTo(0, 0);
+    if (signup?.kit_id && signup?.kit_token) {
+      storeKit(signup.kit_id, signup.kit_token, signup.storage);
+    }
+  }
+
+  // Mirror the files into storage (one raw-body POST each, so no single
+  // request nears Vercel's body cap), then let the backend send the email
+  // and drop the link on the CRM contact. Entirely fire-and-forget.
+  async function storeKit(kitId, token, storage) {
+    const files = deliverables;
+    if (storage) {
+      for (const f of files) {
+        try {
+          const blob = await fetch(f.href).then(r => r.blob());
+          if (blob.size > 4_300_000) continue; // over the upload cap; still downloads locally
+          const res = await fetch(`${API_BASE}/api/kit-file?kit_id=${encodeURIComponent(kitId)}&t=${encodeURIComponent(token)}&name=${encodeURIComponent(f.name)}`, {
+            method: 'POST', body: blob, headers: { 'Content-Type': blob.type || 'application/octet-stream' },
+          });
+          if (!res.ok) break; // storage misconfigured -- don't hammer it
+        } catch { break; }
+      }
+    }
+    try {
+      const done = await apiPost('/api/kit-finish', { kit_id: kitId, t: token });
+      if (done?.emailed) setKit(k => (k ? { ...k, emailed: true } : k));
+    } catch { /* email is a bonus, the page has the files */ }
   }
 
   async function startGoogleAuth() {
@@ -1981,7 +2228,7 @@ export default function App() {
           </p>
           <div style={{background:'#E7EEFB',border:'1px solid #D3DFF6',borderRadius:12,padding:'13px 16px',display:'flex',gap:10,alignItems:'flex-start',fontSize:13.5,color:'#2A3550',lineHeight:1.5,marginBottom:16}}>
             <i className="ti ti-pencil" aria-hidden="true" style={{color:'#0D57D0',flexShrink:0,marginTop:2}} />
-            <span><b style={{color:'var(--text-primary)'}}>These aren't set in stone.</b> Pick the best of what's here. Once your page and ads are built, we can customize everything: your exact photos, services, wording, all of it.</span>
+            <span><b style={{color:'var(--text-primary)'}}>Don't worry if you don't see all your photos here.</b> Pick the best of what's showing. Once your page and ads are built, you can swap in any photo you want, plus change services, wording, all of it.</span>
           </div>
 
           <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(110px,1fr))',gap:8}}>
@@ -2153,10 +2400,24 @@ export default function App() {
     );
   }
 
-  /* ── thank-you (post-save: VSL + gated downloads + call offer) ────── */
-  /* ── locked kit preview (pre-auth): see everything, sign up to get it ── */
+  /* ── kit preview (pre-signup): the download folder, viewable, with one
+        "send me my website & ads" button that opens the name/email/phone
+        popup. No account, no OAuth. ─────────────────────────────────── */
   if (step === 'preview') {
     const first = (business?.name || 'your business').split(',')[0];
+    const pngCount = deliverables.filter(f => f.kind === 'png').length;
+    const sendCard = (
+      <div style={{background:'#fff',border:'1px solid var(--border)',borderRadius:14,padding:'20px 22px',display:'flex',alignItems:'center',gap:16,flexWrap:'wrap',boxShadow:'0 8px 30px rgba(24,29,36,.06)'}}>
+        <div style={{width:48,height:48,borderRadius:12,background:'#E7EEFB',color:'#0D57D0',display:'flex',alignItems:'center',justifyContent:'center',fontSize:24,flexShrink:0}} aria-hidden="true"><i className="ti ti-folder-down" /></div>
+        <div style={{flex:1,minWidth:160}}>
+          <div style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:16,color:'var(--text-primary)'}}>Get the whole folder</div>
+          <div style={{fontSize:13,color:'var(--text-secondary)',marginTop:2}}>{deliverables.length} files, yours to keep. Free.</div>
+        </div>
+        <button className="lb-btn-signal" onClick={() => { setManualError(''); setKitModal(true); }} style={{display:'flex',alignItems:'center',gap:8}}>
+          Send me my website &amp; ads <i className="ti ti-send" aria-hidden="true" />
+        </button>
+      </div>
+    );
     return (
       <div style={{minHeight:'100dvh',background:'var(--surface-1)'}}>
         <div style={{background:'#181D24',padding:'12px 20px',display:'flex',alignItems:'center',gap:10}}>
@@ -2167,145 +2428,57 @@ export default function App() {
         <div style={{padding:'40px 20px 64px',maxWidth:680,margin:'0 auto'}}>
           <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:12,letterSpacing:'.1em',textTransform:'uppercase',color:'#0D57D0',margin:'0 0 12px'}}>Campaign kit ready</p>
           <h1 style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:'clamp(26px,5vw,36px)',letterSpacing:'-.01em',color:'var(--text-primary)',margin:'0 0 10px',lineHeight:1.15}}>Everything for {first} is built</h1>
-          <p style={{fontSize:15,color:'var(--text-secondary)',margin:'0 0 28px',lineHeight:1.6}}>Two landing pages, {deliverables.filter(f=>f.kind==='png').length || 'your'} ad graphics, and Google Search ad copy. Create your free account below to download it all.</p>
+          <p style={{fontSize:15,color:'var(--text-secondary)',margin:'0 0 24px',lineHeight:1.6}}>Two landing pages, {pngCount || 'your'} ad graphics, and Google Search ad copy. Preview anything below, then send the whole folder to yourself.</p>
+
+          <div style={{marginBottom:32}}>{sendCard}</div>
 
           <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,letterSpacing:'.1em',textTransform:'uppercase',color:'var(--text-muted)',margin:'0 0 12px'}}>Your files</p>
-          <div style={{display:'flex',flexDirection:'column',gap:10,marginBottom:32}}>
-            {deliverables.map(f => (
-              <div key={f.name} className="lb-card" style={{cursor:'default'}}>
-                {f.kind && (
-                  <div aria-hidden="true" style={{width:64,height:64,borderRadius:10,border:'1px solid var(--border)',overflow:'hidden',flexShrink:0,background:'#fff'}}>
-                    {f.kind === 'png' && <img src={f.href} alt="" style={{width:'100%',height:'100%',objectFit:'cover',display:'block'}} />}
-                    {f.kind === 'html' && (
-                      <iframe srcDoc={f.previewHtml} sandbox="" scrolling="no" tabIndex={-1} title=""
-                        style={{width:480,height:480,border:0,transform:'scale(0.1334)',transformOrigin:'0 0',pointerEvents:'none',display:'block'}} />
-                    )}
-                    {f.kind === 'gads' && (
-                      <div style={{width:220,height:220,transform:'scale(0.291)',transformOrigin:'0 0',padding:'14px 12px',boxSizing:'border-box',fontFamily:'arial,sans-serif',textAlign:'left'}}>
-                        <div style={{fontSize:11,fontWeight:700,color:'#202124',marginBottom:6}}>Sponsored</div>
-                        <div style={{fontSize:16,color:'#1a0dab',lineHeight:1.25,marginBottom:5}}>{f.previewHeadline}</div>
-                        <div style={{fontSize:12,color:'#4d5156',lineHeight:1.4}}>{f.previewDesc || ''}</div>
-                      </div>
-                    )}
-                  </div>
-                )}
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:14,color:'var(--text-primary)'}}>{f.label}</div>
-                  <div style={{fontSize:12,color:'var(--text-secondary)',marginTop:2}}>{f.detail}</div>
-                </div>
-                <span style={{display:'flex',alignItems:'center',gap:6,fontSize:12.5,fontWeight:600,color:'var(--text-muted)',background:'var(--surface-1)',border:'1px solid var(--border)',borderRadius:999,padding:'7px 13px',flexShrink:0}}>
-                  <i className="ti ti-lock" aria-hidden="true" /> Locked
-                </span>
-              </div>
-            ))}
+          <div style={{marginBottom:32}}>
+            <KitFileList files={deliverables} locked />
           </div>
 
-          <div style={{background:'#fff',border:'1px solid var(--border)',borderRadius:14,padding:'26px 24px',boxShadow:'0 8px 30px rgba(24,29,36,.06)'}}>
-            <h3 style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:20,letterSpacing:'-.01em',margin:'0 0 6px',color:'var(--text-primary)'}}>Create your free account to download</h3>
-            <p style={{fontSize:14,color:'var(--text-secondary)',margin:'0 0 18px',lineHeight:1.5}}>Your kit gets saved so you can come back for it anytime.</p>
-            {accountError && <div className="lb-error" style={{marginBottom:12}}>{accountError}</div>}
-            <button className="lb-btn-signal" onClick={startGoogleAuth} disabled={accountBusy || !supabase} style={{width:'100%',display:'flex',alignItems:'center',justifyContent:'center',gap:10}}>
-              <span style={{display:'flex',alignItems:'center',justifyContent:'center',width:22,height:22,borderRadius:6,background:'#fff',flexShrink:0}} aria-hidden="true">
-                <svg width="14" height="14" viewBox="0 0 48 48">
-                  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-                  <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-                  <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-                  <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-                </svg>
-              </span>
-              {accountBusy ? 'Working…' : 'Continue with Google'}
-            </button>
-
-            <div style={{display:'flex',alignItems:'center',gap:12,margin:'18px 0'}}>
-              <span style={{flex:1,height:1,background:'var(--border)'}} />
-              <span style={{fontSize:12,fontWeight:600,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'.08em'}}>or</span>
-              <span style={{flex:1,height:1,background:'var(--border)'}} />
-            </div>
-
-            <form onSubmit={submitManualSignup} noValidate style={{display:'flex',flexDirection:'column',gap:10}}>
-              <input className="lb-input" placeholder="Your name" autoComplete="name" value={manualForm.name}
-                onChange={e => setManualForm({ ...manualForm, name: e.target.value })} />
-              <input className="lb-input" type="email" placeholder="Email" autoComplete="email" value={manualForm.email}
-                onChange={e => setManualForm({ ...manualForm, email: e.target.value })} />
-              <input className="lb-input" type="tel" placeholder="Phone number" autoComplete="tel" value={manualForm.phone}
-                onChange={e => setManualForm({ ...manualForm, phone: e.target.value })} />
-              {manualError && <div className="lb-error">{manualError}</div>}
-              <button type="submit" className="lb-btn-dark" disabled={manualBusy} style={{width:'100%',height:48,fontSize:15}}>
-                {manualBusy ? 'Unlocking…' : <>Unlock my downloads <i className="ti ti-lock-open" aria-hidden="true" /></>}
-              </button>
-            </form>
-            <p style={{fontSize:11.5,color:'var(--text-muted)',margin:'12px 0 0',lineHeight:1.5}}>We'll use this to send your files and follow up about your campaign. No spam.</p>
-          </div>
+          {sendCard}
         </div>
+
+        {kitModal && (
+          <div style={{position:'fixed',inset:0,zIndex:200,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
+            <div style={{position:'absolute',inset:0,background:'rgba(14,19,24,.7)'}} onClick={() => !manualBusy && setKitModal(false)} />
+            <div style={{position:'relative',background:'#fff',borderRadius:14,maxWidth:400,width:'100%',padding:'28px 24px',boxShadow:'0 20px 60px rgba(0,0,0,.4)'}}>
+              <button onClick={() => setKitModal(false)} disabled={manualBusy} aria-label="Close" style={{position:'absolute',top:10,right:14,background:'none',border:0,fontSize:26,lineHeight:1,color:'var(--text-secondary)',cursor:'pointer'}}>&times;</button>
+              <h3 style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:20,letterSpacing:'-.01em',margin:'0 0 6px',color:'var(--text-primary)'}}>Where should we send it?</h3>
+              <p style={{fontSize:14,color:'var(--text-secondary)',margin:'0 0 18px',lineHeight:1.5}}>Your website and ads unlock on the next page, and we'll email you a link so you can grab them again anytime.</p>
+              <form onSubmit={submitKit} noValidate style={{display:'flex',flexDirection:'column',gap:10}}>
+                <input className="lb-input" placeholder="Your name" autoComplete="name" autoFocus value={manualForm.name}
+                  onChange={e => setManualForm({ ...manualForm, name: e.target.value })} />
+                <input className="lb-input" type="email" placeholder="Email" autoComplete="email" value={manualForm.email}
+                  onChange={e => setManualForm({ ...manualForm, email: e.target.value })} />
+                <input className="lb-input" type="tel" placeholder="Phone number" autoComplete="tel" value={manualForm.phone}
+                  onChange={e => setManualForm({ ...manualForm, phone: e.target.value })} />
+                {manualError && <div className="lb-error">{manualError}</div>}
+                <button type="submit" className="lb-btn-signal" disabled={manualBusy} style={{width:'100%',display:'flex',alignItems:'center',justifyContent:'center',gap:8}}>
+                  {manualBusy ? 'Sending…' : <>Send my website &amp; ads <i className="ti ti-send" aria-hidden="true" /></>}
+                </button>
+              </form>
+              <p style={{fontSize:11.5,color:'var(--text-muted)',margin:'12px 0 0',lineHeight:1.5}}>We'll use this to send your files and follow up about your campaign. No spam.</p>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
 
+  /* ── thank-you: the delivered kit (zip + files + video + calendar) ── */
   if (step === 'thankyou') {
-    const first = (business?.name || landers[0]?.name || 'your business').split(',')[0];
+    const bizName = business?.name || landers[0]?.name || '';
     return (
-      <div style={{minHeight:'100dvh',background:'var(--surface-1)'}}>
-        <div style={{background:'#181D24',padding:'12px 20px',display:'flex',alignItems:'center',gap:10}}>
-          <LogoMark size={26} ring="#181D24" />
-          <span style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:14,color:'#fff',letterSpacing:'-.01em',marginLeft:-5}}>SendKPI</span>
-          <button className="lb-btn-dark" style={{marginLeft:'auto'}} onClick={()=>setStep('dashboard')}>Back to dashboard</button>
-        </div>
-
-        <div style={{padding:'40px 20px 64px',maxWidth:680,margin:'0 auto'}}>
-          <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:12,letterSpacing:'.1em',textTransform:'uppercase',color:'#0D57D0',margin:'0 0 12px'}}>You're all set</p>
-          <h1 style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:'clamp(26px,5vw,36px)',letterSpacing:'-.01em',color:'var(--text-primary)',margin:'0 0 10px',lineHeight:1.15}}>Your lander and ads for {first} are ready</h1>
-          <p style={{fontSize:15,color:'var(--text-secondary)',margin:'0 0 32px',lineHeight:1.6}}>{savedOnceRef.current ? "They're saved to your account, and the files are below." : 'Your files are below. Download them now and keep them somewhere safe.'}{VSL_EMBED_URL ? ' First, two minutes on how to get them live and making the phone ring:' : ''}</p>
-
-          {VSL_EMBED_URL && (
-            <div style={{position:'relative',paddingTop:'56.25%',borderRadius:12,overflow:'hidden',background:'#181D24',marginBottom:32}}>
-              <iframe src={VSL_EMBED_URL} title="How to launch your lander and ads" allow="autoplay; fullscreen; picture-in-picture" allowFullScreen style={{position:'absolute',inset:0,width:'100%',height:'100%',border:0}} />
-            </div>
-          )}
-
-          <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,letterSpacing:'.1em',textTransform:'uppercase',color:'var(--text-muted)',margin:'0 0 12px'}}>Your files</p>
-          <div style={{display:'flex',flexDirection:'column',gap:10,marginBottom:36}}>
-            {deliverables.length === 0 && <p style={{color:'var(--text-secondary)',fontSize:14}}>No files here yet. Head back to the dashboard and hit Step 3 again.</p>}
-            {deliverables.map(f => (
-              <div key={f.name} className="lb-card" style={{cursor:'default'}}>
-                {f.kind && (
-                  <div aria-hidden="true" style={{width:64,height:64,borderRadius:10,border:'1px solid var(--border)',overflow:'hidden',flexShrink:0,background:'#fff'}}>
-                    {f.kind === 'png' && <img src={f.href} alt="" style={{width:'100%',height:'100%',objectFit:'cover',display:'block'}} />}
-                    {f.kind === 'html' && (
-                      <iframe srcDoc={f.previewHtml} sandbox="" scrolling="no" tabIndex={-1} title=""
-                        style={{width:480,height:480,border:0,transform:'scale(0.1334)',transformOrigin:'0 0',pointerEvents:'none',display:'block'}} />
-                    )}
-                    {f.kind === 'gads' && (
-                      <div style={{width:220,height:220,transform:'scale(0.291)',transformOrigin:'0 0',padding:'14px 12px',boxSizing:'border-box',fontFamily:'arial,sans-serif',textAlign:'left'}}>
-                        <div style={{fontSize:11,fontWeight:700,color:'#202124',marginBottom:6}}>Sponsored</div>
-                        <div style={{fontSize:16,color:'#1a0dab',lineHeight:1.25,marginBottom:5,display:'-webkit-box',WebkitLineClamp:3,WebkitBoxOrient:'vertical',overflow:'hidden'}}>{f.previewHeadline}</div>
-                        <div style={{fontSize:12,color:'#4d5156',lineHeight:1.4,display:'-webkit-box',WebkitLineClamp:3,WebkitBoxOrient:'vertical',overflow:'hidden'}}>{f.previewDesc || ''}</div>
-                      </div>
-                    )}
-                  </div>
-                )}
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:14,color:'var(--text-primary)'}}>{f.label}</div>
-                  <div style={{fontSize:12,color:'var(--text-secondary)',marginTop:2}}>{f.detail}</div>
-                </div>
-                <button className="lb-btn-signal" style={{height:40,display:'flex',alignItems:'center',gap:8}} onClick={()=>downloadDeliverable(f)}>
-                  Download <i className="ti ti-download" aria-hidden="true" />
-                </button>
-              </div>
-            ))}
-          </div>
-
-          {BOOKING_URL && (
-            <div style={{background:'#181D24',borderRadius:14,padding:'26px 24px'}}>
-              <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11,letterSpacing:'.1em',textTransform:'uppercase',color:'#8FE3B8',margin:'0 0 10px'}}>Want it live today?</p>
-              <p style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:20,color:'#fff',margin:'0 0 8px',letterSpacing:'-.01em'}}>Book a $100 setup call</p>
-              <p style={{fontSize:14,color:'#C7CDD2',margin:'0 0 18px',lineHeight:1.6}}>We'll get on a call and set it all up together: lander on your subdomain, ads loaded into Meta, tracking on. You leave with a live funnel.</p>
-              <a className="lb-btn-signal" href={BOOKING_URL} target="_blank" rel="noopener" style={{display:'inline-flex',alignItems:'center',gap:8,textDecoration:'none',lineHeight:'48px'}}>
-                Book my setup call <i className="ti ti-arrow-right" aria-hidden="true" />
-              </a>
-            </div>
-          )}
-        </div>
-      </div>
+      <KitDelivery
+        bizName={bizName}
+        files={deliverables}
+        emailedTo={kit?.emailed ? kit.email : null}
+        headerRight={savedOnceRef.current
+          ? <button className="lb-btn-dark" style={{marginLeft:'auto'}} onClick={()=>setStep('dashboard')}>Back to dashboard</button>
+          : <button className="lb-btn-dark" style={{marginLeft:'auto'}} onClick={reset}>Build another</button>}
+      />
     );
   }
 
