@@ -255,6 +255,11 @@ or a rating (e.g. "4.8 stars from 512 reviews") -- never recast it as a \
 number of homes, jobs, customers, or years.
 - Each headline must be clearly different from the others -- different first \
 words, different structure.
+- Headlines are hooks, not labels. Lead with the symptom, the consequence, \
+the proof, or the offer ("Rumbling Tank? Call Before It Floods", \
+"813 Reviews Say Call Duncan First"). Never a flat product mention like \
+"Need A New Water Heater".
+- A headline phrased as a question MUST end with a question mark.
 - Write like a sharp human copywriter: short sentences, concrete words."""
 
 

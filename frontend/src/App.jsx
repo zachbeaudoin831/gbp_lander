@@ -1493,11 +1493,15 @@ function KitSpinner({ text }) {
   );
 }
 
+// Every graphic gets the same button: on Meta the real button ("Learn
+// More") sits under the image, so the pill just points at it.
+const AD_GRAPHIC_CTA = 'Click Learn More For More Information \u2193';
+
 function landerCopyFor(business, v) {
   return {
     headline: v?.headline || business.offer_headline || business.tagline || business.name || '',
     subline: v?.subline || business.offer_subhead || '',
-    cta: v?.cta || business.chosen_angle?.cta_label || 'Call Today',
+    cta: AD_GRAPHIC_CTA,
     primary_text: v?.primary_text || '',
   };
 }
@@ -1730,7 +1734,7 @@ function KitBuilder({ business, onFiles, cta }) {
                         <span style={{fontSize:11,color:'var(--text-muted)',fontFamily:"'IBM Plex Mono',monospace",letterSpacing:'.06em'}}>V{pi + 1}</span>
                       </div>
                     )}
-                    {drawn && <span style={{position:'absolute',top:8,left:8,fontSize:11,fontWeight:700,fontFamily:"'IBM Plex Mono',monospace",letterSpacing:'.06em',color:'#fff',background:'rgba(14,19,24,.65)',borderRadius:999,padding:'3px 9px'}}>V{pi + 1}</span>}
+                    {drawn && <span style={{position:'absolute',bottom:8,right:8,fontSize:11,fontWeight:700,fontFamily:"'IBM Plex Mono',monospace",letterSpacing:'.06em',color:'#fff',background:'rgba(14,19,24,.65)',borderRadius:999,padding:'3px 9px'}}>V{pi + 1}</span>}
                   </div>
                 ))}
               </div>
