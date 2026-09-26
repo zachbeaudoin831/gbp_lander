@@ -599,10 +599,12 @@ function buildGoogleAdsText(biz, g, variant) {
   return `GOOGLE SEARCH ADS${variant ? ` V${variant}` : ''}: ${biz?.name || 'your business'}
 
 How to use: in Google Ads, create a Search campaign, add a Responsive Search
-Ad, and paste these in. Turn on call assets so the ad can ring your phone
-directly.
+Ad, and paste these in. Pin headline 1 to position 1, headline 2 (your
+business name) to position 2, and headline 3 to position 3 so every ad
+reads service / name / call to action; Google mixes the rest. Turn on call
+assets so the ad can ring your phone directly.
 
-HEADLINES (Google mixes and matches these, 30 characters max each)
+HEADLINES (30 characters max each; pin the first three in order)
 ${head}
 
 DESCRIPTIONS (Google shows up to 2 at a time, 90 characters max each)
@@ -1459,6 +1461,30 @@ export function KitDelivery({ bizName, files, emailedTo, headerRight }) {
 const KIT_ADS_PER_LANDER = 4;
 const KIT_FAILSAFE_MS = 45000; // never trap the visitor here
 
+// A lander rendered at desktop width (1000px) and scaled to whatever width
+// its box has, so the thumbnail fills the card on any screen.
+function ScaledFrame({ html, baseWidth = 1000, aspect = 0.62 }) {
+  const ref = useRef(null);
+  const [w, setW] = useState(0);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const ro = new ResizeObserver(entries => setW(entries[0].contentRect.width));
+    ro.observe(el);
+    setW(el.clientWidth);
+    return () => ro.disconnect();
+  }, []);
+  const scale = w ? w / baseWidth : 0;
+  return (
+    <div ref={ref} style={{position:'relative',width:'100%',aspectRatio:String(1 / aspect),borderRadius:10,border:'1px solid var(--border)',overflow:'hidden',background:'#fff'}}>
+      {scale > 0 && (
+        <iframe srcDoc={html} sandbox="" scrolling="no" tabIndex={-1} title=""
+          style={{width:baseWidth,height:baseWidth * aspect,border:0,transform:`scale(${scale})`,transformOrigin:'0 0',pointerEvents:'none',display:'block'}} />
+      )}
+    </div>
+  );
+}
+
 function KitSpinner({ text }) {
   return (
     <div style={{display:'flex',alignItems:'center',gap:12,color:'var(--text-secondary)',fontSize:14}}>
@@ -1640,9 +1666,8 @@ function KitBuilder({ business, onFiles, cta }) {
         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(280px,1fr))',gap:14,marginBottom:36}}>
           {[[1, v1Html], [2, v2Html]].map(([n, html]) => (
             <div key={n} style={card}>
-              <div style={{position:'relative',height:220,borderRadius:10,border:'1px solid var(--border)',overflow:'hidden',background:'#fff',marginBottom:12}}>
-                <iframe srcDoc={html} sandbox="" scrolling="no" tabIndex={-1} title=""
-                  style={{width:1000,height:750,border:0,transform:'scale(0.293)',transformOrigin:'0 0',pointerEvents:'none',display:'block'}} />
+              <div style={{marginBottom:12}}>
+                <ScaledFrame html={html} />
               </div>
               <div style={{display:'flex',alignItems:'center',gap:12}}>
                 <div style={{flex:1,minWidth:0}}>

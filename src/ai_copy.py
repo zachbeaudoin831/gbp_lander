@@ -603,12 +603,20 @@ HARD LIMITS (Google rejects anything longer, so these are absolute):
 - Exactly 4 descriptions, each 90 characters or fewer INCLUDING spaces.
 Count characters before including a line. If a line is over, shorten it.
 
-Headline mix (spread across the 15): the main service plus a city or area; \
-the chosen angle's hook; the offer or guarantee; star rating + review count \
-as social proof; speed/availability ("Same-Day", "24/7") only if the profile \
-supports it; free-quote or price-anchor hooks; and 2-3 plain call-to-action \
-headlines ("Call For A Free Quote"). Title Case for headlines. At most one \
-headline may use an exclamation point.
+Headline ORDER matters -- the owner pins the first three to positions 1-3:
+- Headline 1: the main service itself, plainly (e.g. "Water Heater \
+Replacement", or with the city if it fits).
+- Headline 2: the business name, exactly as given. If the full name is over \
+30 characters, shorten it sensibly (drop "LLC"/"Inc", trailing city, etc.) \
+rather than omit it.
+- Headline 3: a direct call to action ("Call Now For Same-Day Service", \
+"Call For A Free Quote").
+Headlines 4-15 (the mix): the main service plus other cities or areas; the \
+chosen angle's hook; the offer or guarantee; star rating + review count as \
+social proof; speed/availability ("Same-Day", "24/7") only if the profile \
+supports it; free-quote or price-anchor hooks; one or two more calls to \
+action. Work the business name into 1-2 of these as well. Title Case for \
+headlines. At most one headline may use an exclamation point.
 
 Descriptions: complete sentences selling the angle with concrete proof \
 (rating, years, guarantee), each ending in a call to action. Sentence case.
@@ -715,8 +723,9 @@ service-plus-city headline."""
             "\n\nYOUR PREVIOUS ATTEMPT WAS REJECTED. These lines exceed Google's hard limits:\n"
             + ("\n".join(over) or "- (output was not valid JSON)")
             + "\nReturn the full JSON again: 15 headlines of 30 characters or fewer and "
-            "4 descriptions of 90 characters or fewer. Leave the business name out of "
-            "any headline it will not fit in."
+            "4 descriptions of 90 characters or fewer. Keep headline 2 as the business "
+            "name (shortened to fit) and leave the name out of other headlines it "
+            "will not fit in."
         )
         data2 = _call(retry_content)
         h2, d2 = _usable(data2)
