@@ -59,3 +59,16 @@ export function trackSignup({ email, phone } = {}) {
     }),
   }).catch(() => { /* best-effort */ });
 }
+
+// Fired on /booked, where the GHL calendar redirects after someone books the
+// launch call. Browser pixel only -- the page doesn't know who booked, so
+// there's nothing to send server-side. Once per browser session, so a
+// refresh doesn't count as a second booking.
+export function trackSchedule() {
+  if (!PIXEL_ID) return;
+  try {
+    if (sessionStorage.getItem('skpi-scheduled')) return;
+    sessionStorage.setItem('skpi-scheduled', '1');
+  } catch { /* storage blocked -- still fire once */ }
+  try { window.fbq?.('track', 'Schedule'); } catch { /* best-effort */ }
+}
