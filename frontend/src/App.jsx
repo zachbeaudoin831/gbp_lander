@@ -456,13 +456,10 @@ const API_BASE = "https://gbp-lander.vercel.app";
 /* ─── thank-you page config ─────────────────────────────────────────
    Set these as Vercel env vars on the frontend project (then redeploy), or
    paste them into the fallbacks here.
-   VSL_EMBED_URL: a YouTube/Vimeo/Loom EMBED URL (e.g.
-     https://www.youtube.com/embed/XXXX). The video block hides while empty.
    BOOKING_EMBED_URL: the calendar's embed/iframe URL (GHL calendar embed,
      Calendly inline link, etc.) for the free implementation meeting.
    BOOKING_URL: the same calendar as a plain link -- used for the button
      fallback when there's no embed URL, and in the kit email (backend). */
-const VSL_EMBED_URL     = import.meta.env.VITE_VSL_EMBED_URL     || "";
 const BOOKING_EMBED_URL = import.meta.env.VITE_BOOKING_EMBED_URL || "";
 const BOOKING_URL       = import.meta.env.VITE_BOOKING_URL       || "";
 
@@ -1410,12 +1407,6 @@ export function KitDelivery({ bizName, files, emailedTo, headerRight }) {
           <p style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:12,letterSpacing:'.1em',textTransform:'uppercase',color:'#0D57D0',margin:'0 0 12px'}}>Run your marketing with AI</p>
           <h2 style={{fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",fontWeight:700,fontSize:'clamp(24px,4.5vw,32px)',letterSpacing:'-.01em',color:'var(--text-primary)',margin:'0 0 12px',lineHeight:1.15}}>Spend less on marketing. Get more customers. Be crystal clear on your numbers.</h2>
           <p style={{fontSize:15,color:'var(--text-secondary)',margin:'0 0 24px',lineHeight:1.6}}>What just happened for {first} is the first step. I teach business owners to run the whole thing with AI: agents that research your best hooks, build the pages and ads while you sleep, and tune them while you're out handling customers. You see every number that matters.</p>
-
-          {VSL_EMBED_URL && (
-            <div style={{position:'relative',paddingTop:'56.25%',borderRadius:12,overflow:'hidden',background:'#181D24',marginBottom:24}}>
-              <iframe src={VSL_EMBED_URL} title="How to run your marketing with AI" allow="autoplay; fullscreen; picture-in-picture" allowFullScreen style={{position:'absolute',inset:0,width:'100%',height:'100%',border:0}} />
-            </div>
-          )}
 
           <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))',gap:12,marginBottom:32}}>
             {[

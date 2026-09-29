@@ -48,6 +48,10 @@ const LanderB = ({ className = "" }) => (
   </div></div>
 );
 
+/* Homepage walkthrough video (Loom). Share link -> /embed/ URL; params
+   strip Loom's owner/share/title chrome off the player. */
+const LOOM_EMBED_URL = "https://www.loom.com/embed/84472b9e361e41799e0e7b018f253e19?hide_owner=true&hide_share=true&hide_title=true&hideEmbedTopBar=true";
+
 const GAD1 = { hl: "Same-Day Service in Your City | Call Now", ds: "Real reviews from your neighbors. Upfront pricing, no surprises. Tap to call and talk to a real person." };
 const GAD2 = { hl: "Booked Out Elsewhere? We Answer Today", ds: "Local, licensed and insured. Open 7 days. Call now for a same-day visit." };
 const GoogleAd = ({ hl, ds, className = "" }) => (
@@ -161,6 +165,9 @@ export default function Home({ query, setQuery, error, onSearch, onSignIn }) {
               <p className="eyebrow">What you get</p>
               <h2>Everything you need to start getting calls</h2>
               <p>Built from your Google listing in about a minute. Yours to keep, free.</p>
+            </div>
+            <div className="x-video">
+              <iframe src={LOOM_EMBED_URL} title="What you get from SendKPI" loading="lazy" allow="fullscreen; picture-in-picture" allowFullScreen></iframe>
             </div>
             <div className="xb-cards">
               <article className="xb-card">
