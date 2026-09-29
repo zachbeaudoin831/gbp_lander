@@ -1181,9 +1181,9 @@ html { scroll-behavior: smooth; }
 
 .lb-home .xb-vis .la h4{font-size:14.5px}
 .lb-home .xb-vis .x-gad.back{transform:translateY(-34px) scale(.9)}
-/* Loom's player = the video (1024x478 source, ~2.14:1) plus its ~60px
+/* Loom's player = the video (1024x478 source, ~2.14:1) plus its ~57px
    reaction bar underneath. Size the box to exactly that so the player
-   never letterboxes: height = width/2.142 + 60px (padding % is of width). */
+   never letterboxes: height = width/2.142 + 57px (padding % is of width). */
 .lb-home .x-video{position:relative;max-width:960px;margin:0 auto 40px;border-radius:18px;overflow:hidden;background:var(--dark);border:1px solid var(--line);box-shadow:var(--shadow-lg)}
-.lb-home .x-video::before{content:"";display:block;padding-bottom:calc(46.68% + 60px)}
+.lb-home .x-video::before{content:"";display:block;padding-bottom:calc(46.68% + 57px)}
 .lb-home .x-video iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
