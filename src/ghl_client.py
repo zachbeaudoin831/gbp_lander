@@ -25,6 +25,7 @@ import os
 from typing import Optional
 
 UPSERT_URL = "https://services.leadconnectorhq.com/contacts/upsert"
+CUSTOM_FIELDS_URL = "https://services.leadconnectorhq.com/locations/{location_id}/customFields"
 API_VERSION = "2021-07-28"  # GHL v2 API requires this exact Version header
 
 SIGNUP_TAG = "sendkpi-signup"
@@ -35,6 +36,40 @@ class GhlError(RuntimeError):
     """Raised when GHL is unconfigured or the API call fails."""
 
 
+# Custom field key -> GHL field id, per warm serverless instance. None means
+# "looked it up, not found / not readable" so we don't re-ask every signup.
+_FIELD_IDS: dict[str, Optional[str]] = {}
+
+
+def _custom_field_id(token: str, location_id: str, field_key: str) -> Optional[str]:
+    """Resolve a contact custom field's id from its key ("contact.main_service").
+    Ids are the one reference the upsert API is guaranteed to accept. Needs
+    the locations/customFields.readonly scope; without it this returns None
+    and the caller falls back to sending the key."""
+    if field_key in _FIELD_IDS:
+        return _FIELD_IDS[field_key]
+    import requests
+
+    field_id = None
+    try:
+        resp = requests.get(
+            CUSTOM_FIELDS_URL.format(location_id=location_id),
+            headers={"Authorization": f"Bearer {token}", "Version": API_VERSION},
+            params={"model": "contact"},
+            timeout=6,
+        )
+        if resp.ok:
+            bare = field_key.removeprefix("contact.")
+            for f in resp.json().get("customFields") or []:
+                if f.get("fieldKey") in (field_key, f"contact.{bare}"):
+                    field_id = f.get("id")
+                    break
+    except Exception:
+        field_id = None
+    _FIELD_IDS[field_key] = field_id
+    return field_id
+
+
 def upsert_contact(
     *,
     name: Optional[str],
@@ -42,8 +77,14 @@ def upsert_contact(
     phone: Optional[str],
     business: Optional[str],
     tags: Optional[list[str]] = None,
+    custom_fields: Optional[dict[str, str]] = None,
 ) -> dict:
     """Upsert one contact into the configured GHL sub-account.
+
+    custom_fields maps a GHL custom field key ("contact.main_service") to a
+    value. A field that doesn't exist yet must never cost us the contact, so
+    if GHL rejects the upsert with custom fields attached, it's retried
+    without them.
 
     Returns GHL's response JSON. Raises GhlError if the integration isn't
     configured or GHL rejects the request -- callers decide whether that's
@@ -73,19 +114,35 @@ def upsert_contact(
     if business:
         payload["companyName"] = business.strip()
 
-    try:
-        resp = requests.post(
-            UPSERT_URL,
-            json=payload,
-            headers={
-                "Authorization": f"Bearer {token}",
-                "Version": API_VERSION,
-                "Content-Type": "application/json",
-            },
-            timeout=10,
-        )
-    except Exception as e:  # DNS, timeout, TLS -- all the same to the caller
-        raise GhlError(f"GHL request failed: {e}")
+    def post(body: dict):
+        try:
+            return requests.post(
+                UPSERT_URL,
+                json=body,
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Version": API_VERSION,
+                    "Content-Type": "application/json",
+                },
+                timeout=10,
+            )
+        except Exception as e:  # DNS, timeout, TLS -- all the same to the caller
+            raise GhlError(f"GHL request failed: {e}")
+
+    fields = []
+    for key, value in (custom_fields or {}).items():
+        if not value or not value.strip():
+            continue
+        field_id = _custom_field_id(token, location_id, key)
+        ref = {"id": field_id} if field_id else {"key": key.removeprefix("contact.")}
+        fields.append({**ref, "field_value": value.strip()})
+
+    if fields:
+        resp = post({**payload, "customFields": fields})
+        if 400 <= resp.status_code < 500:
+            resp = post(payload)
+    else:
+        resp = post(payload)
 
     if resp.status_code >= 400:
         # Include the status but not the body verbatim -- GHL error bodies

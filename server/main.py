@@ -520,6 +520,8 @@ def signup_lead(req: SignupLeadRequest):
 #   3. kit-finish  -- once uploads are done: GHL note with the link + email.
 # Every step after 1 is best-effort: the browser already has the files.
 
+GHL_SERVICE_FIELD = os.environ.get("GHL_SERVICE_FIELD_KEY", "contact.main_service")
+
 KIT_ID_RE = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
 KIT_TOKEN_RE = re.compile(r"^[A-Za-z0-9_-]{16,64}$")
 
@@ -541,6 +543,7 @@ class KitSignupRequest(BaseModel):
     email: str = Field(min_length=5, max_length=320)
     phone: str = Field(min_length=7, max_length=50)
     business: Optional[str] = Field(default=None, max_length=200)
+    service: Optional[str] = Field(default=None, max_length=200)
     fbclid: Optional[str] = Field(default=None, max_length=500)
     gclid: Optional[str] = Field(default=None, max_length=500)
 
@@ -577,6 +580,9 @@ def kit_signup(req: KitSignupRequest):
             phone=req.phone.strip(),
             business=req.business,
             tags=["sendkpi-kit"],
+            # The service they want more calls for, into a GHL custom field
+            # (key below; create it in GHL as "Main Service").
+            custom_fields={GHL_SERVICE_FIELD: req.service or ""},
         )
         stored = True
     except GhlError:

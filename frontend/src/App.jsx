@@ -2247,6 +2247,7 @@ export default function App() {
       signup = await apiPost('/api/kit-signup', {
         name, email, phone,
         business: business?.name || null,
+        service: mainService.trim() || null,
         fbclid: qs.get('fbclid'), gclid: qs.get('gclid'),
       });
     } catch { /* storage hiccup must never block the files */ }
