@@ -455,9 +455,10 @@ WHAT THE BUSINESS DOES
     client = _client()
     resp = client.messages.create(
         model=MODEL,
-        # 400 was enough for offer-style copy but the don't-delay primary_text
-        # runs longer -- a truncated reply fails JSON parsing outright.
-        max_tokens=800,
+        # The reply itself is ~200 tokens, but adaptive thinking spends from the
+        # same budget first: 800 truncated mid-string on Sonnet 5.5 (502 from the
+        # JSON parse). The cap is only a ceiling, so leave real headroom.
+        max_tokens=4096,
         system=system + _STYLE_RULES,
         messages=[{"role": "user", "content": user_content}],
     )
@@ -537,8 +538,8 @@ MAIN SERVICE THE OWNER WANTS MORE CALLS FOR
         # 7 angles x ~7 fields runs long, and real businesses with rich
         # reviews/site text push the model to write longer "why" fields than
         # test cases showed -- 2500 truncated mid-string on a live business.
-        # Leave real headroom.
-        max_tokens=4096,
+        # Leave real headroom (thinking counts against this cap too).
+        max_tokens=8192,
         system=_ANGLES_SYSTEM + _STYLE_RULES,
         messages=[{"role": "user", "content": user_content}],
     )
@@ -588,7 +589,9 @@ Call button: {angle.get("cta_label") or "(none)"}"""
         model=MODEL,
         # N variations x 4 fields, primary_text runs longest -- same
         # truncation risk as the angles call, so headroom scales with count.
-        max_tokens=600 * count,
+        # The flat 2048 covers adaptive thinking, which spends from this budget
+        # before any text is emitted.
+        max_tokens=2048 + 600 * count,
         system=system + _STYLE_RULES,
         messages=[{"role": "user", "content": user_content}],
     )
