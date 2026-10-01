@@ -466,14 +466,20 @@ function SearchesTab({ leads }) {
 // pricing changes — these only affect the displayed estimate.
 const GOOGLE_PRICE = { search: 0.032, profile: 0.017, photo: 0.007 };
 
-// Claude rates, USD per million tokens, matched by model substring.
+// Claude rates, USD per million tokens, matched by model substring. First
+// match wins, so specific ids must sit above the generic family they contain
+// (opus-5-5 before opus, sonnet-5 before sonnet).
+const SONNET_5_RATE = { inp: 2, out: 10 }; // claude-sonnet-5 and claude-sonnet-5-5
 const CLAUDE_PRICE = [
   ["fable", { inp: 10, out: 50 }],
+  ["opus-5-5", { inp: 4, out: 20 }],
   ["opus", { inp: 5, out: 25 }],
   ["haiku", { inp: 1, out: 5 }],
-  ["sonnet", { inp: 3, out: 15 }],
+  ["sonnet-5", SONNET_5_RATE],
+  ["sonnet", { inp: 3, out: 15 }], // older sonnets, e.g. claude-sonnet-4-6
 ];
-const claudeRate = model => (CLAUDE_PRICE.find(([k]) => String(model || "").includes(k)) || CLAUDE_PRICE[3])[1];
+// Unknown model ids fall back to the sonnet-5 rate — what the app runs.
+const claudeRate = model => (CLAUDE_PRICE.find(([k]) => String(model || "").includes(k)) || [null, SONNET_5_RATE])[1];
 const aiRowCost = r => {
   const p = claudeRate(r.model);
   return (r.input_tokens * p.inp + r.cache_creation_tokens * p.inp * 1.25 + r.cache_read_tokens * p.inp * 0.1 + r.output_tokens * p.out) / 1e6;
