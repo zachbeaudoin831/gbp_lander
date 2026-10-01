@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { supabase } from "./supabaseClient";
 import Home, { LogoMark } from "./Home";
 import { initPixel, trackSignup } from "./metaPixel";
+import CallsLanding from "./CallsLanding.jsx";
 import { zipSync, strToU8 } from "fflate";
 
 /* ─── html helpers ─────────────────────────────────────────────────── */
@@ -2366,9 +2367,12 @@ export default function App() {
   }
 
   /* ── search (homepage) ────────────────────────────────────────────── */
-  if (step === 'search') return (
-    <Home query={query} setQuery={setQuery} error={error} onSearch={handleSearch} onSignIn={handleHomeSignIn} />
-  );
+  // /calls is the ad-matched landing page for the "Best Awareness" Meta ad;
+  // same search, same funnel, different first screen.
+  if (step === 'search') {
+    const Landing = window.location.pathname.replace(/\/+$/, '') === '/calls' ? CallsLanding : Home;
+    return <Landing query={query} setQuery={setQuery} error={error} onSearch={handleSearch} onSignIn={handleHomeSignIn} />;
+  }
 
   /* ── loading ───────────────────────────────────────────────────────── */
   if (step === 'loading') return (

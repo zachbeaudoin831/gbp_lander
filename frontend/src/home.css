@@ -1202,3 +1202,61 @@ html { scroll-behavior: smooth; }
 .lb-home .bk-lbl{font-family:var(--font-mono);font-size:11.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);margin-top:16px}
 .lb-home .bk-note{display:flex;gap:8px;align-items:flex-start;font-size:13.5px;color:var(--ink-2);padding-top:14px;border-top:1px solid var(--line)}
 .lb-home .bk-note .ti{font-size:17px;color:var(--orange);margin-top:2px}
+
+/* ---------- /calls: landing page matched to the "Best Awareness" ad ---------- */
+.lb-home .lc-kick{font-family:var(--font-mono);font-size:12.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--orange);margin-right:18px}
+.lb-home .lc-hero .wrap{align-items:stretch;gap:0}
+.lb-home .lc-copy{max-width:900px}
+.lb-home .lc-hero h1{font-size:clamp(38px,5.6vw,68px);line-height:1.04;letter-spacing:-.035em;font-weight:800;text-align:left}
+.lb-home .lc-lede{font-size:clamp(19px,2vw,24px);color:var(--ink-2);margin-top:14px}
+.lb-home .lc-row{display:grid;grid-template-columns:minmax(0,1fr) 64px minmax(0,1fr);align-items:center;gap:6px}
+.lb-home .lc-row-hero{margin-top:34px}
+.lb-home .lc-arrow{display:grid;place-items:center;color:var(--orange)}
+.lb-home .lc-arrow svg{width:56px;height:16px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.lb-home .lc-listing{background:var(--card);border:1.5px solid var(--line);border-radius:16px;padding:20px 22px;display:flex;flex-direction:column;gap:10px;height:100%;justify-content:center}
+.lb-home .lc-biz{display:flex;align-items:center;gap:14px}
+.lb-home .lc-biz b{display:block;font-family:var(--font-display);font-size:20px;font-weight:700;letter-spacing:-.01em;line-height:1.2}
+.lb-home .lc-biz span{font-size:14.5px;color:var(--ink-2)}
+.lb-home .lc-ini{width:44px;height:44px;border-radius:9px;color:#fff;display:grid;place-items:center;font:700 20px var(--font-body);flex:none}
+.lb-home .lc-ini-you{background:var(--orange-soft);color:var(--orange);font-size:22px}
+.lb-home .lc-stars{font-size:15px;color:var(--ink-2)}
+.lb-home .lc-stars span{color:var(--star);letter-spacing:2px;margin-right:4px}
+.lb-home .lc-open{font-family:var(--font-mono);font-size:13.5px;color:var(--ink-3)}
+.lb-home .lc-open b{color:var(--green);font-weight:600}
+.lb-home .lc-call{background:var(--card);border:2px solid var(--orange);border-radius:16px;padding:16px 20px 18px;display:flex;flex-direction:column;gap:4px;height:100%;justify-content:center}
+.lb-home .lc-chip{align-self:flex-start;font-family:var(--font-mono);font-size:11.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--orange-deep);background:var(--orange-soft);border-radius:999px;padding:3px 11px;margin-bottom:4px}
+.lb-home .lc-hook{font-family:var(--font-display);font-size:21px;font-weight:700;letter-spacing:-.01em;line-height:1.2}
+.lb-home .lc-sub{font-size:14.5px;color:var(--ink-2)}
+.lb-home .lc-meta{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;color:var(--ink-2);margin:2px 0 8px}
+.lb-home .lc-meta i{font-style:normal;color:var(--star);letter-spacing:1px}
+.lb-home .lc-meta em{font-style:normal;font-family:var(--font-mono);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--green-deep);display:flex;align-items:center;gap:6px;white-space:nowrap}
+.lb-home .lc-meta em::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--green)}
+.lb-home .lc-btn{display:block;text-align:center;background:var(--green);color:#fff;font-weight:600;font-size:17px;border-radius:10px;padding:11px 12px}
+.lb-home .lc-find{border-color:var(--orange);box-shadow:0 0 0 5px color-mix(in srgb,var(--orange) 12%,transparent),var(--shadow-lg)}
+.lb-home .lc-input{border:1.5px solid var(--line-2);border-radius:12px;background:var(--paper);padding:2px 4px}
+.lb-home .lc-input:focus-within{border-color:var(--orange);background:#fff}
+.lb-home .lc-input input{width:100%;border:0;background:transparent;outline:none;font:inherit;font-size:16.5px;color:var(--ink);padding:12px 10px}
+.lb-home .lc-go{width:100%;justify-content:center;padding-top:14px;padding-bottom:14px;font-size:16.5px}
+.lb-home .lc-err{font-size:13.5px;color:var(--orange-deep)}
+.lb-home .lc-call-you{border-style:dashed;background:color-mix(in srgb,var(--card) 70%,transparent)}
+.lb-home .lc-call-you .lc-hook,.lb-home .lc-call-you .lc-sub{color:var(--ink-3)}
+.lb-home .lc-call-you .lc-btn{opacity:.55}
+.lb-home .lc-free{display:flex;gap:22px;flex-wrap:wrap;margin-top:20px;font-size:14.5px;color:var(--ink-2)}
+.lb-home .lc-free span{display:inline-flex;align-items:center;gap:7px}
+.lb-home .lc-free i{color:var(--green);font-size:18px}
+.lb-home .lc-examples{display:flex;flex-direction:column;gap:16px;max-width:960px;margin:0 auto}
+.lb-home .lc-steps{list-style:none;margin:0 auto;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;max-width:1000px}
+.lb-home .lc-steps li{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px}
+.lb-home .lc-steps h3{font-size:18px;letter-spacing:-.01em;line-height:1.25;margin:14px 0 6px}
+.lb-home .lc-steps p{font-size:14.5px;color:var(--ink-2)}
+.lb-home .lc-final{display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:34px;font-size:14.5px;color:var(--ink-3)}
+@media (max-width:860px){
+  .lb-home .lc-row{grid-template-columns:1fr;gap:4px}
+  .lb-home .lc-arrow svg{transform:rotate(90deg);width:36px}
+  .lb-home .lc-steps{grid-template-columns:1fr}
+}
+@media (max-width:640px){
+  .lb-home .lc-hero h1{font-size:clamp(34px,10vw,44px)}
+  .lb-home .lc-examples .lc-row:nth-child(n+2) .lc-listing{display:none}
+  .lb-home .lc-examples .lc-row:nth-child(n+2) .lc-arrow{display:none}
+}

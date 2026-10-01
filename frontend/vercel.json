@@ -3,6 +3,7 @@
   "rewrites": [
     { "source": "/admin", "destination": "/" },
     { "source": "/kit", "destination": "/" },
-    { "source": "/booked", "destination": "/" }
+    { "source": "/booked", "destination": "/" },
+    { "source": "/calls", "destination": "/" }
   ]
 }
