@@ -18,7 +18,7 @@ import anthropic
 
 from src.usage_log import log_ai
 
-MODEL = "claude-sonnet-5"
+MODEL = "claude-sonnet-5-5"
 
 # Appended to every system prompt. House style: no em/en dashes in anything
 # we generate (they read as AI-ish and clash with the site's voice).
@@ -681,7 +681,7 @@ service-plus-city headline."""
     def _call(content: str) -> dict:
         resp = client.messages.create(
             model=MODEL,
-            # 15 short headlines + 4 descriptions is little text, but on Sonnet 5
+            # 15 short headlines + 4 descriptions is little text, but on Sonnet 5.x
             # adaptive thinking spends from the same budget before any text is
             # emitted -- 1200 came back with an empty reply. Match the angles
             # call's headroom.

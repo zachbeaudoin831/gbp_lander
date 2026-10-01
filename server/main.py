@@ -37,6 +37,7 @@ from starlette.background import BackgroundTask
 from starlette.concurrency import run_in_threadpool
 
 from src.ai_copy import (
+    MODEL as AI_MODEL,
     generate_ad_angles,
     generate_ad_copy,
     generate_angle_ad_variations,
@@ -406,6 +407,9 @@ def health():
         "status": "ok",
         "api_key_configured": has_places_key,
         "anthropic_key_configured": has_anthropic_key,
+        # Which Claude model this deployment runs -- lets a model switch be
+        # confirmed live without waiting for a usage row.
+        "ai_model": AI_MODEL,
         "lead_store_configured": bool(os.environ.get("DATABASE_URL")),
         "kit_storage_configured": kit_storage_configured(),
         # Which kind of Supabase key is deployed (never the key itself):
