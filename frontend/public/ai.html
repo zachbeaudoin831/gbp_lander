@@ -68,9 +68,9 @@ p{margin:0}a{color:inherit}img{max-width:100%;display:block}
 .book-head{padding:26px clamp(18px,4vw,36px) 0;text-align:center}
 .book-head h2{font-size:clamp(24px,3.4vw,32px);margin-bottom:8px}
 .book-head p{color:var(--ink-2);max-width:56ch;margin:0 auto}
-.calendly-inline-widget{min-width:280px;height:1060px}
-.calendly-inline-widget iframe{width:100%;height:100%;border:0;display:block}
+.calendly-inline-widget{min-width:280px;height:980px;transition:height .2s ease}
 @media (min-width:1000px){.calendly-inline-widget{height:720px}}
+.calendly-inline-widget iframe{width:100%;height:100%;border:0;display:block}
 .book-fallback{text-align:center;padding:0 0 24px;font-size:14px;color:var(--ink-3)}
 
 /* stats */
@@ -209,7 +209,7 @@ footer a{text-decoration:none}footer a:hover{color:var(--dark-ink)}
              its booking events to this page. -->
         <div class="calendly-inline-widget">
           <iframe title="Book a call with Zach"
-            src="https://calendly.com/zkbmarketing/meet-with-zach-beaudoin?embed_domain=sendkpi.com&amp;embed_type=Inline&amp;hide_gdpr_banner=1&amp;primary_color=0d57d0"
+            src="https://calendly.com/zkbmarketing/meet-with-zach-beaudoin?embed_domain=sendkpi.com&amp;embed_type=Inline&amp;hide_event_type_details=1&amp;hide_gdpr_banner=1&amp;primary_color=0d57d0"
             sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
             loading="lazy"></iframe>
         </div>
@@ -441,7 +441,15 @@ footer a{text-decoration:none}footer a:hover{color:var(--dark-ink)}
 
   // Fire Schedule when someone books in the Calendly embed.
   window.addEventListener('message', function (e) {
-    if (e.origin !== 'https://calendly.com' || !e.data || e.data.event !== 'calendly.event_scheduled') return;
+    if (e.origin !== 'https://calendly.com' || !e.data) return;
+    // Calendly reports its content height; grow the box to fit so the
+    // calendar never scrolls inside its own frame.
+    if (e.data.event === 'calendly.page_height' && e.data.payload) {
+      var h = parseInt(e.data.payload.height, 10);
+      if (h > 300) document.querySelector('.calendly-inline-widget').style.height = h + 'px';
+      return;
+    }
+    if (e.data.event !== 'calendly.event_scheduled') return;
     trackSchedule();
     try { sessionStorage.setItem('skpi_ai_scheduled', '1'); } catch (err) {}
     // Go straight to our thank-you page; Calendly's own redirect detours
