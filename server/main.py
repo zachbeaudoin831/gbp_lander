@@ -453,7 +453,7 @@ def meta_event(req: MetaEventRequest, request: Request):
             event_name=req.event_name,
             event_id=req.event_id,
             event_source_url=req.event_source_url,
-            client_ip=request.client.host if request.client else None,
+            client_ip=_client_ip(request) or None,
             client_user_agent=request.headers.get("user-agent"),
             email=req.email,
             phone=req.phone,

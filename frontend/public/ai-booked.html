@@ -30,12 +30,29 @@ t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,do
 'https://connect.facebook.net/en_US/fbevents.js');
 fbq('init', '2456464214838090');fbq('track', 'PageView');</script>
 <script>
+  // Browser pixel + Conversions API copy of the same event, sharing one
+  // event_id so Meta dedupes them. keepalive lets the server call finish
+  // even if the page navigates away right after.
+  function skpiCookie(n) { var m = document.cookie.match(new RegExp('(?:^|; )' + n + '=([^;]*)')); return m ? decodeURIComponent(m[1]) : null; }
+  function trackSchedule() {
+    var id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : Date.now() + '-' + Math.random();
+    try { fbq('track', 'Schedule', {}, { eventID: id }); } catch (e) {}
+    try { gtag('event', 'book_call'); } catch (e) {}
+    try {
+      fetch('https://gbp-lander.vercel.app/api/meta-event', {
+        method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event_name: 'Schedule', event_id: id, event_source_url: location.origin + location.pathname,
+          fbc: skpiCookie('_fbc'), fbp: skpiCookie('_fbp') })
+      }).catch(function () {});
+    } catch (e) {}
+  }
+
   // Bookings made in the /ai embed already fired Schedule there; only count
   // bookings that came straight from the Calendly page.
   (function () {
     var counted = false;
     try { counted = sessionStorage.getItem('skpi_ai_scheduled') === '1'; } catch (e) {}
-    if (!counted) { try { fbq('track', 'Schedule'); gtag('event', 'book_call'); } catch (e) {} }
+    if (!counted) trackSchedule();
   })();
 </script>
 
