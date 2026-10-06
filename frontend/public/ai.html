@@ -69,6 +69,7 @@ p{margin:0}a{color:inherit}img{max-width:100%;display:block}
 .book-head h2{font-size:clamp(24px,3.4vw,32px);margin-bottom:8px}
 .book-head p{color:var(--ink-2);max-width:56ch;margin:0 auto}
 .calendly-inline-widget{min-width:280px;height:1060px}
+.calendly-inline-widget iframe{width:100%;height:100%;border:0;display:block}
 @media (min-width:1000px){.calendly-inline-widget{height:720px}}
 .book-fallback{text-align:center;padding:0 0 24px;font-size:14px;color:var(--ink-3)}
 
@@ -201,7 +202,17 @@ footer a{text-decoration:none}footer a:hover{color:var(--dark-ink)}
           <h2>Book your AI Marketing Game Plan</h2>
           <p>Before we talk, I'll look at your website, Google Business Profile and ads, so I'll have ideas ready to show you.</p>
         </div>
-        <div class="calendly-inline-widget" data-url="https://calendly.com/zkbmarketing/meet-with-zach-beaudoin?hide_gdpr_banner=1&primary_color=0d57d0"></div>
+        <!-- Calendly embedded directly (not via widget.js) so the iframe can be
+             sandboxed without allow-top-navigation: Calendly can't send the page
+             to its "You are leaving Calendly" screen, and our own redirect to
+             /ai-booked runs instead. embed_domain/embed_type make Calendly post
+             its booking events to this page. -->
+        <div class="calendly-inline-widget">
+          <iframe title="Book a call with Zach"
+            src="https://calendly.com/zkbmarketing/meet-with-zach-beaudoin?embed_domain=sendkpi.com&amp;embed_type=Inline&amp;hide_gdpr_banner=1&amp;primary_color=0d57d0"
+            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
+            loading="lazy"></iframe>
+        </div>
         <p class="book-fallback">Calendar not loading? <a href="https://calendly.com/zkbmarketing/meet-with-zach-beaudoin" target="_blank" rel="noopener">Open it in a new tab</a>.</p>
       </div>
 
@@ -394,7 +405,6 @@ footer a{text-decoration:none}footer a:hover{color:var(--dark-ink)}
   </div>
 </footer>
 
-<script src="https://assets.calendly.com/assets/external/widget.js" async></script>
 <script src="https://cdn.jsdelivr.net/npm/@gumlet/player.js@3.0/dist/main.global.js"></script>
 <script>
   // Track plays and finishes from the Gumlet player (via its player.js API).
