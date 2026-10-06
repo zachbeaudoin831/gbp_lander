@@ -1,0 +1,153 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>You're booked | SendKPI</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<script>
+  // Calendly passes the booking details in the query string (including the
+  // invitee's email). Read what we show, then strip the query before any
+  // analytics loads so no personal data reaches GA or Meta.
+  var booking = (function () {
+    var q = new URLSearchParams(location.search);
+    var b = { first: q.get('invitee_first_name') || (q.get('invitee_full_name') || '').split(' ')[0], start: q.get('event_start_time') };
+    if (location.search) history.replaceState(null, '', location.pathname);
+    return b;
+  })();
+</script>
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-6VTNB4JG6E"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-6VTNB4JG6E');</script>
+<!-- Meta Pixel -->
+<script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '2456464214838090');fbq('track', 'PageView');</script>
+<script>
+  // Bookings made in the /ai embed already fired Schedule there; only count
+  // bookings that came straight from the Calendly page.
+  (function () {
+    var counted = false;
+    try { counted = sessionStorage.getItem('skpi_ai_scheduled') === '1'; } catch (e) {}
+    if (!counted) { try { fbq('track', 'Schedule'); gtag('event', 'book_call'); } catch (e) {} }
+  })();
+</script>
+
+<style>
+:root{
+  --paper:#FBFAF7;--paper-2:#F3F0E9;--card:#fff;
+  --ink:#181310;--ink-2:#5C544C;--ink-3:#8A8178;--line:#E4DFD5;
+  --blue:#0D57D0;--blue-deep:#0A46A8;--blue-soft:#E7EEFB;
+  --green:#0E8A5F;--green-soft:#E3F2EA;
+  --shadow:0 1px 2px rgba(24,19,16,.05),0 12px 32px -12px rgba(24,19,16,.18);
+  --display:'Plus Jakarta Sans',ui-sans-serif,system-ui,sans-serif;
+  --body:'Instrument Sans',ui-sans-serif,system-ui,sans-serif;
+  --mono:ui-monospace,'SF Mono',SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16.5px;line-height:1.6;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--display);letter-spacing:-.02em;margin:0;text-wrap:balance}
+p{margin:0}a{color:inherit}
+.wrap{max-width:720px;margin:0 auto;padding:0 clamp(16px,4vw,32px)}
+.top{border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;height:64px;max-width:1040px}
+.logo{display:flex;align-items:center;gap:8px;font-family:var(--display);font-weight:700;font-size:17px;text-decoration:none;letter-spacing:-.01em}
+.eyebrow{font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--blue)}
+
+.hero{text-align:center;padding:clamp(40px,7vw,72px) 0 28px}
+.check{width:64px;height:64px;border-radius:50%;background:var(--green-soft);color:var(--green);display:flex;align-items:center;justify-content:center;margin:0 auto 20px}
+.check svg{width:32px;height:32px}
+.hero h1{font-size:clamp(30px,5vw,44px);line-height:1.1;margin-bottom:12px}
+.hero p{color:var(--ink-2);font-size:17.5px;max-width:52ch;margin:0 auto}
+.when{display:inline-flex;align-items:center;gap:10px;margin-top:22px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:10px 20px;font-weight:600;box-shadow:var(--shadow)}
+.when svg{width:20px;height:20px;color:var(--blue);flex:none}
+.when[hidden]{display:none}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:clamp(20px,4vw,32px);box-shadow:var(--shadow);margin-bottom:16px}
+.card h2{font-size:22px;margin:8px 0 18px}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:18px}
+.steps li{display:grid;grid-template-columns:36px 1fr;gap:14px}
+.steps .n{width:36px;height:36px;border-radius:10px;background:var(--blue-soft);color:var(--blue);font-family:var(--display);font-weight:800;display:flex;align-items:center;justify-content:center}
+.steps b{display:block;margin-bottom:2px}
+.steps span{color:var(--ink-2);font-size:15.5px}
+
+.note{display:flex;gap:12px;align-items:flex-start;background:var(--paper-2);border:1px solid var(--line);border-radius:14px;padding:16px 18px;font-size:15px;color:var(--ink-2)}
+.note svg{flex:none;width:20px;height:20px;color:var(--ink-3);margin-top:2px}
+.sig{display:flex;align-items:center;gap:14px;margin:28px 0 56px}
+.sig img{width:56px;height:56px;border-radius:50%;object-fit:cover}
+.sig b{display:block}.sig span{color:var(--ink-3);font-size:14px}
+footer{border-top:1px solid var(--line);color:var(--ink-3);font-size:13px}
+footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-top:20px;padding-bottom:20px;max-width:1040px}
+footer a{text-decoration:none}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="logo" href="/ai" aria-label="SendKPI">
+      <svg width="30" height="30" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="skpiG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0D57D0"/><stop offset="1" stop-color="#0A46A8"/></linearGradient></defs><rect x="6" y="8" width="48" height="48" rx="9" fill="url(#skpiG)"/><g transform="translate(17.09 47.00) scale(0.02013 -0.02013)"><path d="M674.6 0 919.7 1490H1131.1L886.2 0ZM4.8 380.3 40.6 591.7H1191.8L1156.0 380.3ZM151.7 0 395.7 1490H607.1L363.1 0ZM91.0 897.2 126.8 1109.7H1276.9L1242.2 897.2Z" fill="#fff"/></g><circle cx="53" cy="12" r="9.5" fill="#0E8A5F" stroke="#FBFAF7" stroke-width="3"/></svg>
+      SendKPI
+    </a>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <div class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>
+    <h1 id="title">You're booked!</h1>
+    <p>Your AI Marketing Game Plan is on the calendar. The Google Meet link and calendar invite are on their way to your inbox.</p>
+    <div class="when" id="when" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      <span id="when-text"></span>
+    </div>
+  </section>
+
+  <section class="card">
+    <p class="eyebrow">What happens next</p>
+    <h2>Here's how to get the most out of our call</h2>
+    <ol class="steps">
+      <li><span class="n">1</span><div><b>I'll do my homework</b><span>Before we meet, I'll look at your website, Google Business Profile and ads, so I'll have ideas ready to show you.</span></div></li>
+      <li><span class="n">2</span><div><b>Have your numbers handy</b><span>Roughly what you spend on ads each month, how many leads you get, and how many turn into customers. Ballpark is fine.</span></div></li>
+      <li><span class="n">3</span><div><b>Join from a computer if you can</b><span>I'll be sharing my screen, and it's easier to follow on a bigger screen than a phone.</span></div></li>
+      <li><span class="n">4</span><div><b>Bring your questions</b><span>About AI, your ads, your CRM or anything else. Nothing's off the table.</span></div></li>
+    </ol>
+  </section>
+
+  <div class="note">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+    <span>Don't see the email? Check your spam or promotions folder. Need a different time? Use the reschedule link in your confirmation email.</span>
+  </div>
+
+  <div class="sig">
+    <img src="/img/zach.jpg" alt="Zach Beaudoin" width="56" height="56">
+    <div><b>Talk soon,<br>Zach Beaudoin</b><span>SendKPI</span></div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© SendKPI</span>
+    <span><a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></span>
+  </div>
+</footer>
+
+<script>
+  if (booking.first) document.getElementById('title').textContent = "You're booked, " + booking.first + "!";
+  if (booking.start) {
+    var d = new Date(booking.start);
+    if (!isNaN(d)) {
+      document.getElementById('when-text').textContent = d.toLocaleString(undefined, {
+        weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short'
+      });
+      document.getElementById('when').hidden = false;
+    }
+  }
+</script>
+</body></html>

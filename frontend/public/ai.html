@@ -416,6 +416,7 @@ footer a{text-decoration:none}footer a:hover{color:var(--dark-ink)}
   window.addEventListener('message', function (e) {
     if (e.origin !== 'https://calendly.com' || !e.data || e.data.event !== 'calendly.event_scheduled') return;
     try { fbq('track', 'Schedule'); gtag('event', 'book_call'); } catch (err) {}
+    try { sessionStorage.setItem('skpi_ai_scheduled', '1'); } catch (err) {}
   });
 </script>
 </body></html>
