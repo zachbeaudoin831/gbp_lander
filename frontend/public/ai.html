@@ -417,6 +417,10 @@ footer a{text-decoration:none}footer a:hover{color:var(--dark-ink)}
     if (e.origin !== 'https://calendly.com' || !e.data || e.data.event !== 'calendly.event_scheduled') return;
     try { fbq('track', 'Schedule'); gtag('event', 'book_call'); } catch (err) {}
     try { sessionStorage.setItem('skpi_ai_scheduled', '1'); } catch (err) {}
+    // Go straight to our thank-you page instead of waiting on Calendly's
+    // redirect, which detours through a "You are leaving Calendly" warning.
+    // The short delay lets the pixel and GA hits send first.
+    setTimeout(function () { location.href = '/ai-booked'; }, 700);
   });
 </script>
 </body></html>
