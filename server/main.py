@@ -133,6 +133,7 @@ RATE_LIMITS: dict[str, tuple[int, int]] = {
     "kit": (60, 600),
     "ghl-contact": (8, 3600),
     "meta-event": (60, 3600),
+    "ai-quiz-lead": (10, 3600),
 }
 
 # Global daily caps (all IPs combined): the circuit breaker for distributed
@@ -157,6 +158,7 @@ DAILY_CAPS: dict[str, int] = {
     "kit": 2000,
     "ghl-contact": 300,
     "meta-event": 2000,
+    "ai-quiz-lead": 300,
 }
 
 
@@ -464,6 +466,62 @@ def meta_event(req: MetaEventRequest, request: Request):
         return {"ok": True}
     except MetaCapiError:
         return {"ok": False}
+
+
+class AiQuizLeadRequest(BaseModel):
+    """A completed AI-offer assessment from sendkpi.com/ai-quiz: contact
+    details plus the visitor's answers (question label -> answer text).
+    """
+    name: str = Field(min_length=1, max_length=200)
+    email: str = Field(min_length=5, max_length=320)
+    phone: str = Field(min_length=7, max_length=50)
+    website: Optional[str] = Field(default=None, max_length=500)
+    answers: dict[str, str] = Field(default_factory=dict)
+    event_id: Optional[str] = Field(default=None, max_length=200)
+    page_url: Optional[str] = Field(default=None, max_length=2000)
+    fbc: Optional[str] = Field(default=None, max_length=500)
+    fbp: Optional[str] = Field(default=None, max_length=500)
+
+
+@app.post("/api/ai-quiz-lead")
+def ai_quiz_lead(req: AiQuizLeadRequest, request: Request):
+    """Sync an AI-assessment lead to GHL (own tag, no GBP signup tag) with the
+    answers as a note, and send Meta a server-side Lead with the hashed email
+    and phone, sharing event_id with the browser pixel so Meta dedupes them.
+    Best-effort on each: the visitor already sees their results.
+    """
+    answers = {k[:80]: v[:300] for k, v in list(req.answers.items())[:20]}
+    ghl_ok = False
+    try:
+        contact = upsert_contact(
+            name=req.name.strip(), email=req.email.strip(), phone=req.phone.strip(),
+            business=None, tags=["ai-offer-quiz"], signup_tag=False, source="SendKPI AI assessment",
+        )
+        ghl_ok = True
+        contact_id = (contact.get("contact") or {}).get("id")
+        if contact_id:
+            lines = [f"{k}: {v}" for k, v in answers.items()]
+            if req.website:
+                lines.insert(0, f"Website: {req.website.strip()}")
+            try:
+                ghl_add_note(contact_id, "AI marketing assessment\n\n" + "\n".join(lines))
+            except GhlError:
+                pass
+    except GhlError:
+        pass
+    if req.event_id:
+        try:
+            send_event(
+                event_name="Lead", event_id=req.event_id,
+                event_source_url=req.page_url or "https://sendkpi.com/ai-quiz",
+                client_ip=_client_ip(request) or None,
+                client_user_agent=request.headers.get("user-agent"),
+                email=req.email, phone=req.phone, fbc=req.fbc, fbp=req.fbp,
+                test_event_code=os.environ.get("META_TEST_EVENT_CODE") or None,
+            )
+        except MetaCapiError:
+            pass
+    return {"ok": ghl_ok}
 
 
 class SignupLeadRequest(BaseModel):

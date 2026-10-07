@@ -1,0 +1,614 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>SendKPI: Free AI Marketing Assessment</title>
+<meta name="description" content="Zach Beaudoin ($13M+ in ad spend managed) connects ChatGPT or Claude to your ad account, website and CRM, so you get your numbers on demand and ad ideas built from your own data. Take the free 2-minute assessment and get a personalized AI marketing game plan.">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-6VTNB4JG6E"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-6VTNB4JG6E');</script>
+<!-- Meta Pixel -->
+<script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '2456464214838090');fbq('track', 'PageView');</script>
+
+<style>
+/* Same palette and type as the sendkpi.com homepage (home.css). */
+:root{
+  --paper:#FBFAF7;--paper-2:#F3F0E9;--card:#fff;
+  --ink:#181310;--ink-2:#5C544C;--ink-3:#8A8178;
+  --line:#E4DFD5;--line-2:#D5CFC2;
+  --blue:#0D57D0;--blue-deep:#0A46A8;--blue-soft:#E7EEFB;
+  --green:#0E8A5F;--green-soft:#E3F2EA;--red:#B8432F;--red-soft:#F8E8E4;
+  --dark:#1C1712;--dark-ink:#F4EFE7;--dark-ink-2:#B5AA9C;
+  --shadow:0 1px 2px rgba(24,19,16,.05),0 12px 32px -12px rgba(24,19,16,.18);
+  --shadow-lg:0 2px 4px rgba(24,19,16,.06),0 28px 64px -20px rgba(24,19,16,.28);
+  --display:'Plus Jakarta Sans',ui-sans-serif,system-ui,sans-serif;
+  --body:'Instrument Sans',ui-sans-serif,system-ui,sans-serif;
+  --mono:ui-monospace,'SF Mono',SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16.5px;line-height:1.6;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;letter-spacing:-.02em}
+p{margin:0}a{color:inherit}img{max-width:100%;display:block}
+:focus-visible{outline:2.5px solid var(--blue);outline-offset:3px;border-radius:4px}
+.wrap{max-width:1040px;margin:0 auto;padding:0 clamp(16px,4vw,40px)}
+.narrow{max-width:860px}
+.eyebrow{font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--blue)}
+
+/* header */
+.top{position:sticky;top:0;z-index:20;background:rgba(251,250,247,.9);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;gap:12px;height:64px}
+.logo{display:flex;align-items:center;gap:8px;font-family:var(--display);font-weight:700;font-size:17px;text-decoration:none;letter-spacing:-.01em}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--blue);color:#fff;font-weight:600;text-decoration:none;border-radius:999px;padding:10px 18px;font-size:15px;transition:background .15s}
+.btn:hover{background:var(--blue-deep)}
+.top .btn{margin-left:auto}
+
+/* hero + video */
+.hero{padding:clamp(36px,6vw,64px) 0 28px;text-align:center}
+.hero .eyebrow{justify-content:center;margin-bottom:16px;display:flex}
+.hero h1{font-size:clamp(30px,5.4vw,52px);line-height:1.08;font-weight:800;max-width:20ch;margin:0 auto 18px}
+.hero h1 em{font-style:normal;color:var(--blue)}
+.lede{font-size:clamp(17px,2vw,19px);color:var(--ink-2);max-width:60ch;margin:0 auto}
+.video{margin:32px auto 0;max-width:900px;border-radius:18px;overflow:hidden;background:#000;box-shadow:var(--shadow-lg);aspect-ratio:16/9;position:relative}
+.video iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block}
+.under{margin-top:18px;font-size:15px;color:var(--ink-3)}
+.under b{color:var(--ink)}
+
+/* booking */
+.book{padding:36px 0 56px;scroll-margin-top:56px}
+.quiz-card{background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);padding:clamp(22px,4vw,40px);max-width:820px;margin:0 auto}
+.quiz-card[hidden]{display:none}
+.quiz-top{display:flex;justify-content:space-between;font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.quiz-bar{height:8px;border-radius:99px;background:var(--paper-2);margin:12px 0 28px;overflow:hidden}
+.quiz-bar i{display:block;height:100%;width:13%;background:var(--blue);border-radius:99px;transition:width .3s ease}
+.q-eyebrow{margin-bottom:10px}
+.q-title{font-size:clamp(26px,4vw,36px);line-height:1.1;margin-bottom:8px}
+.q-sub{color:var(--ink-2);margin-bottom:22px}
+.opts{display:flex;flex-direction:column;gap:12px}
+.opt{display:flex;align-items:center;gap:16px;width:100%;text-align:left;background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:16px 20px;font:inherit;font-size:16.5px;color:var(--ink);cursor:pointer;transition:border-color .15s,background .15s}
+.opt:hover{border-color:var(--blue)}
+.opt .dot{flex:none;width:22px;height:22px;border-radius:50%;border:2px solid var(--ink-3);display:flex;align-items:center;justify-content:center}
+.opt.on{border-color:var(--blue);background:var(--blue-soft)}
+.opt.on .dot{border-color:var(--blue)}
+.opt.on .dot::after{content:"";width:10px;height:10px;border-radius:50%;background:var(--blue)}
+.q-back{margin-top:18px;background:none;border:0;padding:0;font:inherit;font-size:14px;color:var(--ink-3);cursor:pointer;text-decoration:underline}
+.fields{display:grid;gap:14px}
+.fields label{display:flex;flex-direction:column;gap:6px;font-size:14px;font-weight:600}
+.fields input{font:inherit;font-size:16px;padding:13px 14px;border:1.5px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink)}
+.fields input:focus{outline:none;border-color:var(--blue)}
+.consent{font-size:12.5px;color:var(--ink-3);margin-top:4px}
+.q-submit{margin-top:18px;width:100%;font-size:17px;padding:15px 22px;border:0;cursor:pointer}
+.q-err{color:var(--red);font-size:14px;margin-top:10px}
+.plan{list-style:none;padding:0;margin:18px 0 22px;display:flex;flex-direction:column;gap:12px}
+.plan li{display:flex;gap:12px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:15.5px;color:var(--ink-2)}
+.plan li::before{content:"\2713";flex:none;width:22px;height:22px;border-radius:50%;background:var(--green-soft);color:var(--green);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center}
+.plan b{color:var(--ink)}
+.r-note{color:var(--ink-2);margin-bottom:18px}
+.book-card{background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);overflow:hidden}
+.book-head{padding:26px clamp(18px,4vw,36px) 0;text-align:center}
+.book-head h2{font-size:clamp(24px,3.4vw,32px);margin-bottom:8px}
+.book-head p{color:var(--ink-2);max-width:56ch;margin:0 auto}
+.calendly-inline-widget{min-width:280px;height:980px;transition:height .2s ease}
+@media (min-width:1000px){.calendly-inline-widget{height:720px}}
+.calendly-inline-widget iframe{width:100%;height:100%;border:0;display:block}
+.book-fallback{text-align:center;padding:0 0 24px;font-size:14px;color:var(--ink-3)}
+
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-top:28px}
+.stat{background:var(--card);padding:20px 16px;text-align:center}
+.stat b{display:block;font-family:var(--display);font-size:clamp(24px,3.6vw,32px);letter-spacing:-.02em}
+.stat span{font-size:14px;color:var(--ink-2)}
+@media (max-width:760px){.stats{grid-template-columns:repeat(2,1fr)}}
+
+/* sections */
+section.sec{padding:clamp(48px,7vw,80px) 0;border-top:1px solid var(--line)}
+.sec-head{max-width:640px;margin-bottom:32px}
+.sec-head .eyebrow{margin-bottom:12px}
+.sec-head h2{font-size:clamp(26px,3.8vw,38px);line-height:1.12;margin-bottom:12px}
+.sec-head p{color:var(--ink-2)}
+
+/* what it does */
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px}
+.card .ic{width:40px;height:40px;border-radius:10px;background:var(--blue-soft);color:var(--blue);display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+.card .ic svg{width:22px;height:22px}
+.card h3{font-size:18px;margin-bottom:6px}
+.card p{font-size:15px;color:var(--ink-2)}
+.approve{margin-top:16px;display:flex;gap:12px;align-items:flex-start;background:var(--green-soft);border:1px solid #BFE0CF;border-radius:14px;padding:16px 18px;font-size:15px}
+.approve svg{flex:none;width:22px;height:22px;color:var(--green);margin-top:1px}
+
+/* who it's for */
+.fit{display:grid;grid-template-columns:1.25fr 1fr;gap:16px}
+@media (max-width:760px){.fit{grid-template-columns:1fr}}
+.fit .card h3{display:flex;align-items:center;gap:10px;font-size:19px;margin-bottom:14px}
+.fit ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+.fit li{display:flex;gap:12px;font-size:15.5px;color:var(--ink-2)}
+.fit li b{color:var(--ink);font-weight:600}
+.fit li i{flex:none;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:13px;font-weight:700;margin-top:1px}
+.yes li i{background:var(--green-soft);color:var(--green)}
+.no{background:var(--paper-2)}
+.no li i{background:var(--red-soft);color:var(--red)}
+
+/* case studies */
+.cases{display:grid;gap:20px}
+.case{display:grid;grid-template-columns:1.1fr 1fr;gap:0;background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+@media (max-width:760px){.case{grid-template-columns:1fr}}
+.case-copy{padding:clamp(20px,3vw,32px);display:flex;flex-direction:column;gap:12px}
+.case-tag{font-family:var(--mono);font-size:11.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.case h3{font-size:clamp(20px,2.6vw,24px);line-height:1.2}
+.case p{font-size:15.5px;color:var(--ink-2)}
+.case blockquote{margin:4px 0 0;padding:12px 16px;border-left:3px solid var(--blue);background:var(--blue-soft);border-radius:0 10px 10px 0;font-weight:600;font-size:15.5px}
+.shot{background:var(--paper-2);border-left:1px solid var(--line);display:flex;align-items:center;justify-content:center;min-height:240px;padding:18px}
+@media (max-width:760px){.shot{border-left:0;border-top:1px solid var(--line)}}
+.shot img{border-radius:10px;box-shadow:var(--shadow);width:100%;height:auto}
+.case.wide{grid-template-columns:1fr}
+.case.wide .shot{border-left:0;border-top:1px solid var(--line);padding:clamp(14px,3vw,28px)}
+.case.wide .shot img{max-width:900px;margin:0 auto}
+.case-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:6px}
+.case-stats div{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.case-stats span{display:block;font-size:13px;color:var(--ink-3)}
+.case-stats b{display:block;font-family:var(--display);font-size:clamp(22px,3vw,28px);letter-spacing:-.02em;color:var(--green)}
+.case-stats em{font-style:normal;font-size:13px;color:var(--ink-3);text-decoration:line-through}
+@media (max-width:560px){.case-stats{grid-template-columns:1fr}}
+.shot-empty{border:2px dashed var(--line-2);border-radius:12px;width:100%;height:100%;min-height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--ink-3);font-size:14px;text-align:center;padding:16px}
+.shot-empty code{font-family:var(--mono);font-size:12px;background:#fff;border:1px solid var(--line);border-radius:6px;padding:2px 8px}
+
+/* steps */
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}
+.step-n{font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.1em;color:var(--blue);margin-bottom:10px}
+
+/* about */
+.about{display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:start}
+@media (max-width:640px){.about{grid-template-columns:1fr}}
+.avatar{width:120px;height:120px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,var(--blue),var(--blue-deep));color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:800;font-size:30px}
+.about p+p{margin-top:12px}
+.about p{color:var(--ink-2)}
+
+/* faq */
+.faq{display:flex;flex-direction:column;gap:10px}
+.faq details{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:0 20px}
+.faq summary{cursor:pointer;list-style:none;padding:18px 28px 18px 0;font-weight:600;font-size:16.5px;position:relative}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";position:absolute;right:0;top:14px;font-size:22px;color:var(--ink-3)}
+.faq details[open] summary::after{content:"–"}
+.faq details p{padding:0 0 18px;color:var(--ink-2);font-size:15.5px}
+
+/* final cta */
+.final{background:var(--dark);color:var(--dark-ink);text-align:center;padding:clamp(56px,8vw,88px) 0}
+.final h2{font-size:clamp(28px,4.4vw,42px);margin-bottom:14px}
+.final p{color:var(--dark-ink-2);max-width:54ch;margin:0 auto 28px}
+.final .btn{font-size:17px;padding:16px 28px}
+footer{background:var(--dark);color:var(--dark-ink-2);font-size:13px;border-top:1px solid rgba(255,255,255,.08)}
+footer .wrap{display:flex;gap:18px;justify-content:space-between;flex-wrap:wrap;padding-top:20px;padding-bottom:20px}
+footer a{text-decoration:none}footer a:hover{color:var(--dark-ink)}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="logo" href="/ai" aria-label="SendKPI">
+      <svg width="30" height="30" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="skpiG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0D57D0"/><stop offset="1" stop-color="#0A46A8"/></linearGradient></defs><rect x="6" y="8" width="48" height="48" rx="9" fill="url(#skpiG)"/><g transform="translate(17.09 47.00) scale(0.02013 -0.02013)"><path d="M674.6 0 919.7 1490H1131.1L886.2 0ZM4.8 380.3 40.6 591.7H1191.8L1156.0 380.3ZM151.7 0 395.7 1490H607.1L363.1 0ZM91.0 897.2 126.8 1109.7H1276.9L1242.2 897.2Z" fill="#fff"/></g><circle cx="53" cy="12" r="9.5" fill="#0E8A5F" stroke="#FBFAF7" stroke-width="3"/></svg>
+      SendKPI
+    </a>
+    <a class="btn" href="#book">Get my game plan</a>
+  </div>
+</header>
+
+<main>
+  <!-- 1. Hero + VSL -->
+  <section class="hero">
+    <div class="wrap">
+      <p class="eyebrow">For business owners running ads</p>
+      <h1>Connect <em>ChatGPT or Claude</em> to your ad account, website and CRM</h1>
+      <p class="lede">Get your numbers whenever you ask, and ad ideas built from your own customers. Set up by a marketer with 12 years, 300 business owners and $13M in ad spend behind him.</p>
+
+      <div class="video">
+        <iframe id="vsl" title="SendKPI video"
+          src="https://play.gumlet.io/embed/6ac5362741d1f14ce08923d7?background=false&autoplay=false&loop=false&disable_player_controls=false"
+          referrerpolicy="origin"
+          allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen; clipboard-write;"></iframe>
+      </div>
+      <p class="under">Watch the video, then <b>answer 8 quick questions below</b>. I'll send you a personalized AI marketing game plan.</p>
+    </div>
+  </section>
+
+  <!-- 2. Calendar, directly under the video -->
+  <section class="book" id="book">
+    <div class="wrap">
+      <div class="quiz-card" id="quiz">
+        <div class="quiz-top"><span id="q-count">Question 1 of 8</span><span id="q-pct">13%</span></div>
+        <div class="quiz-bar"><i id="q-bar"></i></div>
+        <div id="q-body"></div>
+      </div>
+
+      <div class="quiz-card" id="results" hidden>
+        <p class="eyebrow">Your AI marketing game plan</p>
+        <h2 id="r-title">Here's your starting plan</h2>
+        <ul class="plan" id="r-plan"></ul>
+        <p class="r-note">I'll call or text you within 1 business day to walk through it. Rather pick a time now? Grab one below.</p>
+        <!-- Same sandboxed Calendly embed as /ai (see the note there); its src is
+             set only once results show, prefilled with the visitor's name/email. -->
+        <div class="calendly-inline-widget"><iframe title="Book a call with Zach" id="cal"
+          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"></iframe></div>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><b>12 years</b><span>running ads and landing pages</span></div>
+        <div class="stat"><b>300</b><span>business owners worked with</span></div>
+        <div class="stat"><b>$13M+</b><span>in ad spend managed</span></div>
+        <div class="stat"><b>$20k/day</b><span>peak daily ad spend</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. What it does -->
+  <section class="sec">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">What you get</p>
+        <h2>Your AI, connected to the data that runs your business</h2>
+        <p>Once your ad account, website and CRM are connected, you can just ask.</p>
+      </div>
+      <div class="grid3">
+        <div class="card">
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg></div>
+          <h3>Your numbers, on demand</h3>
+          <p>Leads, cost per lead, booked calls, cost per booked call, sales and return on ad spend, for whatever date range you ask for. No waiting on a report.</p>
+        </div>
+        <div class="card">
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div>
+          <h3>Research on what's working</h3>
+          <p>It studies successful campaigns and case studies for the service you want more calls for, then looks at your website and Google Business Profile.</p>
+        </div>
+        <div class="card">
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 20v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M21 20v-2a4 4 0 0 0-3-3.87"/></svg></div>
+          <h3>Learns from your CRM</h3>
+          <p>It reads your past conversations to see who bought and who didn't, so new ads speak to the customers you actually close.</p>
+        </div>
+        <div class="card">
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/><path d="M8 14h5"/></svg></div>
+          <h3>Ads and landing pages</h3>
+          <p>It drafts new ads and landing pages for your offer, including angles your competitors aren't using.</p>
+        </div>
+        <div class="card">
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></div>
+          <h3>Video scripts</h3>
+          <p>It writes scripts you can shoot on your phone. Send the video back and it gets edited and loaded into your ad account.</p>
+        </div>
+        <div class="card">
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+          <h3>Set up safely</h3>
+          <p>I built and tested my own apps before touching a single client account. No horror stories of broken accounts or leaked data.</p>
+        </div>
+      </div>
+      <div class="approve">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        <span><b>You stay in control.</b> The AI doesn't launch or spend anything on its own. Every ad and change waits for your approval.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. Who it's for -->
+  <section class="sec">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">Who it's for</p>
+        <h2>Is this a fit for your business?</h2>
+      </div>
+      <div class="fit">
+        <div class="card yes">
+          <h3>This is for you if…</h3>
+          <ul>
+            <li><i>✓</i><span><b>You're already spending on ads</b> (Google, Meta or both) and want to know what each lead and booked call really costs.</span></li>
+            <li><i>✓</i><span><b>You're tired of waiting on reports.</b> It's 6 p.m. on a Friday and you just want last week's numbers.</span></li>
+            <li><i>✓</i><span><b>You have a CRM full of past leads</b> and want to learn from who bought and who didn't.</span></li>
+            <li><i>✓</i><span><b>You want to reinvest in what works</b>: more ad spend, more salespeople, a funnel you can see clearly.</span></li>
+            <li><i>✓</i><span><b>You want marketing off your mind</b>, with more time for your family, your team and the work you enjoy.</span></li>
+          </ul>
+        </div>
+        <div class="card no">
+          <h3>It's not for you if…</h3>
+          <ul>
+            <li><i>✕</i><span>You're not running ads yet and don't plan to.</span></li>
+            <li><i>✕</i><span>You want an AI spending your money on autopilot with no one checking its work.</span></li>
+            <li><i>✕</i><span>You don't want to look at your numbers. This makes them impossible to ignore.</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. Case studies -->
+  <section class="sec">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">Results</p>
+        <h2>What a different angle can do</h2>
+        <p>The best results I've had came from looking at a business a little differently. Now AI can do that research for you.</p>
+      </div>
+      <div class="cases">
+        <article class="case wide">
+          <div class="case-copy">
+            <span class="case-tag">Premium carport company · Google Ads</span>
+            <h3>Cost per deal dropped from $1,177 to $414</h3>
+            <p>New ads and landing pages only nudged results up at first. Then I noticed a carport over an RV on their Instagram. Someone who can afford an RV can afford a premium carport to protect it. I built an RV carport page and ads to match, and within a month the owner emailed me this:</p>
+            <blockquote>"The Google Ads are performing VERY well, in fact, way better than ever before!"</blockquote>
+            <div class="case-stats">
+              <div><span>Cost per deal</span><b>$414</b><em>was $1,177</em></div>
+              <div><span>Cost per contact</span><b>$38.51</b><em>was $85.82</em></div>
+              <div><span>ROI</span><b>2,320%</b><em>was 654%</em></div>
+            </div>
+          </div>
+          <div class="shot">
+            <img src="/img/case-studies/carport.png" alt="Email from the owner of a premium carport company comparing this quarter's Google Ads results with the previous year: cost per deal fell from $1,176.99 to $414, ROI rose from 654% to 2,320%" loading="lazy" width="1196" height="862">
+          </div>
+        </article>
+
+        <article class="case wide">
+          <div class="case-copy">
+            <span class="case-tag">Fitness offer · Paid ads</span>
+            <h3>Scaled to $3,000 a day with one specific hook</h3>
+            <p>Everyone else promised a six-pack. This offer used an ACE bandage to show why core exercises for low back pain should cinch sideways, like a corset. Pairing that hook with split-tested landing pages let us scale to $3,000 a day.</p>
+          </div>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. What happens next -->
+  <section class="sec">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">What happens next</p>
+        <h2>You'll see what it's like to work with me before you decide</h2>
+      </div>
+      <div class="steps">
+        <div class="card"><div class="step-n">STEP 01</div><h3>Take the 2-minute assessment</h3><p>Eight quick questions about your business and your marketing. No call required.</p></div>
+        <div class="card"><div class="step-n">STEP 02</div><h3>I do my homework</h3><p>Before the call I look at your website, Google Business Profile and market, so I'll have real ideas to show you.</p></div>
+        <div class="card"><div class="step-n">STEP 03</div><h3>We walk through your plan</h3><p>Pick a time on your results page, or I'll reach out within 1 business day.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. About -->
+  <section class="sec">
+    <div class="wrap narrow">
+      <div class="about">
+        <img class="avatar" src="/img/zach.jpg" alt="Zach Beaudoin" width="120" height="120">
+        <div>
+          <p class="eyebrow" style="margin-bottom:12px">About me</p>
+          <h2 style="font-size:clamp(24px,3.4vw,32px);margin-bottom:14px">Hi, I'm Zach Beaudoin</h2>
+          <p>I've been in marketing for 12 years, starting with SEO, then paid ads and landing pages for around 300 business owners. I've managed over $13 million in ad spend, up to $20,000 a day, and pulled the same reports thousands of times.</p>
+          <p>When AI got good, I didn't want to be a dinosaur. I paid a developer for one-on-one lessons until I could build my own apps safely, and only then started using it in client accounts. It felt like magic, the same way my first #1 Google ranking did.</p>
+          <p>Now I help business owners cut their marketing costs, get more customers, and see clearly what's working so they can reinvest confidently.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8. FAQ -->
+  <section class="sec">
+    <div class="wrap narrow">
+      <div class="sec-head">
+        <p class="eyebrow">Questions</p>
+        <h2>Common questions</h2>
+      </div>
+      <div class="faq">
+        <details><summary>Will the AI run ads or spend money without me?</summary><p>No. Right now it researches, reports and drafts. Every ad, page or change waits for your approval before anything goes live.</p></details>
+        <details><summary>Is it safe to connect my accounts?</summary><p>That's the first thing I made sure of. I learned this hands-on and built my own apps before connecting anything to a client account. We'll go over exactly what gets access on the call.</p></details>
+        <details><summary>Do I need ChatGPT or Claude already?</summary><p>Either works, and so does neither. If you already use one, we'll connect that. If not, I'll recommend one on the call.</p></details>
+        <details><summary>Will it work with my CRM and ad accounts?</summary><p>Tell me what you use on the call, and I'll give you a straight answer on what connects and what doesn't.</p></details>
+        <details><summary>What does it cost?</summary><p>It depends on what you're running and what you want connected. We'll go over options on the call, once I know your business.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9. Final CTA -->
+  <section class="final">
+    <div class="wrap">
+      <h2>Give your marketing a jolt of energy</h2>
+      <p>Book a call. I'll come with ideas for your business, and you'll leave knowing exactly what connecting your AI would change.</p>
+      <a class="btn" href="#book">Start the assessment</a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© SendKPI</span>
+    <span><a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></span>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@gumlet/player.js@3.0/dist/main.global.js"></script>
+<script>
+  // Track plays and finishes from the Gumlet player (via its player.js API).
+  var started = false;
+  var vsl = new playerjs.Player(document.getElementById('vsl'));
+  vsl.on('ready', function () {
+    vsl.on('play', function () {
+      if (started) return;
+      started = true;
+      try { gtag('event', 'vsl_play'); fbq('trackCustom', 'VSLPlay'); } catch (e) {}
+    });
+    vsl.on('ended', function () {
+      try { gtag('event', 'vsl_complete'); fbq('trackCustom', 'VSLComplete'); } catch (e) {}
+      document.getElementById('book').scrollIntoView({ behavior: 'smooth' });
+    });
+  });
+
+  // Browser pixel + Conversions API copy of the same event, sharing one
+  // event_id so Meta dedupes them. keepalive lets the server call finish
+  // even if the page navigates away right after.
+  function skpiCookie(n) { var m = document.cookie.match(new RegExp('(?:^|; )' + n + '=([^;]*)')); return m ? decodeURIComponent(m[1]) : null; }
+  function trackSchedule() {
+    var id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : Date.now() + '-' + Math.random();
+    try { fbq('track', 'Schedule', {}, { eventID: id }); } catch (e) {}
+    try { gtag('event', 'book_call'); } catch (e) {}
+    try {
+      fetch('https://gbp-lander.vercel.app/api/meta-event', {
+        method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event_name: 'Schedule', event_id: id, event_source_url: location.origin + location.pathname,
+          fbc: skpiCookie('_fbc'), fbp: skpiCookie('_fbp') })
+      }).catch(function () {});
+    } catch (e) {}
+  }
+
+
+  // ── Assessment: 8 questions, then contact, then a personalized plan ──
+  var QS = [
+    {id:'problem', label:'Biggest problem', eyebrow:'Your situation', q:'Which one sounds like you?', sub:'Pick the one that fits best today.', opts:[
+      ['agency','Burned by an agency: paid for months, never saw clear results'],
+      ['quality','Lots of leads, but low quality: they never answer or never buy'],
+      ['cost',"Leads cost too much, and I'm not sure why"],
+      ['numbers',"I don't know my real numbers, like what a customer costs me"],
+      ['volume','Not enough leads: the phone is too quiet'],
+      ['time','No time: marketing always falls to the bottom of the list']]},
+    {id:'need', label:'Needs more', eyebrow:'Your goal', q:'What do you need more of?', sub:'The one that would move your business most.', opts:[
+      ['booked','Booked calls or appointments'],['phone','Phone calls'],['forms','Form submissions'],['sales','Online sales']]},
+    {id:'ai', label:'Preferred AI', eyebrow:'Your AI', q:'Which AI do you prefer?', sub:'No wrong answer. I set up either one.', opts:[
+      ['chatgpt','ChatGPT'],['claude','Claude'],['both','Both'],['none','Not using AI yet']]},
+    {id:'spend', label:'Monthly ad spend', eyebrow:'Ad spend', q:'How much do you spend on ads each month?', sub:'A ballpark is fine.', opts:[
+      ['0','Not running ads yet'],['1','Under $1,000'],['5','$1,000 to $5,000'],['20','$5,000 to $20,000'],['20p','$20,000+']]},
+    {id:'channels', label:'Advertises on', eyebrow:'Channels', q:'Where do you advertise today?', sub:'Pick the closest.', opts:[
+      ['google','Google'],['meta','Facebook and Instagram'],['both','Both Google and Meta'],['other','Somewhere else'],['nowhere','Nowhere yet']]},
+    {id:'crm', label:'CRM', eyebrow:'Your leads', q:'Where do your leads go?', sub:'Where you track who called or filled out a form.', opts:[
+      ['highlevel','HighLevel'],['hubspot','HubSpot'],['fieldservice','Jobber or ServiceTitan'],['sheet','A spreadsheet or my inbox'],['other','Another CRM']]},
+    {id:'help', label:'Wants', eyebrow:'How you work', q:'How hands-on do you want to be?', sub:'This tells me which setup fits you.', opts:[
+      ['dfy','Do it for me'],['dwy','Set it up and teach my team'],['report','Just send me a weekly report']]},
+    {id:'timing', label:'Timing', eyebrow:'Timing', q:'When do you want this working?', sub:'', opts:[
+      ['asap','As soon as possible'],['30','In the next 30 days'],['exploring','Just exploring']]}
+  ];
+  var answers = {}, step = 0, started = false;
+  var body = document.getElementById('q-body');
+  function esc(t) { var d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+  function progress() {
+    var total = QS.length + 1, n = Math.min(step + 1, total);
+    document.getElementById('q-count').textContent = step < QS.length ? 'Question ' + n + ' of ' + QS.length : 'Last step';
+    var pct = Math.round(n / total * 100);
+    document.getElementById('q-pct').textContent = pct + '%';
+    document.getElementById('q-bar').style.width = pct + '%';
+  }
+  function render() {
+    progress();
+    if (step >= QS.length) return renderContact();
+    var q = QS[step], html = '<p class="eyebrow q-eyebrow">' + esc(q.eyebrow) + '</p><h2 class="q-title">' + esc(q.q) + '</h2>' +
+      (q.sub ? '<p class="q-sub">' + esc(q.sub) + '</p>' : '<div style="height:14px"></div>') + '<div class="opts">';
+    q.opts.forEach(function (o) {
+      var on = answers[q.id] && answers[q.id][0] === o[0];
+      html += '<button type="button" class="opt' + (on ? ' on' : '') + '" data-k="' + o[0] + '"><span class="dot"></span>' + esc(o[1]) + '</button>';
+    });
+    html += '</div>' + (step > 0 ? '<button type="button" class="q-back">Back</button>' : '');
+    body.innerHTML = html;
+    body.querySelectorAll('.opt').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var o = q.opts.find(function (x) { return x[0] === btn.dataset.k; });
+        answers[q.id] = o;
+        body.querySelectorAll('.opt').forEach(function (x) { x.classList.toggle('on', x === btn); });
+        if (!started) { started = true; try { fbq('trackCustom', 'QuizStart'); gtag('event', 'quiz_start'); } catch (e) {} }
+        try { gtag('event', 'quiz_step', { step: step + 1, question: q.id, answer: o[0] }); } catch (e) {}
+        setTimeout(function () { step++; render(); }, 220);
+      });
+    });
+    var back = body.querySelector('.q-back');
+    if (back) back.addEventListener('click', function () { step--; render(); });
+  }
+  function renderContact() {
+    body.innerHTML = '<p class="eyebrow q-eyebrow">Almost done</p><h2 class="q-title">Where should I send your game plan?</h2>' +
+      '<p class="q-sub">You\'ll see your plan on the next screen. I\'ll also look at your website before we talk.</p>' +
+      '<form id="q-form" class="fields" novalidate>' +
+      '<label>Name<input name="name" autocomplete="name" required></label>' +
+      '<label>Email<input name="email" type="email" autocomplete="email" required></label>' +
+      '<label>Mobile phone<input name="phone" type="tel" autocomplete="tel" required></label>' +
+      '<label>Website<input name="website" type="url" inputmode="url" placeholder="yourbusiness.com" autocomplete="url"></label>' +
+      '<p class="consent">By submitting, you agree to get calls and texts from SendKPI about your request. Message and data rates may apply. Reply STOP to opt out.</p>' +
+      '<button class="btn q-submit" type="submit">Show my game plan</button><p class="q-err" id="q-err" hidden></p></form>' +
+      '<button type="button" class="q-back">Back</button>';
+    body.querySelector('.q-back').addEventListener('click', function () { step--; render(); });
+    document.getElementById('q-form').addEventListener('submit', submit);
+  }
+  function submit(ev) {
+    ev.preventDefault();
+    var f = ev.target, v = function (n) { return (f.elements[n].value || '').trim(); };
+    var name = v('name'), email = v('email'), phone = v('phone'), website = v('website'), err = document.getElementById('q-err');
+    if (!name || !/^\S+@\S+\.\S+$/.test(email) || phone.replace(/\D/g, '').length < 10) {
+      err.textContent = 'Please add your name, a valid email and a 10-digit phone number.'; err.hidden = false; return;
+    }
+    var id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : Date.now() + '-' + Math.random();
+    var labeled = {};
+    QS.forEach(function (q) { if (answers[q.id]) labeled[q.label] = answers[q.id][1]; });
+    var qs = new URLSearchParams(location.search);
+    ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content'].forEach(function (k) { if (qs.get(k)) labeled[k] = qs.get(k); });
+    try { fbq('track', 'Lead', {}, { eventID: id }); gtag('event', 'generate_lead'); } catch (e) {}
+    try {
+      fetch('https://gbp-lander.vercel.app/api/ai-quiz-lead', {
+        method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name, email: email, phone: phone, website: website || null, answers: labeled,
+          event_id: id, page_url: location.origin + location.pathname, fbc: skpiCookie('_fbc'), fbp: skpiCookie('_fbp') })
+      }).catch(function () {});
+    } catch (e) {}
+    showResults(name, email);
+  }
+  function key(id) { return answers[id] ? answers[id][0] : ''; }
+  function showResults(name, email) {
+    var first = name.split(' ')[0];
+    var PROBLEM = {
+      agency: "<b>You'll see every number yourself.</b> Your AI reads your ad accounts directly, so nothing hides behind a monthly PDF.",
+      quality: '<b>Fix lead quality at the source.</b> Instant follow-up, lead scoring in your CRM, and real customers sent back to Meta and Google so they find buyers, not form-fillers.',
+      cost: '<b>First, find where the money leaks.</b> Your AI compares every ad and keyword against what actually turned into customers.',
+      numbers: '<b>Your numbers, on demand.</b> Ask "what did a customer cost me last month?" and get the answer in seconds.',
+      volume: '<b>New angles from your best customers.</b> We study what made them buy, plus what competitors run, then test fresh ads and pages.',
+      time: '<b>It runs in the background.</b> Your AI drafts the reports and the ads; you just approve.'
+    };
+    var NEED = { booked: 'booked call', phone: 'phone call', forms: 'lead', sales: 'sale' };
+    var CRM = { highlevel: 'HighLevel', hubspot: 'HubSpot', fieldservice: 'your field-service software', sheet: 'a simple CRM', other: 'your CRM' };
+    var AI = { chatgpt: 'Set up in <b>ChatGPT</b>, connected to your ad accounts, website and CRM.', claude: 'Set up in <b>Claude</b>, connected to your ad accounts, website and CRM.',
+      both: 'Works with <b>both ChatGPT and Claude</b>, connected to your ad accounts, website and CRM.', none: "I'll recommend <b>ChatGPT or Claude</b> for your setup and connect it to your ads, website and CRM." };
+    var HELP = { dfy: '<b>Best fit: done-for-you.</b> I run it with your AI; you approve every launch.', dwy: '<b>Best fit: a 4-week setup sprint.</b> I build it on your accounts and train your team.',
+      report: '<b>Best fit: the weekly AI KPI report.</b> Your numbers and three recommendations in your inbox every Monday.' };
+    var items = [];
+    if (PROBLEM[key('problem')]) items.push(PROBLEM[key('problem')]);
+    if (NEED[key('need')]) items.push('<b>Your north-star number: cost per ' + NEED[key('need')] + '</b>, tracked from ad click to ' + (CRM[key('crm')] || 'your CRM') + '.');
+    if (AI[key('ai')]) items.push(AI[key('ai')]);
+    if (key('spend') === '0' || key('channels') === 'nowhere') items.push("<b>Start small.</b> Since you're not running ads yet, we'd set up tracking first, then one test campaign.");
+    if (HELP[key('help')]) items.push(HELP[key('help')]);
+    document.getElementById('r-title').textContent = "Thanks, " + first + "! Here's your starting plan.";
+    document.getElementById('r-plan').innerHTML = items.map(function (t) { return '<li><span>' + t + '</span></li>'; }).join('');
+    document.getElementById('quiz').hidden = true;
+    document.getElementById('results').hidden = false;
+    document.getElementById('cal').src = 'https://calendly.com/zkbmarketing/meet-with-zach-beaudoin?embed_domain=sendkpi.com&embed_type=Inline&hide_event_type_details=1&hide_gdpr_banner=1&primary_color=0d57d0' +
+      '&name=' + encodeURIComponent(name) + '&email=' + encodeURIComponent(email);
+    document.getElementById('book').scrollIntoView({ behavior: 'smooth' });
+  }
+  render();
+
+  // Fire Schedule when someone books in the Calendly embed.
+  window.addEventListener('message', function (e) {
+    if (e.origin !== 'https://calendly.com' || !e.data) return;
+    // Calendly reports its content height; grow the box to fit so the
+    // calendar never scrolls inside its own frame.
+    if (e.data.event === 'calendly.page_height' && e.data.payload) {
+      var h = parseInt(e.data.payload.height, 10);
+      if (h > 300) document.querySelector('.calendly-inline-widget').style.height = h + 'px';
+      return;
+    }
+    if (e.data.event !== 'calendly.event_scheduled') return;
+    trackSchedule();
+    try { sessionStorage.setItem('skpi_ai_scheduled', '1'); } catch (err) {}
+    // Go straight to our thank-you page; Calendly's own redirect detours
+    // through a "You are leaving Calendly" warning. The short delay lets the
+    // pixel and GA hits send first.
+    setTimeout(function () { location.href = '/ai-booked'; }, 700);
+  });
+</script>
+</body></html>

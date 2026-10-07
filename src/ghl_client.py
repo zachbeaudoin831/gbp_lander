@@ -78,6 +78,8 @@ def upsert_contact(
     business: Optional[str],
     tags: Optional[list[str]] = None,
     custom_fields: Optional[dict[str, str]] = None,
+    signup_tag: bool = True,
+    source: str = SOURCE,
 ) -> dict:
     """Upsert one contact into the configured GHL sub-account.
 
@@ -102,8 +104,10 @@ def upsert_contact(
 
     payload: dict = {
         "locationId": location_id,
-        "source": SOURCE,
-        "tags": [SIGNUP_TAG, *(tags or [])],
+        "source": source,
+        # signup_tag=False keeps leads from other offers (e.g. the AI quiz)
+        # out of the GBP funnel's sendkpi-signup automations.
+        "tags": [*([SIGNUP_TAG] if signup_tag else []), *(tags or [])],
     }
     if name:
         payload["name"] = name.strip()
