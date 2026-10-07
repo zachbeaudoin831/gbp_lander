@@ -134,6 +134,7 @@ RATE_LIMITS: dict[str, tuple[int, int]] = {
     "ghl-contact": (8, 3600),
     "meta-event": (60, 3600),
     "ai-quiz-lead": (10, 3600),
+    "ghl-scopes": (5, 3600),
 }
 
 # Global daily caps (all IPs combined): the circuit breaker for distributed
@@ -159,6 +160,7 @@ DAILY_CAPS: dict[str, int] = {
     "ghl-contact": 300,
     "meta-event": 2000,
     "ai-quiz-lead": 300,
+    "ghl-scopes": 20,
 }
 
 
@@ -466,6 +468,36 @@ def meta_event(req: MetaEventRequest, request: Request):
         return {"ok": True}
     except MetaCapiError:
         return {"ok": False}
+
+
+@app.get("/api/ghl-scopes")
+def ghl_scopes():
+    """TEMPORARY diagnostic: which GHL scopes the deployed token has. Returns
+    only HTTP status codes per probe (never data or the token). The write
+    probe posts an empty body, which GHL rejects before creating anything:
+    401 = scope missing, 400/422 = scope present.
+    """
+    import requests
+    token = os.environ.get("GHL_API_TOKEN"); loc = os.environ.get("GHL_LOCATION_ID")
+    if not token or not loc:
+        return {"configured": False}
+    base = "https://services.leadconnectorhq.com"
+    h = {"Authorization": f"Bearer {token}", "Version": "2021-07-28", "Accept": "application/json"}
+    probes = {
+        "contacts.readonly": ("GET", f"{base}/contacts/?locationId={loc}&limit=1"),
+        "locations/customFields.readonly": ("GET", f"{base}/locations/{loc}/customFields"),
+        "locations/customFields.write": ("POST", f"{base}/locations/{loc}/customFields"),
+        "locations/tags.readonly": ("GET", f"{base}/locations/{loc}/tags"),
+        "opportunities.readonly": ("GET", f"{base}/opportunities/pipelines?locationId={loc}"),
+    }
+    out = {}
+    for scope, (method, url) in probes.items():
+        try:
+            r = requests.request(method, url, headers=h, json={} if method == "POST" else None, timeout=10)
+            out[scope] = r.status_code
+        except Exception:
+            out[scope] = "error"
+    return {"configured": True, "status_by_scope": out}
 
 
 class AiQuizLeadRequest(BaseModel):
