@@ -134,7 +134,7 @@ RATE_LIMITS: dict[str, tuple[int, int]] = {
     "ghl-contact": (8, 3600),
     "meta-event": (60, 3600),
     "ai-quiz-lead": (10, 3600),
-    "ghl-scopes": (5, 3600),
+    "ghl-scopes": (80, 3600),
 }
 
 # Global daily caps (all IPs combined): the circuit breaker for distributed
@@ -160,7 +160,7 @@ DAILY_CAPS: dict[str, int] = {
     "ghl-contact": 300,
     "meta-event": 2000,
     "ai-quiz-lead": 300,
-    "ghl-scopes": 20,
+    "ghl-scopes": 200,
 }
 
 
