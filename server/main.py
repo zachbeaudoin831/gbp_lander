@@ -494,7 +494,8 @@ def ghl_scopes():
     for scope, (method, url) in probes.items():
         try:
             r = requests.request(method, url, headers=h, json={} if method == "POST" else None, timeout=10)
-            out[scope] = r.status_code
+            # On auth failures include GHL's short error message (no data rides on a 401/403).
+            out[scope] = r.status_code if r.status_code not in (401, 403) else f"{r.status_code}: {r.text[:140]}"
         except Exception:
             out[scope] = "error"
     return {"configured": True, "status_by_scope": out}
