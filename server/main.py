@@ -485,6 +485,7 @@ def ghl_scopes():
     h = {"Authorization": f"Bearer {token}", "Version": "2021-07-28", "Accept": "application/json"}
     probes = {
         "contacts.readonly": ("GET", f"{base}/contacts/?locationId={loc}&limit=1"),
+        "contacts.write": ("POST", f"{base}/contacts/upsert"),
         "locations/customFields.readonly": ("GET", f"{base}/locations/{loc}/customFields"),
         "locations/customFields.write": ("POST", f"{base}/locations/{loc}/customFields"),
         "locations/tags.readonly": ("GET", f"{base}/locations/{loc}/tags"),
