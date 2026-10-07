@@ -494,7 +494,9 @@ def ghl_scopes():
     out = {}
     for scope, (method, url) in probes.items():
         try:
-            r = requests.request(method, url, headers=h, json={} if method == "POST" else None, timeout=10)
+            # Write probes send a body GHL must reject (invalid email / missing fields), so nothing is created.
+            body = {"locationId": loc, "email": "not-an-email"} if scope == "contacts.write" else {}
+            r = requests.request(method, url, headers=h, json=body if method == "POST" else None, timeout=10)
             # On auth failures include GHL's short error message (no data rides on a 401/403).
             out[scope] = r.status_code if r.status_code not in (401, 403) else f"{r.status_code}: {r.text[:140]}"
         except Exception:
