@@ -26,6 +26,33 @@ QUIZ_FIELDS: dict[str, tuple[str, Optional[list[str]]]] = {
 }
 
 
+# GHL field keys as created in the sub-account (via the one-off setup on 2026-10-07).
+FIELD_KEYS: dict[str, str] = {
+    "Biggest problem": "contact.quiz_biggest_problem",
+    "Needs more": "contact.quiz_needs_more",
+    "Preferred AI": "contact.quiz_preferred_ai",
+    "Monthly ad spend": "contact.quiz_monthly_ad_spend",
+    "Advertises on": "contact.quiz_advertises_on",
+    "CRM": "contact.quiz_crm",
+    "Wants": "contact.quiz_wants",
+    "Timing": "contact.quiz_timing",
+    "Website": "contact.quiz_website",
+}
+
+
+def quiz_custom_fields(answers: dict[str, str], website: Optional[str]) -> dict[str, str]:
+    """Answers -> {GHL field key: value}. Dropdown values are only sent when they
+    match a known option exactly, so one stray value can't make GHL reject them all."""
+    out = {}
+    for label, value in answers.items():
+        spec = QUIZ_FIELDS.get(label)
+        if spec and label in FIELD_KEYS and (spec[1] is None or value in spec[1]):
+            out[FIELD_KEYS[label]] = value
+    if website and website.strip():
+        out[FIELD_KEYS["Website"]] = website.strip()[:300]
+    return out
+
+
 def quiz_tags(answers: dict[str, str]) -> list[str]:
     """Action tags derived from the answers (see the SOP doc for what each drives)."""
     a = answers.get

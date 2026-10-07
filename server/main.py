@@ -45,6 +45,7 @@ from src.ai_copy import (
     generate_google_rsa,
 )
 from src.brand_color import fetch_brand_color
+from src.ai_quiz_fields import quiz_custom_fields, quiz_tags
 from src.ghl_client import GhlError, add_note as ghl_add_note, is_configured as ghl_is_configured, upsert_contact
 from src.kit_store import (
     KitStoreError,
@@ -134,7 +135,6 @@ RATE_LIMITS: dict[str, tuple[int, int]] = {
     "ghl-contact": (8, 3600),
     "meta-event": (60, 3600),
     "ai-quiz-lead": (10, 3600),
-    "ghl-quiz-setup": (30, 3600),
 }
 
 # Global daily caps (all IPs combined): the circuit breaker for distributed
@@ -160,7 +160,6 @@ DAILY_CAPS: dict[str, int] = {
     "ghl-contact": 300,
     "meta-event": 2000,
     "ai-quiz-lead": 300,
-    "ghl-quiz-setup": 60,
 }
 
 
@@ -470,52 +469,6 @@ def meta_event(req: MetaEventRequest, request: Request):
         return {"ok": False}
 
 
-@app.get("/api/ghl-quiz-setup")
-def ghl_quiz_setup():
-    """TEMPORARY one-off: report the token's scopes (status codes only) and
-    create any missing AI-quiz custom fields. Idempotent: existing fields
-    (matched by name) are left alone. Returns names and ids, no contact data.
-    """
-    import requests
-    from src.ai_quiz_fields import QUIZ_FIELDS
-    token = os.environ.get("GHL_API_TOKEN"); loc = os.environ.get("GHL_LOCATION_ID")
-    if not token or not loc:
-        return {"configured": False}
-    base = "https://services.leadconnectorhq.com"
-    h = {"Authorization": f"Bearer {token}", "Version": "2021-07-28", "Accept": "application/json"}
-    scopes = {}
-    for scope, url in {"contacts.readonly": f"{base}/contacts/?locationId={loc}&limit=1",
-                       "locations/customFields.readonly": f"{base}/locations/{loc}/customFields",
-                       "locations/tags.readonly": f"{base}/locations/{loc}/tags",
-                       "opportunities.readonly": f"{base}/opportunities/pipelines?locationId={loc}"}.items():
-        try:
-            scopes[scope] = requests.get(url, headers=h, timeout=10).status_code
-        except Exception:
-            scopes[scope] = "error"
-    r = requests.get(f"{base}/locations/{loc}/customFields", headers=h, timeout=10)
-    if r.status_code != 200:
-        return {"scopes": scopes, "error": f"listing custom fields failed: HTTP {r.status_code}"}
-    existing = {f.get("name"): f for f in (r.json().get("customFields") or [])}
-    fields = {}
-    for name, opts in QUIZ_FIELDS.values():
-        if name in existing:
-            f = existing[name]; fields[name] = {"status": "exists", "id": f.get("id"), "key": f.get("fieldKey"), "type": f.get("dataType")}
-            continue
-        body = {"name": name, "model": "contact", "dataType": "SINGLE_OPTIONS" if opts else "TEXT"}
-        if opts:
-            body["options"] = opts
-        c = requests.post(f"{base}/locations/{loc}/customFields", headers=h, json=body, timeout=10)
-        if c.status_code >= 400 and opts:
-            # Fall back to a plain text field rather than leave the answer uncaptured.
-            c = requests.post(f"{base}/locations/{loc}/customFields", headers=h, json={"name": name, "model": "contact", "dataType": "TEXT"}, timeout=10)
-        if c.status_code < 300:
-            f = c.json().get("customField") or c.json()
-            fields[name] = {"status": "created", "id": f.get("id"), "key": f.get("fieldKey"), "type": f.get("dataType")}
-        else:
-            fields[name] = {"status": f"failed HTTP {c.status_code}", "detail": c.text[:160]}
-    return {"scopes": scopes, "fields": fields}
-
-
 class AiQuizLeadRequest(BaseModel):
     """A completed AI-offer assessment from sendkpi.com/ai-quiz: contact
     details plus the visitor's answers (question label -> answer text).
@@ -533,7 +486,8 @@ class AiQuizLeadRequest(BaseModel):
 
 @app.post("/api/ai-quiz-lead")
 def ai_quiz_lead(req: AiQuizLeadRequest, request: Request):
-    """Sync an AI-assessment lead to GHL (own tag, no GBP signup tag) with the
+    """Sync an AI-assessment lead to GHL: answers into the "Quiz: ..." custom
+    fields, action tags from src/ai_quiz_fields.py (no GBP signup tag), and the
     answers as a note, and send Meta a server-side Lead with the hashed email
     and phone, sharing event_id with the browser pixel so Meta dedupes them.
     Best-effort on each: the visitor already sees their results.
@@ -543,7 +497,8 @@ def ai_quiz_lead(req: AiQuizLeadRequest, request: Request):
     try:
         contact = upsert_contact(
             name=req.name.strip(), email=req.email.strip(), phone=req.phone.strip(),
-            business=None, tags=["ai-offer-quiz"], signup_tag=False, source="SendKPI AI assessment",
+            business=None, tags=quiz_tags(answers), signup_tag=False, source="SendKPI AI assessment",
+            custom_fields=quiz_custom_fields(answers, req.website),
         )
         ghl_ok = True
         contact_id = (contact.get("contact") or {}).get("id")
