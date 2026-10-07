@@ -134,7 +134,6 @@ RATE_LIMITS: dict[str, tuple[int, int]] = {
     "ghl-contact": (8, 3600),
     "meta-event": (60, 3600),
     "ai-quiz-lead": (10, 3600),
-    "ghl-scopes": (80, 3600),
 }
 
 # Global daily caps (all IPs combined): the circuit breaker for distributed
@@ -160,7 +159,6 @@ DAILY_CAPS: dict[str, int] = {
     "ghl-contact": 300,
     "meta-event": 2000,
     "ai-quiz-lead": 300,
-    "ghl-scopes": 200,
 }
 
 
@@ -468,40 +466,6 @@ def meta_event(req: MetaEventRequest, request: Request):
         return {"ok": True}
     except MetaCapiError:
         return {"ok": False}
-
-
-@app.get("/api/ghl-scopes")
-def ghl_scopes():
-    """TEMPORARY diagnostic: which GHL scopes the deployed token has. Returns
-    only HTTP status codes per probe (never data or the token). The write
-    probe posts an empty body, which GHL rejects before creating anything:
-    401 = scope missing, 400/422 = scope present.
-    """
-    import requests
-    token = os.environ.get("GHL_API_TOKEN"); loc = os.environ.get("GHL_LOCATION_ID")
-    if not token or not loc:
-        return {"configured": False}
-    base = "https://services.leadconnectorhq.com"
-    h = {"Authorization": f"Bearer {token}", "Version": "2021-07-28", "Accept": "application/json"}
-    probes = {
-        "contacts.readonly": ("GET", f"{base}/contacts/?locationId={loc}&limit=1"),
-        "contacts.write": ("POST", f"{base}/contacts/upsert"),
-        "locations/customFields.readonly": ("GET", f"{base}/locations/{loc}/customFields"),
-        "locations/customFields.write": ("POST", f"{base}/locations/{loc}/customFields"),
-        "locations/tags.readonly": ("GET", f"{base}/locations/{loc}/tags"),
-        "opportunities.readonly": ("GET", f"{base}/opportunities/pipelines?locationId={loc}"),
-    }
-    out = {}
-    for scope, (method, url) in probes.items():
-        try:
-            # Write probes send a body GHL must reject (invalid email / missing fields), so nothing is created.
-            body = {"locationId": loc, "email": "not-an-email"} if scope == "contacts.write" else {}
-            r = requests.request(method, url, headers=h, json=body if method == "POST" else None, timeout=10)
-            # On auth failures include GHL's short error message (no data rides on a 401/403).
-            out[scope] = r.status_code if r.status_code not in (401, 403) else f"{r.status_code}: {r.text[:140]}"
-        except Exception:
-            out[scope] = "error"
-    return {"configured": True, "status_by_scope": out}
 
 
 class AiQuizLeadRequest(BaseModel):
