@@ -22,10 +22,10 @@ fbq('init', '2456464214838090');fbq('track', 'PageView');</script>
 /* Same palette and type as the sendkpi.com homepage (home.css). */
 :root{
   --paper:#FBFAF7;--paper-2:#F3F0E9;--card:#fff;
-  --ink:#181310;--ink-2:#5C544C;--ink-3:#8A8178;
+  --ink:#181310;--ink-2:#5C544C;--ink-3:#6F675E;
   --line:#E4DFD5;--line-2:#D5CFC2;
   --blue:#0D57D0;--blue-deep:#0A46A8;--blue-soft:#E7EEFB;
-  --green:#0E8A5F;--green-soft:#E3F2EA;--red:#B8432F;--red-soft:#F8E8E4;
+  --green:#0B7A53;--green-soft:#E3F2EA;--red:#B8432F;--red-soft:#F8E8E4;
   --dark:#1C1712;--dark-ink:#F4EFE7;--dark-ink-2:#B5AA9C;
   --shadow:0 1px 2px rgba(24,19,16,.05),0 12px 32px -12px rgba(24,19,16,.18);
   --shadow-lg:0 2px 4px rgba(24,19,16,.06),0 28px 64px -20px rgba(24,19,16,.28);
@@ -39,7 +39,8 @@ body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);f
 h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;letter-spacing:-.02em}
 p{margin:0}a{color:inherit}img{max-width:100%;display:block}
 :focus-visible{outline:2.5px solid var(--blue);outline-offset:3px;border-radius:4px}
-.wrap{max-width:1040px;margin:0 auto;padding:0 clamp(16px,4vw,40px)}
+.wrap{max-width:1040px;margin:0 auto;padding:0 40px}
+@media (max-width:700px){.wrap{padding:0 16px}}
 .narrow{max-width:860px}
 .eyebrow{font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--blue)}
 
@@ -65,19 +66,7 @@ p{margin:0}a{color:inherit}img{max-width:100%;display:block}
 /* booking */
 .book{padding:36px 0 56px;scroll-margin-top:56px}
 .hero h1.q-hero{font-size:clamp(40px,6.4vw,68px);max-width:none}
-/* Nearly all traffic is mobile: keep question 1 and its first two answers on the first screen. */
-@media (max-width:600px){
-  .hero{padding:20px 0 14px}
-  .hero .eyebrow{margin-bottom:10px}
-  .hero h1.q-hero{font-size:38px;margin-bottom:12px}
-  .hero .lede{font-size:16px}
-  .book{padding-top:6px}
-  .quiz-card{padding:20px 18px}
-  .quiz-bar{margin:10px 0 18px}
-  .q-sub{margin-bottom:14px}
-  .opt{padding:13px 16px;font-size:16px}
-}
-.quiz-card{background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);padding:clamp(22px,4vw,40px);max-width:820px;margin:0 auto}
+.quiz-card{background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);padding:36px 40px;max-width:820px;margin:0 auto}
 .quiz-card[hidden]{display:none}
 .quiz-top{display:flex;justify-content:space-between;font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
 .quiz-bar{height:8px;border-radius:99px;background:var(--paper-2);margin:12px 0 28px;overflow:hidden}
@@ -122,7 +111,8 @@ p{margin:0}a{color:inherit}img{max-width:100%;display:block}
 @media (max-width:760px){.stats{grid-template-columns:repeat(2,1fr)}}
 
 /* sections */
-section.sec{padding:clamp(48px,7vw,80px) 0;border-top:1px solid var(--line)}
+section.sec{padding:72px 0;border-top:1px solid var(--line)}
+@media (max-width:700px){section.sec{padding:48px 0}}
 .sec-head{max-width:640px;margin-bottom:32px}
 .sec-head .eyebrow{margin-bottom:12px}
 .sec-head h2{font-size:clamp(26px,3.8vw,38px);line-height:1.12;margin-bottom:12px}
@@ -195,13 +185,26 @@ section.sec{padding:clamp(48px,7vw,80px) 0;border-top:1px solid var(--line)}
 .faq details p{padding:0 0 18px;color:var(--ink-2);font-size:15.5px}
 
 /* final cta */
-.final{background:var(--dark);color:var(--dark-ink);text-align:center;padding:clamp(56px,8vw,88px) 0}
+.final{background:var(--dark);color:var(--dark-ink);text-align:center;padding:80px 24px}
+@media (max-width:700px){.final{padding:56px 16px}}
 .final h2{font-size:clamp(28px,4.4vw,42px);margin-bottom:14px}
 .final p{color:var(--dark-ink-2);max-width:54ch;margin:0 auto 28px}
 .final .btn{font-size:17px;padding:16px 28px}
 footer{background:var(--dark);color:var(--dark-ink-2);font-size:13px;border-top:1px solid rgba(255,255,255,.08)}
 footer .wrap{display:flex;gap:18px;justify-content:space-between;flex-wrap:wrap;padding-top:20px;padding-bottom:20px}
 footer a{text-decoration:none}footer a:hover{color:var(--dark-ink)}
+/* Nearly all traffic is mobile: keep question 1 and its first two answers on the first screen. */
+@media (max-width:600px){
+  .hero{padding:20px 0 14px}
+  .hero .eyebrow{margin-bottom:10px}
+  .hero h1.q-hero{font-size:38px;margin-bottom:12px}
+  .hero .lede{font-size:16px}
+  .book{padding-top:6px}
+  .quiz-card{padding:20px 18px}
+  .quiz-bar{margin:10px 0 18px}
+  .q-sub{margin-bottom:14px}
+  .opt{padding:13px 16px;font-size:16px}
+}
 </style>
 </head>
 <body>
@@ -247,12 +250,6 @@ footer a{text-decoration:none}footer a:hover{color:var(--dark-ink)}
           sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"></iframe></div>
       </div>
 
-      <div class="stats">
-        <div class="stat"><b>12 years</b><span>running ads and landing pages</span></div>
-        <div class="stat"><b>300</b><span>business owners worked with</span></div>
-        <div class="stat"><b>$13M+</b><span>in ad spend managed</span></div>
-        <div class="stat"><b>$20k/day</b><span>peak daily ad spend</span></div>
-      </div>
     </div>
   </section>
 
