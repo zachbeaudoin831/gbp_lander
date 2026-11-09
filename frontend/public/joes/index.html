@@ -109,6 +109,8 @@ nav a{text-decoration:none;color:var(--tx)}nav a:hover{color:var(--or)}
   .chips{margin-top:clamp(14px,2.4vh,28px)}
   .stats .stat{padding:16px 14px}.stats .stat b{font-size:clamp(30px,4.2vh,44px)}.stats .stat span{margin-top:4px}
 }
+/* Desktop: hero fills the screen so the stats bar's bottom edge meets the bottom of the window (JS sets the exact height) */
+@media (min-width:980px){.hero{display:flex;flex-direction:column;justify-content:center;min-height:calc(100vh - 202px)}}
 @media (min-width:980px) and (max-height:900px){
   .talk{padding:20px}.talk-h img{width:56px;height:56px}
   .big{margin-top:10px;padding:12px 16px}.big .bi{width:42px;height:42px}
@@ -519,6 +521,12 @@ I had the driver stop at their shop right after leaving the auction yard, and th
   if(ts){if(h>=t[0]&&h<t[1]){ts.textContent='In the shop now · open until '+fmt(t[1]);}
     else{fd.classList.add('closed');var nd2=h<t[0]?d:(d+1)%7;ts.textContent='Closed now · text anytime, opens '+(nd2===d?'today':'tomorrow')+' at '+fmt(H[nd2][0]);}}
 })();
+// Desktop: size the hero so top bar + header + hero + stats bar exactly fill the window.
+function fitHero(){var h=document.querySelector('.hero');if(!h)return;
+  if(!matchMedia('(min-width:980px)').matches){h.style.minHeight='';return;}
+  var r=function(sel){return document.querySelector(sel).getBoundingClientRect().height;};
+  h.style.minHeight=Math.max(0,Math.ceil(innerHeight-r('.topbar')-r('header')-r('.stats')))+'px';}
+fitHero();addEventListener('resize',fitHero);addEventListener('load',fitHero);if(document.fonts)document.fonts.ready.then(fitHero);
 // Reviews: newest first, in the shorter of two columns on wide screens; "Show more" reveals the rest.
 function masonry(){var r=document.getElementById('rvList');if(!r)return;
   var cards=r._cards||(r._cards=[].slice.call(r.querySelectorAll('.rv')));r.innerHTML='';
