@@ -1,0 +1,534 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Joe's All Tire | Honest Tire & Brake Shop in Elk River, MN</title>
+<meta name="description" content="Independent tire and brake shop in Elk River, MN since 1993. New and used tires, repairs patched right, brakes, trailer, ATV and motorcycle tires. Open 7 days. 4.9 stars from 747 Google reviews.">
+<link rel="icon" href="/joes/assets/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,600..900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--or:#E93002;--or2:#FF5A1F;--bl:#0A47B8;--bl-d:#06296B;--ink:#0E1116;--ink2:#171B22;--tx:#1E232B;--dim:#5B6370;--line:#E3E6EB;--bg:#F4F5F7;--acc:var(--or)}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,sans-serif;color:var(--tx);background:#fff;line-height:1.55;-webkit-font-smoothing:antialiased}
+img{display:block;max-width:100%}
+a{color:inherit}
+.wrap{width:min(1180px,100% - 32px);margin:0 auto}
+h1,h2,h3,.disp{font-family:'Archivo',sans-serif;font-stretch:80%;font-weight:900;line-height:1;letter-spacing:-.01em;text-transform:uppercase}
+h2{font-size:clamp(34px,6vw,58px)}
+h3{font-size:22px;font-stretch:85%;font-weight:800}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--or)}
+.eyebrow::before{content:"";width:22px;height:3px;background:currentColor;border-radius:2px}
+.lead{font-size:18px;color:var(--dim);max-width:640px;margin-top:14px}
+section{padding:84px 0}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;font-weight:700;font-size:16px;text-decoration:none;border-radius:12px;padding:15px 22px;transition:transform .15s,box-shadow .15s,background .15s;white-space:nowrap}
+.btn svg{width:19px;height:19px;flex:none}
+.btn-or{background:var(--or);color:#fff;box-shadow:0 10px 24px rgba(233,48,2,.35)}
+.btn-or:hover{background:var(--or2);transform:translateY(-1px)}
+.btn-ghost{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.28)}
+.btn-ghost:hover{background:rgba(255,255,255,.18)}
+.btn-dark{background:var(--ink);color:#fff}
+.btn-line{border:2px solid var(--ink);color:var(--ink)}
+.stars{color:#FBBC04;letter-spacing:1px}
+.g{width:20px;height:20px;flex:none}
+
+/* concept bar + top bar + header */
+.topbar{background:var(--bl-d);color:#dfe7f7;font-size:13.5px}
+.topbar .wrap{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:8px 0;flex-wrap:wrap}
+.topbar a{color:#fff;font-weight:600;text-decoration:none}
+.open-dot{display:inline-flex;align-items:center;gap:8px;font-weight:600;color:#fff}
+.open-dot i{width:9px;height:9px;border-radius:50%;background:#27C46B;box-shadow:0 0 0 4px rgba(39,196,107,.25)}
+.open-dot.closed i{background:#F2A33A;box-shadow:0 0 0 4px rgba(242,163,58,.25)}
+.tb-r{display:flex;gap:18px;align-items:center}
+header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+header .wrap{display:flex;align-items:center;justify-content:space-between;gap:18px;height:74px}
+.logo img{height:48px;width:auto}
+nav{display:flex;gap:26px;font-weight:600;font-size:15px}
+nav a{text-decoration:none;color:var(--tx)}nav a:hover{color:var(--or)}
+.h-cta{display:flex;gap:10px}
+.h-cta .btn{padding:11px 16px;font-size:15px}
+@media (max-width:980px){nav{display:none}}
+@media (max-width:640px){.h-cta .btn-text-h{display:none}.h-cta .btn{padding:10px 14px}.logo img{height:40px}.topbar .tb-hide{display:none}}
+@media (max-width:420px){.h-cta .num{display:none}.h-cta .call-word{display:inline}}
+.call-word{display:none}
+
+/* hero */
+.hero{position:relative;color:#fff;padding:0;overflow:hidden;background:var(--ink)}
+.hero::before{content:"";position:absolute;inset:0;background:url('/joes/assets/shop.jpg') center 60%/cover;opacity:.55}
+.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,rgba(14,17,22,.97) 0%,rgba(14,17,22,.88) 42%,rgba(14,17,22,.55) 100%),linear-gradient(0deg,rgba(14,17,22,.8),transparent 40%)}
+.hero .wrap{position:relative;z-index:1;display:grid;gap:36px;padding:64px 0 72px;align-items:center}
+.hero .wrap>*{min-width:0}
+.rating{display:inline-flex;align-items:center;gap:10px;background:#fff;color:#202124;border-radius:999px;padding:8px 16px 8px 10px;font-size:14.5px;font-weight:600;text-decoration:none;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+.rating b{font-size:16px}
+.hero h1{font-size:clamp(46px,9vw,92px);margin-top:22px}
+.hero h1 span{color:var(--or);display:block}
+.hero .sub{font-size:clamp(17px,2.2vw,20px);color:#D4D9E1;max-width:560px;margin-top:20px}
+.hero .ctas{display:flex;gap:12px;margin-top:28px;flex-wrap:wrap}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:28px}
+.chips span{display:inline-flex;align-items:center;gap:7px;font-size:13.5px;font-weight:600;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);padding:7px 12px;border-radius:999px;color:#E9ECF1}
+.chips svg{width:15px;height:15px;stroke:var(--or2);fill:none;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.talk{width:100%;max-width:500px;justify-self:center;background:#fff;color:var(--tx);border-radius:24px;padding:24px;box-shadow:0 30px 70px rgba(0,0,0,.45)}
+.talk-h{display:flex;align-items:center;gap:14px}
+.talk-h .face{position:relative;flex:none}
+.talk-h img{width:64px;height:64px;border-radius:50%;object-fit:cover;border:3px solid #fff;box-shadow:0 0 0 2px var(--or)}
+.talk-h .face i{position:absolute;right:1px;bottom:3px;width:15px;height:15px;border-radius:50%;background:#27C46B;border:3px solid #fff}
+.talk-h .face.closed i{background:#F2A33A}
+.talk-h b{display:block;font-family:'Archivo';font-stretch:82%;font-weight:900;text-transform:uppercase;font-size:26px;line-height:1}
+.talk-h span{display:block;font-size:14px;color:var(--dim);margin-top:4px}
+.big{display:flex;align-items:center;gap:14px;text-decoration:none;border-radius:16px;padding:15px 18px;margin-top:14px;transition:transform .15s,box-shadow .15s}
+.big:hover{transform:translateY(-1px)}
+.big .bi{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;flex:none}
+.big .bi svg{width:24px;height:24px}
+.big b{display:block;font-size:18px;line-height:1.2}
+.big small{display:block;font-size:13.5px;opacity:.85;margin-top:2px}
+.big .arr{margin-left:auto;font-size:22px;opacity:.8}
+.big.call{background:var(--or);color:#fff;box-shadow:0 12px 26px rgba(233,48,2,.32)}
+.big.call .bi{background:rgba(255,255,255,.18)}
+.big.text{background:var(--ink);color:#fff}
+.big.text .bi{background:rgba(255,255,255,.1)}
+.quick{margin-top:18px}
+.quick p{font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.quick div{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.quick a{font-size:14px;font-weight:600;text-decoration:none;color:var(--tx);background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:8px 13px;transition:border-color .15s,background .15s}
+.quick a:hover{border-color:var(--or);background:#FFF3EE}
+.size{display:flex;gap:14px;align-items:center;margin-top:18px;padding:14px;border-radius:14px;background:#F4F7FD;border:1px dashed #BFD0EE}
+.size svg{width:96px;height:56px;flex:none}
+.size p{font-size:14px;color:#3A4352}.size p b{color:var(--bl)}
+.talk q{display:block;font-size:14px;color:var(--dim);margin-top:16px;text-align:center;quotes:none}
+.talk q b{color:var(--tx);font-weight:600}
+@media (min-width:980px){.hero .wrap{grid-template-columns:1.12fr .88fr;padding:80px 0 96px}.talk{justify-self:end}}
+/* Desktop: size the hero to the screen height so the orange stats bar shows without scrolling */
+@media (min-width:980px){
+  .hero .wrap{padding:clamp(26px,4.2vh,72px) 0 clamp(28px,4.6vh,80px)}
+  .hero h1{font-size:clamp(46px,min(6.4vw,8.4vh),92px);margin-top:clamp(12px,2.2vh,22px)}
+  .hero .sub{margin-top:clamp(10px,2vh,20px)}
+  .hero .ctas{margin-top:clamp(16px,2.6vh,28px)}
+  .chips{margin-top:clamp(14px,2.4vh,28px)}
+  .stats .stat{padding:16px 14px}.stats .stat b{font-size:clamp(30px,4.2vh,44px)}.stats .stat span{margin-top:4px}
+}
+@media (min-width:980px) and (max-height:900px){
+  .talk{padding:20px}.talk-h img{width:56px;height:56px}
+  .big{margin-top:10px;padding:12px 16px}.big .bi{width:42px;height:42px}
+  .quick{margin-top:14px}.quick div{margin-top:8px}.quick a{padding:7px 12px}
+  .size{display:none}
+  .talk q{margin-top:12px}
+  .chips span:nth-child(n+4){display:none}
+}
+@media (min-width:980px) and (max-height:760px){.chips{display:none}.hero .sub{font-size:17px}}
+.big b{white-space:nowrap}
+@media (max-width:460px){.talk{padding:18px;border-radius:20px}.talk-h b{font-size:23px}.big{gap:12px;padding:13px 14px}.big .bi{width:40px;height:40px}.big b{font-size:16.5px}.big .arr{display:none}}
+
+/* stats */
+.stats{background:var(--or);color:#fff;padding:0}
+.stats .wrap{display:grid;grid-template-columns:repeat(2,1fr)}
+.stat{padding:26px 14px;text-align:center;border-right:1px solid rgba(255,255,255,.22)}
+.stat:nth-child(2n){border-right:0}
+.stat:nth-child(-n+2){border-bottom:1px solid rgba(255,255,255,.22)}
+.stat b{display:block;font-family:'Archivo';font-stretch:78%;font-weight:900;font-size:clamp(34px,5vw,48px);line-height:1}
+.stat span{display:block;font-size:13.5px;font-weight:600;opacity:.92;margin-top:6px}
+@media (min-width:760px){.stats .wrap{grid-template-columns:repeat(4,1fr)}.stat{border-bottom:0!important;border-right:1px solid rgba(255,255,255,.22)!important}.stat:last-child{border-right:0!important}}
+
+/* stories */
+.stories{background:var(--bg)}
+.story-grid{display:grid;gap:18px;margin-top:40px}
+.story{background:#fff;border-radius:20px;padding:28px;border:1px solid var(--line);display:flex;flex-direction:column;gap:16px;position:relative;overflow:hidden}
+.story::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--or)}
+.story .tag{font-family:'Archivo';font-stretch:82%;font-weight:800;text-transform:uppercase;font-size:22px;line-height:1.05;color:var(--ink)}
+.story blockquote{font-size:17px;color:#2B313A;flex:1}
+.story blockquote::before{content:"“";font-family:Georgia,serif;font-size:56px;line-height:.4;color:var(--or);display:block;margin:14px 0 6px}
+.who{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--dim)}
+.who b{color:var(--tx)}
+@media (min-width:860px){.story-grid{grid-template-columns:repeat(3,1fr)}}
+
+/* services */
+.svc-grid{display:grid;gap:16px;margin-top:40px}
+.svc{display:flex;gap:18px;align-items:flex-start;background:#fff;border:1px solid var(--line);border-radius:18px;padding:24px;transition:border-color .15s,transform .15s,box-shadow .15s}
+.svc:hover{border-color:#cfd4dc;transform:translateY(-2px);box-shadow:0 12px 30px rgba(14,17,22,.07)}
+.svc .ic{width:54px;height:54px;border-radius:14px;background:#FFF0EA;display:grid;place-items:center;flex:none}
+.svc .ic svg{width:30px;height:30px;stroke:var(--or);fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.svc p{color:var(--dim);font-size:15.5px;margin-top:6px}
+.svc .pill{display:inline-block;margin-top:10px;font-size:12.5px;font-weight:700;color:var(--bl);background:#EAF0FC;border-radius:999px;padding:4px 10px}
+.svc-more{margin-top:22px;font-size:15.5px;color:var(--dim)}.svc-more b{color:var(--tx)}
+@media (min-width:700px){.svc-grid{grid-template-columns:repeat(2,1fr)}}
+@media (min-width:1040px){.svc-grid{grid-template-columns:repeat(3,1fr)}}
+
+/* not walmart */
+.nw{background:var(--ink);color:#fff;overflow:hidden}
+.nw .wrap{display:grid;gap:44px;align-items:center}
+.nw h2 em{font-style:normal;color:var(--or)}
+.nw .lead{color:#B9C0CB}
+.nw-list{display:grid;gap:18px;margin-top:30px}
+.nw-item{display:flex;gap:14px}
+.nw-item .n{flex:none;width:34px;height:34px;border-radius:10px;background:rgba(233,48,2,.15);color:var(--or2);display:grid;place-items:center;font-weight:800;font-family:'Archivo'}
+.nw-item b{display:block;font-size:17px}
+.nw-item span{color:#AEB5C0;font-size:15px}
+.photo-stack{position:relative;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.photo-stack img{border-radius:18px;width:100%;aspect-ratio:3/4;object-fit:cover}
+.photo-stack img:nth-child(2){margin-top:44px}
+.photo-stack .badge{position:absolute;left:50%;bottom:-18px;transform:translateX(-50%);background:var(--or);color:#fff;font-family:'Archivo';font-stretch:80%;font-weight:900;text-transform:uppercase;font-size:20px;padding:12px 20px;border-radius:14px;white-space:nowrap;box-shadow:0 14px 30px rgba(0,0,0,.35)}
+@media (min-width:980px){.nw .wrap{grid-template-columns:1fr 1fr;gap:70px}}
+
+/* winter */
+.winter{background:linear-gradient(135deg,#0B3D99,#06296B);color:#fff;position:relative;overflow:hidden}
+.winter::after{content:"";position:absolute;right:-120px;top:-120px;width:460px;height:460px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.12),transparent 65%)}
+.winter .wrap{position:relative;z-index:1;display:grid;gap:34px;align-items:center}
+.winter .eyebrow{color:#9CC1FF}
+.winter .lead{color:#C9D7F2}
+.tread{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.tread div{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:16px;padding:20px}
+.tread b{font-family:'Archivo';font-stretch:82%;font-weight:800;text-transform:uppercase;font-size:20px;display:block}
+.tread span{font-size:14.5px;color:#C9D7F2;display:block;margin-top:6px}
+.tread .good{border-color:#7FB0FF;background:rgba(127,176,255,.14)}
+.tread svg{width:100%;height:64px;margin-bottom:12px}
+@media (min-width:900px){.winter .wrap{grid-template-columns:1.1fr .9fr}}
+
+/* reviews */
+.rv-head{display:grid;gap:20px;align-items:end}
+.rv-score{display:flex;align-items:center;gap:16px;background:var(--bg);border-radius:18px;padding:18px 22px;width:max-content;max-width:100%}
+.rv-score .big{font-family:'Archivo';font-stretch:78%;font-weight:900;font-size:54px;line-height:1}
+.rv-score small{display:block;color:var(--dim);font-size:13.5px}
+@media (min-width:900px){.rv-head{grid-template-columns:1fr auto}}
+.reviews{margin-top:36px}
+.reviews.mz{display:flex;gap:16px;align-items:flex-start}.mz-col{flex:1;min-width:0}
+.rv{background:#fff;border:1px solid var(--line);border-radius:18px;padding:20px;margin:0 0 16px;box-shadow:0 4px 18px rgba(14,17,22,.04)}
+.rv-h{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.rv-h .av{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;flex:none}
+.rv-h b{display:block;font-size:15px;color:#202124}.rv-h span{font-size:13px;color:#70757a}
+.rv-h .g{margin-left:auto}
+.rv blockquote{font-size:15.5px;color:#30363a;white-space:pre-line}
+.rv.more{display:none}.show-all .rv.more{display:block}
+.rv-actions{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:10px}
+
+/* joe */
+.joe{background:var(--bg)}
+.joe .wrap{display:grid;gap:44px;align-items:center}
+.joe-photo{position:relative}
+.joe-photo img{border-radius:22px;width:100%;aspect-ratio:4/5;object-fit:cover;object-position:center 30%}
+.joe-photo .since{position:absolute;right:-10px;bottom:28px;background:#fff;border-radius:16px;padding:14px 18px;box-shadow:0 14px 34px rgba(14,17,22,.18);text-align:center}
+.joe-photo .since b{display:block;font-family:'Archivo';font-stretch:78%;font-weight:900;font-size:40px;line-height:1;color:var(--or)}
+.joe-photo .since span{font-size:12.5px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.08em}
+.joe p{margin-top:16px;font-size:16.5px;color:#39414C}
+.timeline{display:grid;gap:12px;margin-top:26px}
+.timeline div{display:flex;gap:14px;align-items:baseline}
+.timeline b{flex:none;width:64px;font-family:'Archivo';font-stretch:80%;font-weight:900;font-size:20px;color:var(--bl)}
+.timeline span{color:#39414C;font-size:15.5px}
+.team{margin-top:28px;background:#fff;border:1px dashed #C9CED6;border-radius:16px;padding:18px 20px}
+.team b{font-size:14px;text-transform:uppercase;letter-spacing:.1em;color:var(--dim)}
+.team ul{list-style:none;margin-top:10px;display:grid;gap:6px;font-size:15px}
+.team li span{color:var(--dim)}
+@media (min-width:940px){.joe .wrap{grid-template-columns:.85fr 1.15fr;gap:70px}}
+
+/* brands */
+.brands{padding:64px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.brands .wrap{display:grid;gap:28px;align-items:center}
+.mq{display:flex;align-items:center;gap:16px;background:#111;color:#FFD200;border-radius:16px;padding:12px 18px 12px 12px;width:max-content;max-width:100%}
+.mq img{width:58px;height:58px;border-radius:10px}
+.mq b{font-family:'Archivo';font-stretch:82%;font-weight:900;text-transform:uppercase;font-size:20px;line-height:1.05;display:block}
+.mq span{color:#ddd;font-size:13.5px}
+.brand-list{display:flex;flex-wrap:wrap;gap:8px}
+.brand-list span{font-family:'Archivo';font-stretch:85%;font-weight:800;text-transform:uppercase;font-size:15px;letter-spacing:.03em;border:1px solid var(--line);border-radius:10px;padding:9px 14px;color:#3A414B}
+@media (min-width:940px){.brands .wrap{grid-template-columns:auto 1fr}}
+
+/* visit */
+.visit .wrap{display:grid;gap:30px}
+.map{border-radius:20px;overflow:hidden;border:1px solid var(--line);min-height:340px;background:#e9ecef}
+.map iframe{width:100%;height:100%;min-height:340px;border:0;display:block}
+.info{display:grid;gap:18px}
+.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:22px}
+.hours{width:100%;border-collapse:collapse;font-size:15.5px;margin-top:8px}
+.hours td{padding:8px 0;border-bottom:1px solid var(--line)}
+.hours td:last-child{text-align:right;font-weight:600}
+.hours tr.today td{color:var(--or);font-weight:800}
+.towns{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.towns span{background:var(--bg);border-radius:999px;padding:5px 11px;font-size:13.5px;font-weight:600;color:#39414C}
+@media (min-width:940px){.visit .wrap{grid-template-columns:1.2fr .8fr}}
+
+/* faq */
+.faq{background:var(--bg)}
+.faq .wrap{max-width:860px}
+details{background:#fff;border:1px solid var(--line);border-radius:14px;padding:0 20px;margin-top:12px}
+summary{cursor:pointer;list-style:none;font-weight:700;font-size:17px;padding:18px 0;display:flex;justify-content:space-between;gap:16px}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";font-size:24px;line-height:1;color:var(--or);font-weight:600}
+details[open] summary::after{content:"–"}
+details p{padding:0 0 18px;color:#434B56}
+
+/* final + footer */
+.final{background:var(--or);color:#fff;text-align:center}
+.final h2{font-size:clamp(38px,7vw,72px)}
+.final p{font-size:19px;opacity:.95;margin:16px auto 0;max-width:620px}
+.final .ctas{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:28px}
+.final .btn-or{background:#fff;color:var(--or);box-shadow:0 12px 26px rgba(0,0,0,.18)}
+.final .btn-ghost{border-color:rgba(255,255,255,.6)}
+footer{background:var(--ink);color:#9AA2AE;font-size:14.5px;padding:52px 0 30px}
+footer .wrap{display:grid;gap:30px}
+footer b{color:#fff;display:block;margin-bottom:10px;font-size:15px}
+footer a{text-decoration:none;color:#D5DAE1}
+footer .fl{display:grid;gap:6px}
+footer .copy{border-top:1px solid #262C35;padding-top:20px;font-size:13px;grid-column:1/-1}
+@media (min-width:860px){footer .wrap{grid-template-columns:1.4fr 1fr 1fr 1fr}}
+
+/* sticky mobile bar */
+.mbar{position:fixed;left:0;right:0;bottom:0;z-index:60;display:grid;grid-template-columns:1fr 1fr 1fr;background:#fff;border-top:1px solid var(--line);box-shadow:0 -8px 24px rgba(0,0,0,.08)}
+.mbar a{display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 0 11px;font-size:12.5px;font-weight:700;text-decoration:none;color:var(--tx)}
+.mbar a svg{width:22px;height:22px;stroke:var(--or);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.mbar a.primary{background:var(--or);color:#fff}.mbar a.primary svg{stroke:#fff}
+@media (min-width:760px){.mbar{display:none}}
+@media (max-width:759px){body{padding-bottom:64px}}
+</style>
+</head>
+<body>
+<div class="topbar"><div class="wrap">
+  <span class="open-dot" id="openNow"><i></i><span>Open 7 days a week</span></span>
+  <div class="tb-r"><span class="tb-hide">20300 Auburn St NW, Elk River</span><a href="sms:+16126444201?&amp;body=Hi%20Joe%2C%20I%27d%20like%20a%20price%20on%20tires.%20My%20tire%20size%20is%3A%20">Text us: (612) 644-4201</a></div>
+</div></div>
+<header><div class="wrap">
+  <a class="logo" href="#top"><img src="/joes/assets/logo.png" alt="Joe's All Tire"></a>
+  <nav><a href="#services">Services</a><a href="#reviews">Reviews</a><a href="#joe">Meet Joe</a><a href="#winter">Winter tires</a><a href="#visit">Hours &amp; directions</a></nav>
+  <div class="h-cta">
+    <a class="btn btn-line btn-text-h" href="sms:+16126444201?&amp;body=Hi%20Joe%2C%20I%27d%20like%20a%20price%20on%20tires.%20My%20tire%20size%20is%3A%20"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8.5 8.5 0 0 1-12.4 7.5L3 21l1.5-5.6A8.5 8.5 0 1 1 21 12z"/><path d="M8.5 11h.01M12 11h.01M15.5 11h.01"/></svg>Text Joe</a>
+    <a class="btn btn-or" href="tel:+17632411874"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg><span class="num">(763) 241-1874</span><span class="call-word">Call</span></a>
+  </div>
+</div></header>
+
+<main id="top">
+<section class="hero"><div class="wrap">
+  <div>
+    <a class="rating" href="https://www.google.com/maps/search/?api=1&query=All+Tire+20300+Auburn+St+NW+Elk+River+MN+55330" target="_blank" rel="noopener"><svg viewBox="0 0 48 48" class="g"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg><b>4.9</b><span class="stars">★★★★★</span><span>747 Google reviews</span></a>
+    <h1>Honest tires &amp; brakes.<span>Since 1993.</span></h1>
+    <p class="sub">An independent tire and brake shop in Elk River where the owner, Joe, is in the shop every day. He'll tell you what your vehicle needs, even when the answer is "not yet."</p>
+    <div class="ctas">
+      <a class="btn btn-or" href="sms:+16126444201?&amp;body=Hi%20Joe%2C%20I%27d%20like%20a%20price%20on%20tires.%20My%20tire%20size%20is%3A%20"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8.5 8.5 0 0 1-12.4 7.5L3 21l1.5-5.6A8.5 8.5 0 1 1 21 12z"/><path d="M8.5 11h.01M12 11h.01M15.5 11h.01"/></svg>Text Joe for a price</a>
+      <a class="btn btn-ghost" href="tel:+17632411874"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>Call (763) 241-1874</a>
+    </div>
+    <div class="chips">
+      <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Open 7 days</span><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Patched right, never plugged</span><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Michelin Quality Dealer</span><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>ASE-certified</span><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Bring your own tires</span>
+    </div>
+  </div>
+  <div class="talk" id="quote">
+    <div class="talk-h">
+      <div class="face" id="faceDot"><img src="/joes/assets/joe-face.jpg" alt="Joe Saunders, owner"><i></i></div>
+      <div><b>Talk to Joe directly</b><span id="talkStatus">The owner answers his own phone and texts.</span></div>
+    </div>
+    <a class="big call" href="tel:+17632411874"><span class="bi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg></span><span><b>Call (763) 241-1874</b><small>Best for flats and same-day help</small></span><span class="arr">→</span></a>
+    <a class="big text" href="sms:+16126444201?&amp;body=Hi%20Joe%2C%20I%27d%20like%20a%20price%20on%20tires.%20My%20tire%20size%20is%3A%20"><span class="bi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8.5 8.5 0 0 1-12.4 7.5L3 21l1.5-5.6A8.5 8.5 0 1 1 21 12z"/><path d="M8.5 11h.01M12 11h.01M15.5 11h.01"/></svg></span><span><b>Text Joe for a price</b><small>(612) 644-4201 · send your tire size</small></span><span class="arr">→</span></a>
+    <div class="quick"><p>Or tap to text Joe about</p><div><a href="sms:+16126444201?&amp;body=Hi%20Joe%2C%20I%27ve%20got%20a%20nail%20in%20my%20tire.%20Can%20you%20patch%20it%20today%3F">Nail in my tire</a><a href="sms:+16126444201?&amp;body=Hi%20Joe%2C%20I%27d%20like%20a%20price%20on%20tires.%20My%20tire%20size%20is%3A%20">New set of tires</a><a href="sms:+16126444201?&amp;body=Hi%20Joe%2C%20I%27d%20like%20a%20price%20on%20winter%20tires.%20My%20tire%20size%20is%3A%20">Winter tires</a><a href="sms:+16126444201?&amp;body=Hi%20Joe%2C%20I%20need%20my%20brakes%20looked%20at.%20My%20vehicle%20is%20a%3A%20">Brakes</a><a href="sms:+16126444201?&amp;body=Hi%20Joe%2C%20I%20need%20tires%20for%20my%20trailer/ATV.%20The%20tire%20size%20is%3A%20">Trailer or ATV tires</a><a href="sms:+16126444201?&amp;body=Hi%20Joe%2C%20I%20have%20my%20own%20tires.%20Can%20you%20mount%20and%20balance%20them%3F">Mount my own tires</a></div></div>
+    <div class="size">
+      <svg viewBox="0 0 96 56" aria-hidden="true"><path d="M2 54a46 46 0 0 1 92 0" fill="#1E232B"/><path d="M14 54a34 34 0 0 1 68 0" fill="#fff"/><path d="M24 54a24 24 0 0 1 48 0" fill="#C9CED6"/><rect x="25" y="9" width="46" height="13" rx="3" fill="#0A47B8"/><text x="48" y="18.6" text-anchor="middle" font-family="Inter,Arial" font-size="8.5" font-weight="800" fill="#fff">225/65R17</text></svg>
+      <p><b>Not sure of your size?</b> It's printed on the side of your tire. Snap a photo and text it to Joe.</p>
+    </div>
+    <q><b>"Answers his phone and texts immediately."</b> Travis L., Google review</q>
+  </div>
+</div></section>
+
+<section class="stats"><div class="wrap">
+  <div class="stat"><b>1993</b><span>Same owner, same town</span></div>
+  <div class="stat"><b>4.9★</b><span>747 Google reviews</span></div>
+  <div class="stat"><b>331</b><span>New reviews this past year</span></div>
+  <div class="stat"><b>7 days</b><span>Open every day of the week</span></div>
+</div></section>
+
+<section class="stories"><div class="wrap">
+  <div class="eyebrow">Why people drive past three other shops</div>
+  <h2 style="margin-top:12px">The tire guy who picks up the phone</h2>
+  <div class="story-grid">
+    <figure class="story"><div class="tag">Honest, even when it costs him a sale</div>
+      <blockquote>…could have sold into me but instead of selling them to me told me why they would not work. Hard to find an honest guy nowadays.</blockquote>
+      <figcaption class="who"><svg viewBox="0 0 48 48" class="g"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg><span><b>Mr G.</b> · 3 days ago</span></figcaption></figure>
+    <figure class="story"><div class="tag">Answers after hours</div>
+      <blockquote>I got a flat tire late at night after business hours, but he still answered my call and replaced the tire quickly.</blockquote>
+      <figcaption class="who"><svg viewBox="0 0 48 48" class="g"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg><span><b>Hailee K.</b> · 5 days ago</span></figcaption></figure>
+    <figure class="story"><div class="tag">Gets travelers back on the road</div>
+      <blockquote>We had a tire failure at 12:30am.… Joe got us 4 new tires, mounted, balanced and out the door.</blockquote>
+      <figcaption class="who"><svg viewBox="0 0 48 48" class="g"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg><span><b>Robert H.</b> · a month ago</span></figcaption></figure>
+  </div>
+</div></section>
+
+<section id="services"><div class="wrap">
+  <div class="eyebrow">What we do</div>
+  <h2 style="margin-top:12px">If it rolls, Joe can tire it</h2>
+  <p class="lead">Cars, pickups, SUVs, trailers, ATVs, UTVs, skid steers, motorcycles, lawn tractors and light industrial. Call or text for a quote. Prices depend on your tire size and how you drive, so we don't guess online.</p>
+  <div class="svc-grid">
+    <div class="svc"><div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><circle cx="12" cy="12" r="4"/><path d="M12 2.5v5.5M12 16v5.5M2.5 12H8M16 12h5.5M5.3 5.3l3.9 3.9M14.8 14.8l3.9 3.9M18.7 5.3l-3.9 3.9M9.2 14.8l-3.9 3.9"/></svg></div><div><h3>New &amp; used tires</h3><p>New tires for cars, trucks and SUVs, plus hand-picked used tires and overstock deals that move fast.</p><span class="pill">Text for a quote</span></div></div><div class="svc"><div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M8 12h8M12 8v8"/></svg></div><div><h3>Mounting, balancing &amp; repair</h3><p>Your tires or ours, mounted and balanced. Punctures are patched correctly, never plugged.</p><span class="pill">Patched, never plugged</span></div></div><div class="svc"><div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><circle cx="12" cy="12" r="2.5"/><path d="M12 2.5v3M21.5 12h-3M12 21.5v-3M2.5 12h3"/><path d="M16.5 4.5a9.5 9.5 0 0 1 3 4"/></svg></div><div><h3>Brake service</h3><p>Grinding, pulling or a soft pedal? Brake inspection and repair from ASE-certified hands.</p><span class="pill">ASE-certified</span></div></div><div class="svc"><div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="17" r="3.5"/><circle cx="18" cy="17" r="3.5"/><path d="M9.5 17h5M4 13l2-5h9l3 5M13 8l1-3h3"/></svg></div><div><h3>ATV &amp; UTV tires</h3><p>ATV and UTV tire mounting is a big part of the work here, and growing every season.</p></div></div><div class="svc"><div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5.5" cy="16.5" r="3.5"/><circle cx="18.5" cy="16.5" r="3.5"/><path d="M5.5 16.5 9 9h5l4.5 7.5M14 9l-1.5-3H10M9 9l3 7.5h1"/></svg></div><div><h3>Motorcycle &amp; dirt bike</h3><p>Street bikes and dirt bikes, mounted and balanced so you&#x27;re riding again fast.</p></div></div><div class="svc"><div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 15.5h14v-7h-14zM16.5 13h5"/><circle cx="7" cy="17.5" r="2.5"/><path d="M21.5 13v3"/></svg></div><div><h3>Trailer, skid steer &amp; lawn</h3><p>Trailer tires matched to your load rating, plus skid steer, lawn tractor and light industrial tires.</p><span class="pill">Load-rating help</span></div></div>
+  </div>
+  <p class="svc-more"><b>Bringing your own tires?</b> No problem. We mount and balance yours or ours.</p>
+</div></section>
+
+<section class="nw"><div class="wrap">
+  <div>
+    <div class="eyebrow">Small-shop care, big-shop results</div>
+    <h2 style="margin-top:12px">This isn't <em>Walmart.</em></h2>
+    <p class="lead">A big-box tire counter works from a script. At All Tire you talk to someone who has spent over 30 years in the tire business, and he's the one who owns the shop.</p>
+    <div class="nw-list">
+      <div class="nw-item"><div class="n">1</div><div><b>You talk to the owner, not a script</b><span>No call center, no middlemen. Joe works on-site every day and answers his own phone and texts.</span></div></div>
+      <div class="nw-item"><div class="n">2</div><div><b>Honest answers, even "not yet"</b><span>If your tires have life left, Joe tells you. If they're dangerous, he shows you why.</span></div></div>
+      <div class="nw-item"><div class="n">3</div><div><b>Repairs patched right, never plugged</b><span>The right way to fix a puncture, done from the inside.</span></div></div>
+      <div class="nw-item"><div class="n">4</div><div><b>Open nights and weekends</b><span>Weeknights until 8, Saturdays and Sundays too, because flats don't keep office hours.</span></div></div>
+    </div>
+  </div>
+  <div class="photo-stack">
+    <img src="/joes/assets/joe-rolling.jpg" alt="Joe rolling new tires across the shop floor" loading="lazy">
+    <img src="/joes/assets/joe-at-machine.jpg" alt="Joe mounting a tire at All Tire" loading="lazy">
+    <div class="badge">Owner-operated since 1993</div>
+  </div>
+</div></section>
+
+<section class="winter" id="winter"><div class="wrap">
+  <div>
+    <div class="eyebrow">Minnesota winter is coming</div>
+    <h2 style="margin-top:12px">Get your winter tires on before the first snow</h2>
+    <p class="lead">"All season" and M+S stamps don't tell you how a tire grips in slush. Tread shape does. Joe will show you the difference on the tires he carries and match you to the right set for your commute, from Elk River to up north.</p>
+    <div class="ctas" style="display:flex;gap:12px;flex-wrap:wrap;margin-top:26px">
+      <a class="btn btn-or" href="sms:+16126444201?&amp;body=Hi%20Joe%2C%20I%27d%20like%20a%20price%20on%20winter%20tires.%20My%20tire%20size%20is%3A%20"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8.5 8.5 0 0 1-12.4 7.5L3 21l1.5-5.6A8.5 8.5 0 1 1 21 12z"/><path d="M8.5 11h.01M12 11h.01M15.5 11h.01"/></svg>Text Joe about winter tires</a>
+      <a class="btn btn-ghost" href="tel:+17632411874"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>Call (763) 241-1874</a>
+    </div>
+  </div>
+  <div class="tread">
+    <div class="good"><svg viewBox="0 0 160 64" fill="none" stroke="#9CC1FF" stroke-width="5" stroke-linecap="round"><path d="M8 10h144M8 54h144"/><path d="M8 20h20M8 32h28M8 44h20M152 20h-20M152 32h-28M152 44h-20"/><path d="M48 16l12 16-12 16M80 16l12 16-12 16M112 16l12 16-12 16" stroke-width="4"/></svg><b>Open shoulder</b><span>Grooves run out the sides, so slush and water escape.</span></div>
+    <div><svg viewBox="0 0 160 64" fill="none" stroke="#6E86B8" stroke-width="5" stroke-linecap="round"><path d="M8 10h144M8 54h144M12 18v28M148 18v28"/><path d="M48 16l12 16-12 16M80 16l12 16-12 16M112 16l12 16-12 16" stroke-width="4"/></svg><b>Closed shoulder</b><span>Solid edges trap slush under the tire.</span></div>
+  </div>
+</div></section>
+
+<section id="reviews"><div class="wrap">
+  <div class="rv-head">
+    <div>
+      <div class="eyebrow">747 reviews and counting</div>
+      <h2 style="margin-top:12px">331 new Google reviews in the past year</h2>
+      <p class="lead">326 of them are 5 stars. Here are the newest, straight from Google.</p>
+    </div>
+    <div class="rv-score"><svg viewBox="0 0 48 48" class="g" style="width:46px;height:46px"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg><div><div class="big">4.9</div></div><div><span class="stars" style="font-size:18px">★★★★★</span><small>735 five-star reviews</small></div></div>
+  </div>
+  <div class="reviews" id="rvList"><figure class="rv"><div class="rv-h"><div class="av" style="background:#E93002">Z</div><div><b>Zachary B.</b><span><span class="stars">★★★★★</span> · 3 days ago</span></div><svg viewBox="0 0 48 48" class="g"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg></div><blockquote>After chasing a tire issue across multiple other shops, Joe at All Tire was finally able to help me. We replaced a couple of tires and remounted and balanced everything. Left all tire with my truck riding better than it has since getting the new wheels and tires installed.</blockquote></figure><figure class="rv"><div class="rv-h"><div class="av" style="background:#0A47B8">S</div><div><b>Sherry E.</b><span><span class="stars">★★★★★</span> · 2 weeks ago</span></div><svg viewBox="0 0 48 48" class="g"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg></div><blockquote>Called to have a tire repaired after I found a nail embedded in it. He got me in the same day, on a Sunday, and patched the tire for me. Fast, friendly service at a reasonable price.</blockquote></figure><figure class="rv"><div class="rv-h"><div class="av" style="background:#0F8A5F">T</div><div><b>Thomas O.</b><span><span class="stars">★★★★★</span> · a month ago</span></div><svg viewBox="0 0 48 48" class="g"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg></div><blockquote>I’ve had a great experience with Joe’s All Tire. He put new front brakes in my Audi Q3. They provide excellent service, are friendly and professional, and their prices are very competitive. It’s nice to have a local tire and brake shop that you can trust to do quality work without overcharging. I highly recommend Joe’s All Tire for anyone looking for honest, reliable service!</blockquote></figure><figure class="rv"><div class="rv-h"><div class="av" style="background:#7A3FD1">T</div><div><b>Travis L.</b><span><span class="stars">★★★★★</span> · a month ago</span></div><svg viewBox="0 0 48 48" class="g"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg></div><blockquote>Joe is simply as genuine as they come. Answers his phone and texts immediately. I dropped off some skid steer tires unannounced on a Friday afternoon. He let me know he has a full line up, and might not get to them until Saturday, but two hours later I got a text from him saying they were done and ready. I can&#x27;t recommend Joe enough! Thanks again, Sir!</blockquote></figure><figure class="rv"><div class="rv-h"><div class="av" style="background:#C2185B">M</div><div><b>Mark</b><span><span class="stars">★★★★★</span> · a month ago</span></div><svg viewBox="0 0 48 48" class="g"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg></div><blockquote>I’ve had Joe replace tires, patch tires, fix brakes on my personal vehicle and work vehicle, replace tires on my lawn tractor replace a wheel bearing and probably more . The appointment process is simple and convenient especially with the possibility of a Saturday or Sunday. I’ve never had to go back for a second fix, always done right the first time.</blockquote></figure><figure class="rv"><div class="rv-h"><div class="av" style="background:#E93002">B</div><div><b>Britt A.</b><span><span class="stars">★★★★★</span> · a month ago</span></div><svg viewBox="0 0 48 48" class="g"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg></div><blockquote>This was my first time at Joe’s All Star. I only went for a balance and rotation but he caught some serious wear on my tires. And showed me. Yikes. Really bad, no kidding. I wasn’t thrilled to get new tires but he saved me a blow out. And what quick service. He also explains the why and how of tires. Very thankful.</blockquote></figure><figure class="rv"><div class="rv-h"><div class="av" style="background:#0A47B8">M</div><div><b>Marina S.</b><span><span class="stars">★★★★★</span> · 4 weeks ago</span></div><svg viewBox="0 0 48 48" class="g"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg></div><blockquote>We were traveling 6 hours from home and  had an emergency requiring a new tire early Friday morning...we called and he had us back on the road by 1pm...he knew his stuff...great personal service and he did such great work we replaced all 4 tires...we felt lucky to have had a tire problem near that business!</blockquote></figure><figure class="rv"><div class="rv-h"><div class="av" style="background:#0F8A5F">D</div><div><b>Daniel H.</b><span><span class="stars">★★★★★</span> · a month ago</span></div><svg viewBox="0 0 48 48" class="g"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg></div><blockquote>Joe’s All Tire is hands down the best tire shop around! Joe provides fast, honest, and high-quality service at a very fair price. It is refreshing to find a reliable local business that genuinely cares about its customers. Highly recommended!</blockquote></figure><figure class="rv"><div class="rv-h"><div class="av" style="background:#7A3FD1">B</div><div><b>Benjamin C.</b><span><span class="stars">★★★★★</span> · a month ago</span></div><svg viewBox="0 0 48 48" class="g"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg></div><blockquote>Had a flat tire early in the morning with an odd tire size nobody carried. Joe went out of his way to help me out even ordered the tire without money down till I could get there. He will be the only person I go to for tires from here on out</blockquote></figure><figure class="rv more"><div class="rv-h"><div class="av" style="background:#C2185B">J</div><div><b>John K.</b><span><span class="stars">★★★★★</span> · a month ago</span></div><svg viewBox="0 0 48 48" class="g"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg></div><blockquote>I have been a repeat customer of Joe’s for many years. His owner operated business is a source of pride and it shows in his work. His price and service are second to none. I would recommend him to my mother.</blockquote></figure><figure class="rv more"><div class="rv-h"><div class="av" style="background:#E93002">K</div><div><b>Kellie B.</b><span><span class="stars">★★★★★</span> · 2 months ago</span></div><svg viewBox="0 0 48 48" class="g"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg></div><blockquote>Fantastic Service!
+
+My tire got nailed on Labor Day weekend. I called around to get it repaired. Even though Joe was closing at 3pm. Joe said if I could make it in by 3pm he will repair my tire. I am very impressed with his service and knowledge. Joe showed me the inside of the tire and where the tiny nail hole was. Joe explained the steps prior to patching as I watched him do so.
+
+Joe took the time to explain and show me and my adult daughter, hands on, the difference between a closed shoulder tire and an open shoulder tire. (The difference in treads and why one is better than the other.)
+
+Joe is witty and personable, he goes above and beyond to make a stressful situation well worth the visit!
+
+Thank you Joe!</blockquote></figure><figure class="rv more"><div class="rv-h"><div class="av" style="background:#0A47B8">S</div><div><b>Steven T.</b><span><span class="stars">★★★★★</span> · 2 months ago</span></div><svg viewBox="0 0 48 48" class="g"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg></div><blockquote>Absolutely a life saver. I was headed up North and passing through the area at about 8pm when I got a low tire pressure indicator. Every other business was closed... I called and, while there is no way to do a repair in the time he or I had, he at least looked it over and set me up with some air so I could get back home to switch vehicles. Through and through a stand up guy. I tried to pay for taking up his time and he kindly didn&#x27;t accept. I would recommend him for service, and have him on top of mind when I need some new tire work for any of my vehicles.</blockquote></figure><figure class="rv more"><div class="rv-h"><div class="av" style="background:#0F8A5F">S</div><div><b>Sean B.</b><span><span class="stars">★★★★★</span> · 2 months ago</span></div><svg viewBox="0 0 48 48" class="g"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg></div><blockquote>Purchased a boat from an auction out in Minnesota and had a long-haul transport driver picking it up to haul down to Florida. The boat trailer needed four brand-new tires mounted and balanced before making the long trip, and All Tire handled it seamlessly.
+
+I had the driver stop at their shop right after leaving the auction yard, and they got the trailer in, mounted, and balanced all four tires quickly so my driver could hit the road safely without losing time. Fantastic customer service!</blockquote></figure><figure class="rv more"><div class="rv-h"><div class="av" style="background:#7A3FD1">T</div><div><b>Tara S.</b><span><span class="stars">★★★★★</span> · 2 months ago</span></div><svg viewBox="0 0 48 48" class="g"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg></div><blockquote>Joe was awesome to do business with! He repaired my tire after it got a nail in it—something all the other shops I contacted wouldn’t even touch. He had great communication, reasonable prices, and truly stands behind his work. I highly recommend Joe if you’re looking for someone honest, reliable, and great at what he does! ⭐️⭐️⭐️⭐️⭐️</blockquote></figure><figure class="rv more"><div class="rv-h"><div class="av" style="background:#C2185B">R</div><div><b>Randall F.</b><span><span class="stars">★★★★★</span> · 2 months ago</span></div><svg viewBox="0 0 48 48" class="g"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg></div><blockquote>fantastic service. it was a weekend and front bearings went out on my truck. he replace them and also replaced a rear rotor all in the same day. I was able to get my truck back on Sunday. he explains everything being done. I highly recommend Joe for service on a vehicle.</blockquote></figure><figure class="rv more"><div class="rv-h"><div class="av" style="background:#E93002">C</div><div><b>Connor W.</b><span><span class="stars">★★★★★</span> · 2 months ago</span></div><svg viewBox="0 0 48 48" class="g"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg></div><blockquote>Working with Joe is great! He’s quick and easy to communicate with, incredibly informative, and helped me (someone who knows nothing about cars and tires) pick great tires for this upcoming winter. I’d definitely work with him again!</blockquote></figure><figure class="rv more"><div class="rv-h"><div class="av" style="background:#0A47B8">M</div><div><b>M W.</b><span><span class="stars">★★★★★</span> · 2 months ago</span></div><svg viewBox="0 0 48 48" class="g"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg></div><blockquote>Great experience at Joe’s All Tire! Joe got me in the same day, was super friendly, and had my tire fixed and me back out the door in about 15 minutes. Great service, quick turnaround, and a fair price. I’ll definitely be back!</blockquote></figure><figure class="rv more"><div class="rv-h"><div class="av" style="background:#0F8A5F">L</div><div><b>Lanny F.</b><span><span class="stars">★★★★★</span> · 2 months ago</span></div><svg viewBox="0 0 48 48" class="g"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg></div><blockquote>Joe was the bomb.  He answered his phone on a Sunday, ordered the tires and had early Monday morning.  He made a bad situation the best outcome.  We will be forever grateful!  Oh and he very knowledgeable!!!</blockquote></figure><figure class="rv more"><div class="rv-h"><div class="av" style="background:#7A3FD1">J</div><div><b>Jeanne P.</b><span><span class="stars">★★★★★</span> · 3 months ago</span></div><svg viewBox="0 0 48 48" class="g"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg></div><blockquote>If you are looking for an honest and knowledgeable tire guy, it’s Joe at All Tire in Elk River. Joe takes the time to get to know you and what your needs are to match you with the right tires. Second set and we drive 4 hours to buy from Joe. His customer service is exceptional. When I picked up my car yesterday Joe took the time to explain how my tires will keep me moving on our “up north” roads all year. Thanks Joe. It’s a pleasure to work with you.</blockquote></figure></div>
+  <div class="rv-actions">
+    <button class="btn btn-dark" id="rvMore" type="button" style="border:0;cursor:pointer;font-family:inherit">Show more reviews</button>
+    <a class="btn btn-line" href="https://www.google.com/maps/search/?api=1&query=All+Tire+20300+Auburn+St+NW+Elk+River+MN+55330" target="_blank" rel="noopener">Read all 747 on Google →</a>
+  </div>
+</div></section>
+
+<section class="joe" id="joe"><div class="wrap">
+  <div class="joe-photo">
+    <img src="/joes/assets/joe-tires.jpg" alt="Joe Saunders, owner of All Tire, working in the shop" loading="lazy">
+    <div class="since"><b>30+</b><span>Years in tires</span></div>
+  </div>
+  <div>
+    <div class="eyebrow">Meet the owner</div>
+    <h2 style="margin-top:12px">Hi, I'm Joe.</h2>
+    <p>I bought my first car, a 1965 Mustang, when I was 15, and I've been working on cars ever since: Mom's, Dad's, my friends'. I've been an Elk River resident and small business owner for over 35 years, and I'll be here years from now.</p>
+    <p>I'm in the shop every day. You'll get my honest advice and my personal attention, whether it's a nail in your tire or a new set for the winter.</p>
+    <div class="timeline">
+      <div><b>1992</b><span>Earned ASE automotive certifications</span></div>
+      <div><b>1993</b><span>Started ALL TIRE in Elk River</span></div>
+      <div><b>2005</b><span>Went full time with the tire and brake business</span></div>
+      <div><b>Today</b><span>747 Google reviews and still answering the phone myself</span></div>
+    </div>
+    <div class="team"><b>Our team, by department</b>
+      <ul>
+        <li>Puncture Remediation Specialist: <span>Joe</span></li>
+        <li>Executive Director of Deceleration Operations: <span>Joe</span></li>
+        <li>Senior Frozen Precipitation Removal Specialist: <span>Joe</span></li>
+        <li>Chief Caffeine Acquisition Officer: <span>Also Joe</span></li>
+      </ul>
+    </div>
+  </div>
+</div></section>
+
+<section class="brands"><div class="wrap">
+  <div class="mq"><img src="/joes/assets/michelin.jpg" alt="Michelin"><div><b>Michelin<br>Quality Dealer</b><span>Defender, CrossClimate, X-Ice and more</span></div></div>
+  <div>
+    <div class="eyebrow">Brands we carry</div>
+    <div class="brand-list" style="margin-top:14px"><span>Michelin</span><span>BFGoodrich</span><span>Goodyear</span><span>General</span><span>Firestone</span><span>Cooper</span><span>Toyo</span><span>Continental</span><span>Nitto</span><span>Yokohama</span><span>Uniroyal</span><span>Pirelli</span><span>+ many more</span></div>
+  </div>
+</div></section>
+
+<section class="visit" id="visit"><div class="wrap">
+  <div>
+    <div class="eyebrow">Visit the shop</div>
+    <h2 style="margin-top:12px;margin-bottom:24px">One shop. Elk River.</h2>
+    <div class="map"><iframe title="Map to All Tire" loading="lazy" src="https://maps.google.com/maps?q=All%20Tire%2C%2020300%20Auburn%20St%20NW%2C%20Elk%20River%2C%20MN%2055330&amp;z=14&amp;output=embed"></iframe></div>
+  </div>
+  <div class="info">
+    <div class="card"><b>Hours</b>
+      <table class="hours" id="hours">
+        <tr data-d="1"><td>Monday</td><td>8 AM – 8 PM</td></tr><tr data-d="2"><td>Tuesday</td><td>8 AM – 8 PM</td></tr><tr data-d="3"><td>Wednesday</td><td>8 AM – 8 PM</td></tr>
+        <tr data-d="4"><td>Thursday</td><td>8 AM – 8 PM</td></tr><tr data-d="5"><td>Friday</td><td>8 AM – 8 PM</td></tr><tr data-d="6"><td>Saturday</td><td>9 AM – 5 PM</td></tr><tr data-d="0"><td>Sunday</td><td>11 AM – 4 PM</td></tr>
+      </table>
+      <p style="font-size:13.5px;color:var(--dim);margin-top:10px">Appointments recommended. Call or text first.</p>
+    </div>
+    <div class="card"><b>Address</b>
+      <p style="margin-top:6px">20300 Auburn St NW<br>Elk River, MN 55330</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px"><a class="btn btn-or" style="padding:11px 16px;font-size:15px" href="https://www.google.com/maps/dir/?api=1&amp;destination=All+Tire+20300+Auburn+St+NW+Elk+River+MN+55330" target="_blank" rel="noopener">Get directions</a><a class="btn btn-line" style="padding:9px 14px;font-size:15px" href="tel:+17632411874">(763) 241-1874</a></div>
+      <div class="towns"><span>Elk River</span><span>Otsego</span><span>Ramsey</span><span>Nowthen</span><span>Anoka</span><span>Zimmerman</span><span>Big Lake</span><span>Rogers</span><span>St. Michael</span><span>Twin Cities to St. Cloud</span></div>
+    </div>
+  </div>
+</div></section>
+
+<section class="faq"><div class="wrap">
+  <div class="eyebrow">Good questions</div>
+  <h2 style="margin-top:12px;margin-bottom:12px">Common questions</h2>
+  <details><summary>How do I get a tire quote?</summary><p>Call (763) 241-1874 or text (612) 644-4201. Prices aren&#x27;t posted online because the right tire and price depend on your vehicle, tire size, brand and how you drive. Send your tire size (it&#x27;s on the sidewall) and Joe will get back to you.</p></details><details><summary>Do I need an appointment?</summary><p>Appointments are highly recommended, so call or text first. Joe regularly fits in flats and same-day repairs when he can.</p></details><details><summary>Can I bring my own tires?</summary><p>Yes. All Tire mounts and balances tires you bought elsewhere, as well as tires bought here.</p></details><details><summary>Do you plug tires?</summary><p>No. Repairs are patched correctly from the inside, never plugged, which is the right way to fix a puncture.</p></details><details><summary>What tires work best in a Minnesota winter?</summary><p>Open-shoulder tires clear slush and snow better than closed-shoulder tires, because the tread lets water escape out the side. An M+S or All Season marking alone doesn&#x27;t tell you how a tire grips in slush. Ask Joe to show you the difference.</p></details><details><summary>Is All Tire a Michelin dealer?</summary><p>Yes. All Tire is a Michelin Quality Dealer and carries the Defender, Defender LTX, CrossClimate, X-Ice Snow and more, plus BFGoodrich and Uniroyal.</p></details>
+</div></section>
+
+<section class="final"><div class="wrap">
+  <h2>Nail in your tire? Need a new set?</h2>
+  <p>Text Joe a photo of your tire size or give him a call. You'll get an honest answer and a real price.</p>
+  <div class="ctas">
+    <a class="btn btn-or" href="tel:+17632411874"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>Call (763) 241-1874</a>
+    <a class="btn btn-ghost" href="sms:+16126444201?&amp;body=Hi%20Joe%2C%20I%27d%20like%20a%20price%20on%20tires.%20My%20tire%20size%20is%3A%20"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8.5 8.5 0 0 1-12.4 7.5L3 21l1.5-5.6A8.5 8.5 0 1 1 21 12z"/><path d="M8.5 11h.01M12 11h.01M15.5 11h.01"/></svg>Text (612) 644-4201</a>
+  </div>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <div><img src="/joes/assets/logo.png" alt="Joe's All Tire" style="height:46px;width:auto;margin-bottom:14px"><span>Independent tire and brake shop in Elk River, MN. Owner-operated since 1993.</span></div>
+  <div class="fl"><b>Visit</b><span>20300 Auburn St NW</span><span>Elk River, MN 55330</span></div>
+  <div class="fl"><b>Contact</b><a href="tel:+17632411874">Call (763) 241-1874</a><a href="sms:+16126444201?&amp;body=Hi%20Joe%2C%20I%27d%20like%20a%20price%20on%20tires.%20My%20tire%20size%20is%3A%20">Text (612) 644-4201</a><a href="mailto:joe@joesalltire.com">joe@joesalltire.com</a></div>
+  <div class="fl"><b>Hours</b><span>Mon–Fri 8 AM–8 PM</span><span>Sat 9 AM–5 PM</span><span>Sun 11 AM–4 PM</span></div>
+  <div class="copy">© Joe's All Tire. Reviews quoted word for word from Google.</div>
+</div></footer>
+
+<div class="mbar">
+  <a class="primary" href="tel:+17632411874"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>Call</a>
+  <a href="sms:+16126444201?&amp;body=Hi%20Joe%2C%20I%27d%20like%20a%20price%20on%20tires.%20My%20tire%20size%20is%3A%20"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8.5 8.5 0 0 1-12.4 7.5L3 21l1.5-5.6A8.5 8.5 0 1 1 21 12z"/><path d="M8.5 11h.01M12 11h.01M15.5 11h.01"/></svg>Text Joe</a>
+  <a href="https://www.google.com/maps/dir/?api=1&amp;destination=All+Tire+20300+Auburn+St+NW+Elk+River+MN+55330" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>Directions</a>
+</div>
+
+<script>
+// Open-now badge and today's hours, in shop time (Central).
+(function(){
+  var H={0:[11,16],1:[8,20],2:[8,20],3:[8,20],4:[8,20],5:[8,20],6:[9,17]};
+  var now=new Date(new Date().toLocaleString('en-US',{timeZone:'America/Chicago'}));
+  var d=now.getDay(),h=now.getHours()+now.getMinutes()/60,t=H[d],el=document.getElementById('openNow');
+  var fmt=function(x){var hr=Math.floor(x)%12||12;return hr+(x>=12?' PM':' AM');};
+  if(h>=t[0]&&h<t[1]){el.querySelector('span').textContent='Open now · until '+fmt(t[1]);}
+  else{el.classList.add('closed');var nd=h<t[0]?d:(d+1)%7;el.querySelector('span').textContent='Closed now · opens '+(nd===d?'today':'tomorrow')+' at '+fmt(H[nd][0]);}
+  var row=document.querySelector('#hours tr[data-d="'+d+'"]');if(row)row.classList.add('today');
+  var ts=document.getElementById('talkStatus'),fd=document.getElementById('faceDot');
+  if(ts){if(h>=t[0]&&h<t[1]){ts.textContent='In the shop now · open until '+fmt(t[1]);}
+    else{fd.classList.add('closed');var nd2=h<t[0]?d:(d+1)%7;ts.textContent='Closed now · text anytime, opens '+(nd2===d?'today':'tomorrow')+' at '+fmt(H[nd2][0]);}}
+})();
+// Reviews: newest first, in the shorter of two columns on wide screens; "Show more" reveals the rest.
+function masonry(){var r=document.getElementById('rvList');if(!r)return;
+  var cards=r._cards||(r._cards=[].slice.call(r.querySelectorAll('.rv')));r.innerHTML='';
+  if(!matchMedia('(min-width:760px)').matches){r.classList.remove('mz');cards.forEach(function(c){r.appendChild(c);});return;}
+  r.classList.add('mz');var cols=[0,1].map(function(){var d=document.createElement('div');d.className='mz-col';r.appendChild(d);return d;});
+  cards.forEach(function(c){if(getComputedStyle(c).display==='none'){cols[0].appendChild(c);return;}(cols[0].offsetHeight<=cols[1].offsetHeight?cols[0]:cols[1]).appendChild(c);});}
+var mzW=0;addEventListener('resize',function(){if(innerWidth!==mzW){mzW=innerWidth;masonry();}});
+var mq=matchMedia('(min-width:760px)');(mq.addEventListener?mq.addEventListener('change',masonry):mq.addListener(masonry));
+addEventListener('load',masonry);if(document.fonts)document.fonts.ready.then(masonry);masonry();
+document.getElementById('rvMore').addEventListener('click',function(){var r=document.getElementById('rvList');r.classList.add('show-all');this.style.display='none';masonry();});
+</script>
+</body>
+</html>
